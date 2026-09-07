@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield test screen 5 — adversarial</title>
+    <!--
+      TESTING.md Section 1, Screen 5: password field without type="password",
+      ambiguous labels, and PII that no attribute announces.
+
+      This screen is meant to be failed, at least partly. Each block below is a
+      case where the primary DOM signal is absent or actively misleading, and
+      the honest use of this page is to record which ones Shield catches and
+      which it does not, rather than to tune rules until the page goes green —
+      a fixture you optimise against stops measuring anything.
+
+      Expected at the time of writing, from the rules in
+      src/lib/pii/dom-rules.ts:
+        1  masked password, no type=password  -> caught, via the label/name text
+        2  password named "field_7"           -> caught only as `other`, since
+                                                 nothing identifies it as a
+                                                 password; hidden, but
+                                                 mislabelled
+        3  email in visible text              -> caught, by content pattern
+        4  a person's name in visible text    -> MISSED. Documented in
+                                                 SECURITY_PRIVACY.md 4.1: names
+                                                 cannot be told from other words
+                                                 without a named-entity model
+        5  ID number in visible text          -> caught, by content pattern
+        6  ID number inside an image          -> MISSED. The OCR pass is
+                                                 deferred; recorded in 4.1
+        7  autocomplete lying about content   -> caught, and the more sensitive
+                                                 reading wins
+    -->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px 32px;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #1f2933;
+        background: #f5f7fa;
+      }
+
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+
+      .intro {
+        margin: 0 0 18px;
+        font-size: 13px;
+        color: #52606d;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        max-width: 900px;
+      }
+
+      .case {
+        background: #fff;
+        border: 1px solid #e4e7eb;
+        border-radius: 8px;
+        padding: 12px 14px;
+      }
+
+      .case h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #7b8794;
+        margin: 0 0 8px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+
+      input[type='text'],
+      input[type='password'] {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #cbd2d9;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .value {
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .note {
+        font-size: 11px;
+        color: #9aa5b1;
+        margin: 6px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Edge cases</h1>
+    <p class="intro">
+      Every block below hides something, or appears to. Synthetic data only.
+    </p>
+
+    <div class="grid">
+      <section class="case">
+        <h2>1 — Masked, but not type=password</h2>
+        <!--
+          Visually a password field, and it behaves like one, but the attribute
+          every detector keys on is absent. The label is the only signal left.
+        -->
+        <label for="c1">Password</label>
+        <input
+          type="text"
+          id="c1"
+          name="password"
+          style="-webkit-text-security: disc; text-security: disc"
+          value="not-a-real-password-1234"
+        />
+        <p class="note">No type="password". Label and name still say so.</p>
+      </section>
+
+      <section class="case">
+        <h2>2 — Nothing says what this is</h2>
+        <!--
+          A real password with no label, no autocomplete, and a meaningless
+          name. Nothing identifies it; only the default-to-hide rule can save it.
+        -->
+        <input type="text" id="c2" name="field_7" value="not-a-real-password-5678" />
+        <p class="note">No label, no autocomplete, opaque name.</p>
+      </section>
+
+      <section class="case">
+        <h2>3 — Email as plain text</h2>
+        <p class="value">Account contact: casey.tan@example.com</p>
+        <p class="note">No input, no attribute. Content only.</p>
+      </section>
+
+      <section class="case">
+        <h2>4 — A name as plain text</h2>
+        <p class="value">Account holder: Priya Raghunathan</p>
+        <p class="note">Expected to be missed. See SECURITY_PRIVACY.md 4.1.</p>
+      </section>
+
+      <section class="case">
+        <h2>5 — ID number as plain text</h2>
+        <p class="value">PAN ABCDE1234F · Account 402711558903</p>
+        <p class="note">Formatted identifiers, no markup clue.</p>
+      </section>
+
+      <section class="case">
+        <h2>6 — ID number inside an image</h2>
+        <!--
+          Drawn as an SVG rather than loaded as a file, so the fixture stays
+          self-contained. To a pixel-reading detector it is an image of text;
+          to the DOM it is markup, which is why an OCR pass is a different
+          capability rather than a stricter rule.
+        -->
+        <svg width="230" height="46" role="img" aria-label="Scanned identity card">
+          <rect width="230" height="46" rx="4" fill="#e4e7eb" />
+          <text x="12" y="29" font-family="monospace" font-size="15" fill="#1f2933">
+            ID 8842 5510 0937
+          </text>
+        </svg>
+        <p class="note">Expected to be missed. OCR pass is deferred.</p>
+      </section>
+
+      <section class="case">
+        <h2>7 — The attribute is wrong</h2>
+        <!--
+          The page says this holds a nickname. It holds an email address. The
+          declaration and the content disagree, and the more sensitive reading
+          should win.
+        -->
+        <label for="c7">Display name</label>
+        <input
+          type="text"
+          id="c7"
+          autocomplete="nickname"
+          value="casey.tan@example.com"
+        />
+        <p class="note">Declared a nickname, holds an email.</p>
+      </section>
+
+      <section class="case">
+        <h2>8 — Looks like PII, is not</h2>
+        <p class="value">Invoice 2024-2025 · Sections 100-200 · Build 10240</p>
+        <p class="note">Must NOT be flagged. False-positive control.</p>
+      </section>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+public/icons/
+*.local
+.DS_Store
+public/ort/

@@ -1,0 +1,156 @@
+"""Shield backend — /analyze and /health, per API_SPEC.md.
+
+Two rules govern everything here.
+
+First, nothing about a request is ever logged beyond its id. SECURITY_PRIVACY.md
+Section 3 names logs as a disclosure path, and the payload arriving here is
+redacted rather than harmless: it still describes somebody's screen, and a
+server log is exactly the kind of store that outlives the request and gets
+copied around. Only `request_id`, timings and outcomes are recorded.
+
+Second, the action allowlist is enforced here as well as on the client. That is
+not redundancy for its own sake — it means a compromised or simply mistaken
+model cannot produce anything but click, type or scroll, and the client refusing
+it later is a second line rather than the only one.
+"""
+
+from __future__ import annotations
+
+import logging
+import sys
+import time
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from model_reasoner import decide_with_model, is_configured
+from prompt import PROMPT_VERSION
+from schemas import (
+    ALLOWED_ACTIONS,
+    ActionReadyResponse,
+    AnalyzeRequest,
+    ErrorResponse,
+    NeedsMoreContextResponse,
+)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("shield")
+
+VERSION = "0.1.0"
+
+app = FastAPI(title="Shield backend", version=VERSION)
+
+# The extension calls this from a service worker, whose origin is
+# chrome-extension://<id>. That id changes between machines and between packed
+# and unpacked loads, so it cannot be pinned for a hackathon build. Tightening
+# this to the published extension id is a Full Product task, noted in
+# SECURITY_PRIVACY.md rather than left as a silent hole.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["POST", "GET", "OPTIONS"],
+    allow_headers=["content-type"],
+)
+
+
+@app.get("/health")
+def health() -> dict[str, object]:
+    """Liveness, and which reasoner is active.
+
+    The reasoner is reported because "the server is up" and "the server can
+    actually answer" are different claims, and a demo that discovers the
+    difference live discovers it at the worst moment.
+    """
+    return {
+        "status": "ok",
+        "version": VERSION,
+        # Which path a request will actually take, not merely whether a key is
+        # present. "model" still falls back to the rules on any failure, so this
+        # says what will be tried first rather than what will answer.
+        "reasoner": "model" if is_configured() else "rules",
+        "model_configured": is_configured(),
+        "prompt_version": PROMPT_VERSION,
+    }
+
+
+def _error(request_id: str, code: str, message: str, http_status: int) -> JSONResponse:
+    body = ErrorResponse(request_id=request_id, error_code=code, message=message)
+    return JSONResponse(status_code=http_status, content=body.model_dump())
+
+
+@app.post("/analyze")
+async def analyze(request: Request) -> JSONResponse:
+    started = time.perf_counter()
+
+    try:
+        raw = await request.json()
+    except Exception:
+        # No request id is available yet, so there is nothing to correlate with.
+        logger.warning("rejected a request whose body was not JSON")
+        return _error("", "MALFORMED_REQUEST", "Body was not valid JSON.", 400)
+
+    request_id = ""
+    if isinstance(raw, dict) and isinstance(raw.get("request_id"), str):
+        request_id = raw["request_id"]
+
+    try:
+        payload = AnalyzeRequest.model_validate(raw)
+    except Exception as error:
+        # The validation error names fields, not values, but it is still built
+        # from the payload, so only the exception type is logged.
+        logger.warning("request %s failed schema validation (%s)", request_id, type(error).__name__)
+        return _error(request_id, "MALFORMED_REQUEST", "Request failed schema validation.", 400)
+
+    try:
+        decision, path = await decide_with_model(payload)
+    except Exception:
+        # No `logger.exception` here: a traceback carries the local variables of
+        # every frame it walks, and the frames in this call chain hold the
+        # payload. Only the exception type is recorded.
+        logger.error(
+            "request %s failed while reasoning (%s)",
+            request_id,
+            type(sys.exc_info()[1]).__name__,
+        )
+        return _error(request_id, "INTERNAL_ERROR", "Could not process this page.", 500)
+
+    if decision.action is None:
+        logger.info(
+            "request %s -> needs_more_context via %s in %.0fms",
+            request_id,
+            path,
+            (time.perf_counter() - started) * 1000,
+        )
+        return JSONResponse(
+            content=NeedsMoreContextResponse(
+                request_id=request_id, reasoning_summary=decision.summary
+            ).model_dump()
+        )
+
+    # The allowlist, enforced server-side. The model path checks it too, before
+    # the reply becomes a Decision at all — this is the second line, kept
+    # because the first one lives in the module that talks to the model and is
+    # therefore the module most likely to be rewritten in a hurry.
+    if decision.action.type not in ALLOWED_ACTIONS:
+        logger.warning("request %s produced a disallowed action", request_id)
+        return _error(
+            request_id, "ACTION_REJECTED", "No safe action could be determined.", 200
+        )
+
+    logger.info(
+        "request %s -> %s via %s in %.0fms",
+        request_id,
+        decision.action.type,
+        path,
+        (time.perf_counter() - started) * 1000,
+    )
+
+    return JSONResponse(
+        content=ActionReadyResponse(
+            request_id=request_id,
+            action=decision.action,
+            confidence=decision.confidence,
+            reasoning_summary=decision.summary,
+        ).model_dump()
+    )

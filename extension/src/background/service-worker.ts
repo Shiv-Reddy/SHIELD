@@ -1,0 +1,1099 @@
+/**
+ * Background service worker — the orchestrator for one Shield run.
+ *
+ * This file owns the pipeline order and nothing else. The actual work of each
+ * stage lives in its own module (Modules A-E in TASKS.md) and is wired in here
+ * as those modules land. Keeping orchestration separate from implementation is
+ * what makes the redact-before-transmit invariant auditable: a reviewer can
+ * read this one file and see the whole order of operations.
+ *
+ * MV3 service workers are killed aggressively when idle, so nothing here may
+ * assume it stays resident between runs. Run state is deliberately kept small
+ * and rebuildable.
+ */
+
+import { captureViewport } from './capture';
+import { ensureOffscreenDocument } from './offscreen';
+import {
+  MSG,
+  broadcast,
+  sendToTab,
+  type PopupMessage,
+  type PingResult,
+  type ExtractDomResult,
+  sendToOffscreen,
+  redactOffscreenFrame,
+  warmOffscreen,
+  reloadOffscreenModel,
+  runOffscreenSelfTest,
+} from '../lib/messages';
+import { detectDomPii } from '../lib/pii/dom-rules';
+import { faceRegions } from '../lib/pii/face-regions';
+import { buildManifest, redactDomElements } from '../lib/redaction/placeholders';
+import { buildSanitizedPayload } from '../lib/redaction/payload';
+import { recordTransmission } from '../lib/redaction/evidence';
+import { send } from '../lib/transport/client';
+import { readSettings } from '../lib/settings';
+import { readSelfTestRecord, writeSelfTestRecord } from '../lib/self-test-record';
+import { timed, type StageTiming } from '../lib/timing';
+import type {
+  DomElement,
+  RawFrame,
+  ShieldAction,
+  RedactedDomEntry,
+  ScreenSnapshot,
+  SensitiveRegion,
+  ViewportInfo,
+} from '../lib/types';
+import {
+  INITIAL_STATE,
+  STAGE_ORDER,
+  STATUS_LABEL,
+  stageIndex,
+  type PipelineStage,
+  type ShieldState,
+  type ShieldStatus,
+} from '../lib/status';
+
+const CONTENT_SCRIPT_FILE = 'content-script.js';
+
+/**
+ * Shown whenever Chrome will not let us near a page at all.
+ *
+ * Deliberately says what the user can do about it rather than what went wrong
+ * internally: this fires on chrome:// pages, the Web Store, the PDF viewer, and
+ * other extensions' pages, and in every one of those cases the answer is the
+ * same — try it on an ordinary web page.
+ */
+const UNREADABLE_PAGE_MESSAGE =
+  "Shield can't read this page. Chrome blocks extensions on its own pages — " +
+  'chrome:// pages, the Web Store, PDFs, and other extensions. Try an ordinary ' +
+  'web page.';
+
+// --- Run state --------------------------------------------------------------
+
+let state: ShieldState = { ...INITIAL_STATE };
+
+function setState(patch: Partial<ShieldState>): void {
+  state = { ...state, ...patch };
+  broadcast({ type: MSG.STATE_CHANGED, state });
+}
+
+function setStatus(status: ShieldStatus, errorMessage: string | null = null): void {
+  setState({ status, errorMessage });
+}
+
+/**
+ * Stage timings for the pass currently running.
+ *
+ * Collected here rather than threaded through every stage's return value: the
+ * pipeline is a straight sequence and the alternative is a parameter that most
+ * of it does not use. Reset at the start of each step, because a multi-step run
+ * has one breakdown per step and adding them would report a duration nobody
+ * waited for.
+ */
+let stepTimings: StageTiming[] = [];
+
+/** Record a stage's timing and push it to the popup as it happens. */
+function record<T>(measured: { result: T; timing: StageTiming }): T {
+  stepTimings = [...stepTimings, measured.timing];
+  setState({ timings: stepTimings });
+  return measured.result;
+}
+
+function fail(message: string): void {
+  // Every failure surfaces to the user with a specific reason. PRD.md Section 20
+  // requires no silent failures and no generic "something went wrong".
+  console.error('[shield]', message);
+  setStatus('error', message);
+}
+
+// --- Pipeline ordering guard ------------------------------------------------
+
+/**
+ * Stages completed during the current run.
+ *
+ * This exists to enforce ARCHITECTURE.md Section 2.3's hard invariant at
+ * runtime, alongside the compile-time `Sanitized<T>` seal in lib/types.ts. Two
+ * independent mechanisms guarding the same boundary is intentional: the type
+ * seal catches wiring mistakes at build time, this catches a stage that was
+ * skipped, threw, or returned early at run time.
+ */
+let completedStages = new Set<PipelineStage>();
+
+function beginRun(taskQuery: string, tabId: number): void {
+  completedStages = new Set();
+  setState({
+    status: 'reading',
+    errorMessage: null,
+    taskQuery,
+    tabId,
+    step: 1,
+  });
+}
+
+function markStageComplete(stage: PipelineStage): void {
+  completedStages.add(stage);
+}
+
+/**
+ * Refuse to proceed past `stage` unless every earlier stage actually ran.
+ *
+ * The transport call sites the check with `'sending'`, which makes skipping
+ * redaction a thrown error rather than a leak. Fails closed, per
+ * ARCHITECTURE.md Section 9.
+ */
+function assertStagesCompletedBefore(stage: PipelineStage): void {
+  const limit = stageIndex(stage);
+  for (let i = 0; i < limit; i += 1) {
+    const required = STAGE_ORDER[i];
+    if (required && !completedStages.has(required)) {
+      throw new Error(
+        `Pipeline order violation: reached "${stage}" without completing "${required}". ` +
+          'Refusing to continue.',
+      );
+    }
+  }
+}
+
+// --- Content script lifecycle ----------------------------------------------
+
+/**
+ * Ensure the content script is live in `tabId`, injecting it if it isn't.
+ *
+ * Shield declares no static content scripts. The script is injected only when
+ * the user actively starts a run, under `activeTab`, so Shield has no reach
+ * into pages the user never pointed it at. That is a real privacy property,
+ * not just a smaller permission warning — see DECISIONS.md.
+ */
+async function ensureContentScript(tabId: number): Promise<void> {
+  const alive = await sendToTab<PingResult>(tabId, { type: MSG.PING });
+  if (alive?.ok) return;
+
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: [CONTENT_SCRIPT_FILE],
+    });
+  } catch (error) {
+    // Chrome refuses injection outright on its own pages, and the raw message
+    // ("Cannot access a chrome:// URL") is internal wording no user should be
+    // shown. PRD.md Section 20 asks for a clear "couldn't read this page"
+    // instead, so the real error is logged for us and replaced for them.
+    console.warn('[shield] content script injection refused:', error);
+    throw new Error(UNREADABLE_PAGE_MESSAGE);
+  }
+
+  const confirmed = await sendToTab<PingResult>(tabId, { type: MSG.PING });
+  if (!confirmed?.ok) throw new Error(UNREADABLE_PAGE_MESSAGE);
+}
+
+async function getActiveTab(): Promise<chrome.tabs.Tab> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) throw new Error('No active tab to work on.');
+  return tab;
+}
+
+/**
+ * Whether a page is one of our own test fixtures.
+ *
+ * Used to decide how much of the element map may be printed. Fixtures are local
+ * files containing synthetic data we wrote; anything else is somebody's real
+ * page. `pageUrl` is client-side only and never transmitted (see
+ * ScreenSnapshot), so consulting it here costs nothing.
+ */
+function isLocalFixture(pageUrl: string): boolean {
+  return pageUrl.startsWith('file://') || pageUrl.startsWith('http://localhost');
+}
+
+/**
+ * Print the element map so a developer can check the scan against the page.
+ *
+ * Full detail is printed ONLY for local fixtures. On a real page the map is
+ * summarised, with no label text at all.
+ *
+ * This used to print every label unconditionally, on the reasoning that labels
+ * are page structure rather than user input and therefore safe. That reasoning
+ * was wrong, and a run against a real social feed proved it: the labels were
+ * other people's names, and the whole set went into a console buffer — the kind
+ * that gets pasted into bug reports and chat, as that one was. A tool whose
+ * entire claim is that private data does not escape cannot leak it while
+ * explaining itself.
+ *
+ * Values were never printed and still are not.
+ */
+function logElementMap(snapshot: ScreenSnapshot): void {
+  const elements = snapshot.elements;
+
+  if (!isLocalFixture(snapshot.pageUrl)) {
+    const byType = new Map<string, number>();
+    for (const element of elements) {
+      byType.set(element.elementType, (byType.get(element.elementType) ?? 0) + 1);
+    }
+
+    const breakdown = [...byType.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([type, count]) => `${count} ${type}`)
+      .join(', ');
+
+    console.info(
+      `[shield] element map: ${breakdown}; ` +
+        `${elements.filter((element) => element.value !== null).length} with a value, ` +
+        `${elements.filter((element) => element.label !== null).length} with a label ` +
+        '(detail withheld: not a local fixture)',
+    );
+    return;
+  }
+
+  console.table(
+    elements.map((element) => ({
+      id: element.elementId,
+      type: element.elementType,
+      inputType: element.inputType ?? '',
+      autocomplete: element.autocomplete ?? '',
+      label: element.label ?? '',
+      hasValue: element.value !== null,
+      selector: element.selector,
+    })),
+  );
+}
+
+/**
+ * Print what the detector flagged, and why.
+ *
+ * Categories, rules, confidences and sizes only — never the value that was
+ * flagged and never a label. The reasons are rule names ('input type="password"',
+ * 'face detected at 98% confidence'), which describe the decision without
+ * quoting the content that triggered it.
+ */
+/**
+ * Which mapped element a visual region sits on top of.
+ *
+ * A face detection carries no element id — that is the whole point of the visual
+ * layer. But on a page of images, knowing *which* image a box landed on is the
+ * difference between reading a result and guessing at it: correlating box sizes
+ * to page elements by eye is exactly the sort of inference that has been wrong
+ * twice already in this module.
+ *
+ * Overlap is measured as a fraction of the region, not of the element, so a
+ * small box sitting inside a large image scores 1.0 rather than nearly zero.
+ */
+function overlappingElement(
+  region: SensitiveRegion,
+  elements: readonly DomElement[],
+): string {
+  const area = region.position.width * region.position.height;
+  if (area <= 0) return '';
+
+  let bestId = '';
+  let bestShare = 0;
+
+  for (const element of elements) {
+    const overlapWidth = Math.max(
+      0,
+      Math.min(
+        region.position.x + region.position.width,
+        element.position.x + element.position.width,
+      ) - Math.max(region.position.x, element.position.x),
+    );
+    const overlapHeight = Math.max(
+      0,
+      Math.min(
+        region.position.y + region.position.height,
+        element.position.y + element.position.height,
+      ) - Math.max(region.position.y, element.position.y),
+    );
+
+    const share = (overlapWidth * overlapHeight) / area;
+    if (share > bestShare) {
+      bestShare = share;
+      bestId = element.elementId;
+    }
+  }
+
+  return bestShare > 0.5 ? bestId : '';
+}
+
+function logDetections(
+  regions: readonly SensitiveRegion[],
+  elements: readonly DomElement[],
+): void {
+  if (regions.length === 0) {
+    console.warn('[shield] no sensitive regions detected on this page');
+    return;
+  }
+
+  console.info(`[shield] ${regions.length} sensitive region(s) detected`);
+  console.table(
+    regions.map((region) => ({
+      element: region.elementId ?? '',
+      category: region.category,
+      source: region.source,
+      confidence: Number(region.confidence.toFixed(3)),
+      // Size is printed for faces specifically. A detector that only ever finds
+      // large faces is missing small ones because of the downscale into the
+      // model's 320x240 input, and the sizes it did find are what shows that.
+      size: `${Math.round(region.position.width)}x${Math.round(region.position.height)}`,
+      at: `${Math.round(region.position.x)},${Math.round(region.position.y)}`,
+      // For a face, the element it covers. Empty when it covers none.
+      over: region.elementId ?? overlappingElement(region, elements),
+      why: region.reason,
+    })),
+  );
+}
+
+/**
+ * Report what the redacted summary now contains.
+ *
+ * Prints the placeholder tokens, never the values they replaced. Tokens are
+ * fixed strings from a known list, so this cannot echo page content — which is
+ * precisely why it is safe to print on any page, unlike the element map.
+ */
+function logRedactionSummary(
+  entries: readonly RedactedDomEntry[],
+  regions: readonly SensitiveRegion[],
+): void {
+  const flagged = new Set(
+    regions.map((region) => region.elementId).filter((id): id is string => id !== null),
+  );
+
+  const tokens = entries
+    .filter((entry) => flagged.has(entry.elementId))
+    .map((entry) => `${entry.elementId}=${entry.value ?? ''}`);
+
+  if (tokens.length === 0) {
+    console.info('[shield] no DOM values needed replacing');
+    return;
+  }
+
+  console.info(`[shield] DOM values replaced: ${tokens.join(', ')}`);
+}
+
+// --- Action execution --------------------------------------------------------
+
+/**
+ * The token the server uses to ask for a stored credential.
+ *
+ * It asks for one by reference because it has no access to the value and must
+ * never be sent one. Whether Shield can honour the request is a separate
+ * question, answered below.
+ */
+const CREDENTIAL_REFERENCE = '[USE_SAVED_CREDENTIAL]';
+
+/**
+ * Work out what to actually type, locally.
+ *
+ * Shield deliberately has no credential store. Keeping passwords in
+ * `chrome.storage.local` would put them in plaintext, readable by any code in
+ * this extension, on a project whose entire claim is that secrets stay
+ * protected — a vault worth having needs a real one, and building a bad one
+ * would undercut the thing being demonstrated.
+ *
+ * So a request to fill a credential is refused, clearly, rather than half-met.
+ * The primary demo does not need it: the form is already filled and the action
+ * is to submit it.
+ */
+function resolveTypeValue(
+  action: ShieldAction,
+  snapshot: ScreenSnapshot,
+): { value: string | null; error: string | null } {
+  if (action.type !== 'type') return { value: null, error: null };
+
+  if (action.value === CREDENTIAL_REFERENCE) {
+    return {
+      value: null,
+      error:
+        'Shield has no saved credentials, so it cannot fill this field. ' +
+        'Fill it yourself and run Shield again to submit the form.',
+    };
+  }
+
+  // A literal value aimed at a field Shield redacted is refused here, not only
+  // on the server. The server applies the same rule at the point it reads the
+  // model's reply, but SECURITY_PRIVACY.md's elevation-of-privilege row treats
+  // the server as a component that can be compromised or simply wrong, and this
+  // is the case where being wrong is worst: the only way the assistant could
+  // know what belongs in a redacted field is if it was never redacted.
+  const targetsRedactedField = snapshot.sensitiveRegions.some(
+    (region) =>
+      region.elementId !== null &&
+      (region.elementId === action.selector ||
+        snapshot.elements.some(
+          (element) =>
+            element.elementId === region.elementId && element.selector === action.selector,
+        )),
+  );
+
+  if (targetsRedactedField) {
+    return {
+      value: null,
+      error:
+        'The assistant tried to type a value into a field Shield had hidden. ' +
+        'Shield refused, because it could not have known what belongs there.',
+    };
+  }
+
+  // Any other value came from the server and describes content the model was
+  // already shown — it cannot carry anything that was redacted, since the model
+  // never saw it. It is still not trusted blindly: only a string is accepted,
+  // and the executor re-verifies the target before typing anywhere.
+  return { value: action.value, error: null };
+}
+
+/**
+ * Send one action to the page, carrying what the element looked like when
+ * captured so the content script can re-verify it.
+ */
+async function executeOnPage(
+  tabId: number,
+  action: ShieldAction,
+  snapshot: ScreenSnapshot,
+): Promise<{ ok: boolean; message: string }> {
+  // The server names elements by the id we gave it. A selector is accepted as a
+  // fallback because API_SPEC.md Section 5 allows either, but the id is what a
+  // correct response uses, and it is the only form that can be checked against
+  // the snapshot.
+  const element = snapshot.elements.find(
+    (candidate) =>
+      candidate.elementId === action.selector || candidate.selector === action.selector,
+  );
+
+  if (!element) {
+    return {
+      ok: false,
+      message: 'The assistant referred to something Shield did not see on this page.',
+    };
+  }
+
+  const { value, error } = resolveTypeValue(action, snapshot);
+  if (error) return { ok: false, message: error };
+
+  const result = await sendToTab<{ ok: boolean; message: string }>(tabId, {
+    type: MSG.EXECUTE_ACTION,
+    action,
+    expectedSelector: element.selector,
+    expectedType: element.elementType,
+    expectedLabel: element.label,
+    typeValue: value,
+  });
+
+  if (!result) {
+    return {
+      ok: false,
+      message: 'Shield lost contact with the page before it could act.',
+    };
+  }
+
+  return result;
+}
+
+// --- Task run ---------------------------------------------------------------
+
+interface StepOutcome {
+  /** True when the page was actually changed. */
+  acted: boolean;
+  /** The assistant's own explanation, if it gave one. Never page content. */
+  summary: string | null;
+  /**
+   * Identifies the action taken, for repeat detection.
+   *
+   * Null when nothing was done.
+   */
+  signature: string | null;
+  /** True when an action was refused because it repeated the previous one. */
+  repeated: boolean;
+}
+
+/** What an action does and to what, ignoring anything incidental. */
+function actionSignature(action: ShieldAction): string {
+  return `${action.type}:${action.selector}`;
+}
+
+/**
+ * Run one step of a task: perceive, detect, redact, send, act.
+ *
+ * Every stage is present; none is stubbed with a placeholder success value. A
+ * stage that pretends to have redacted something is far more dangerous than one
+ * that refuses to run, so a stage that cannot do its job throws.
+ *
+ * Errors propagate to `runTask`, which owns the loop and the user-facing
+ * failure. Nothing is caught here, because a step that half-failed has no
+ * sensible value to return.
+ */
+async function runStep(
+  tab: chrome.tabs.Tab,
+  tabId: number,
+  taskQuery: string,
+  lastSignature: string | null,
+): Promise<StepOutcome> {
+  let frame: RawFrame | null = null;
+
+  try {
+    // Each step is a full pass through the pipeline, so the ordering guard
+    // starts clean. Carrying stages over from the previous step would let a
+    // step that skipped redaction inherit the previous one's proof that it
+    // hadn't.
+    completedStages = new Set();
+
+    // Same reasoning as the stage guard above: this step's breakdown describes
+    // this step. A stale timing from the previous pass would be shown next to
+    // fresh ones with nothing marking it as older.
+    stepTimings = [];
+    setState({ timings: stepTimings });
+
+    // Stage 1 — Screen Perception (ARCHITECTURE.md 2.1)
+    //
+    // Two halves: the captured frame and the DOM element map. Both must
+    // succeed before `reading` counts as complete, because the PII Detector
+    // needs both signals and an empty element map is indistinguishable from a
+    // page with nothing sensitive on it.
+    setStatus('reading');
+
+    const viewport = await sendToTab<ViewportInfo>(tabId, { type: MSG.GET_VIEWPORT });
+    if (!viewport) {
+      throw new Error("Couldn't read this page's layout. Try reloading the page.");
+    }
+
+    frame = record(
+      await timed('capture', 'screen capture', () => captureViewport(tab.windowId, viewport)),
+    );
+    // A const alias so the compiler keeps the non-null narrowing inside the
+    // closures below; `frame` itself stays a `let` purely so `finally` can
+    // clear it on every exit path.
+    const rawFrame = frame;
+
+    const domMap = record(
+      await timed('domScan', 'DOM scan', () =>
+        sendToTab<ExtractDomResult>(tabId, { type: MSG.EXTRACT_DOM }),
+      ),
+    );
+
+    // A null result means the scan threw. An empty element map is just as
+    // dangerous in a different way: it is indistinguishable from a page with
+    // nothing sensitive on it, and the PII Detector would happily find nothing
+    // to hide. Both fail the run.
+    if (!domMap) {
+      throw new Error("Couldn't read the contents of this page. Try reloading it.");
+    }
+    if (domMap.elements.length === 0) {
+      throw new Error(
+        'Found nothing readable on this page. Shield stops rather than treat ' +
+          'an empty reading as a page with nothing to hide.',
+      );
+    }
+
+    const snapshot: ScreenSnapshot = {
+      frame: rawFrame,
+      // Filled in by the offscreen document, which is what actually decodes the
+      // frame and can therefore measure it.
+      geometry: { width: 0, height: 0, scaleX: 1, scaleY: 1 },
+      elements: domMap.elements,
+      pageUrl: domMap.pageUrl,
+      capturedAt: rawFrame.capturedAt,
+      // Populated by the `detecting` stage below. Starting empty rather than
+      // optional is deliberate: an absent field invites `?? []` at the redaction
+      // site, which would silently turn "detection never ran" into "nothing to
+      // hide" — the exact confusion the pipeline order guard exists to prevent.
+      sensitiveRegions: [],
+    };
+
+    // The unresolved count is printed even when zero: it is a correctness check,
+    // and a check you only see when it fails is one you stop trusting.
+    console.info(
+      `[shield] mapped ${snapshot.elements.length} elements ` +
+        `(${domMap.scanned} scanned, ${domMap.unresolvedSelectors} unresolved selectors` +
+        `${domMap.truncated ? ', truncated' : ''})`,
+    );
+
+    logElementMap(snapshot);
+
+    // Screen Perception is complete: both the frame and the element map are in
+    // hand, so the stage can be marked done.
+    markStageComplete('reading');
+
+    // Stage 2 — local inference (ARCHITECTURE.md 2.2)
+    //
+    // The model runs in an offscreen document, not here: Manifest V3 service
+    // workers cannot host ONNX Runtime Web at all — dynamic import() is
+    // disallowed on ServiceWorkerGlobalScope, and both its WASM and WebGPU
+    // backends are unavailable (microsoft/onnxruntime#20876).
+    setStatus('detecting');
+    await ensureOffscreenDocument();
+
+    // Resolved here, outside the timed block, so a storage read is not counted
+    // against the inference budget it has nothing to do with.
+    const { forceBackend } = await readSettings();
+
+    const analysis = record(
+      await timed('inference', 'local inference', () =>
+        sendToOffscreen({
+          type: MSG.ANALYSE_FRAME,
+          dataUrl: rawFrame.dataUrl,
+          viewportWidth: viewport.width,
+          viewportHeight: viewport.height,
+          forceBackend,
+        }),
+      ),
+    );
+
+    if (!analysis.ok) {
+      throw new Error(`Local analysis failed: ${analysis.message}`);
+    }
+
+    const { backend, fellBack, forced, frame: geometry, detection } = analysis;
+    snapshot.geometry = geometry;
+    setState({ backend, fellBack });
+
+    console.info(
+      `[shield] ${geometry.width}x${geometry.height} device px ` +
+        `(scale ${geometry.scaleX.toFixed(3)}x${geometry.scaleY.toFixed(3)}), ` +
+        `inference on ${backend}${forced ? ' (forced)' : ''} in ` +
+        `${detection.inferenceMs.toFixed(1)}ms — ` +
+        `${detection.priors} priors, peak face score ${detection.maxScore.toFixed(3)}, ` +
+        `candidates ${detection.candidatesByCutoff.at30}/${detection.candidatesByCutoff.at50}/` +
+        `${detection.candidatesByCutoff.at70} at 0.3/0.5/0.7, ` +
+        `${detection.faces.length} face(s) kept`,
+    );
+
+    // Pulled from storage rather than waited for as a message. The first design
+    // relied solely on the offscreen document pushing its verdict at the one
+    // moment the test finished; anything that dropped that single message — or
+    // a verdict recorded before anyone was watching the console — left the
+    // fallback looking untested forever, with nothing printed either way.
+    void ensureCpuFallbackProved();
+
+    if (detection.boxRange) {
+      const { dims, min, max, sample } = detection.boxRange;
+      console.info(
+        `[shield] box dims [${dims.join(', ')}], raw range ` +
+          `${min.toFixed(3)}..${max.toFixed(3)}, sample [` +
+          `${sample.map((value: number) => value.toFixed(3)).join(', ')}]`,
+      );
+    }
+
+    // Module B — DOM rule engine (SECURITY_PRIVACY.md Section 4).
+    //
+    // Runs over the captured snapshot, never the live page: the DOM can change
+    // under us between capture and redaction, and detecting against a mutable
+    // reference is the time-of-check-to-time-of-use gap the threat model's
+    // tampering row calls out.
+    const domRegions = detectDomPii(snapshot.elements);
+
+    // The visual layer covers what no attribute can express. Nothing in a page's
+    // markup announces that a person's face is rendered at these coordinates,
+    // so this is not a second opinion on the DOM rules — it is the only opinion
+    // available for this category.
+    const visualRegions = faceRegions(detection.faces, geometry);
+
+    const regions = [...domRegions, ...visualRegions];
+    snapshot.sensitiveRegions = regions;
+    logDetections(regions, snapshot.elements);
+
+    // Show the user what was found, on the page, before it is sent anywhere.
+    // PRD.md FR-24: everything protective happens where they cannot see it, so
+    // this is the only part of the pipeline that makes the claim checkable
+    // rather than something they have to take on trust.
+    void sendToTab(tabId, {
+      type: MSG.SHOW_OVERLAY,
+      regions: regions.map((region) => ({
+        category: region.category,
+        reason: region.reason,
+        x: region.position.x,
+        y: region.position.y,
+        width: region.position.width,
+        height: region.position.height,
+      })),
+    });
+
+    markStageComplete('detecting');
+
+    // Stage 3 — Redaction (ARCHITECTURE.md 2.3). The frame and the DOM summary
+    // are sanitised together, because they are two views of the same content:
+    // an email address visible in a text field is in the screenshot as surely
+    // as it is in the DOM, and hiding either one alone hides nothing.
+    setStatus('redacting');
+
+    const redacted = record(
+      await timed('redaction', 'redaction', () =>
+        redactOffscreenFrame({
+          dataUrl: rawFrame.dataUrl,
+          regions,
+          scaleX: geometry.scaleX,
+          scaleY: geometry.scaleY,
+        }),
+      ),
+    );
+
+    if (!redacted.ok) {
+      // Fails closed. A failed redaction must never degrade into sending the
+      // raw frame (ARCHITECTURE.md Section 9).
+      throw new Error(`Redaction failed: ${redacted.message}`);
+    }
+
+    const { dataUrl: redactedFrame, painted, skipped } = redacted;
+
+    if (skipped > 0) {
+      // Reported rather than swallowed: a manifest that claims a region was
+      // hidden when nothing was painted is a false assurance.
+      console.warn(
+        `[shield] ${skipped} region(s) had unusable geometry and were not painted`,
+      );
+    }
+
+    const redactedDom = redactDomElements(snapshot.elements, regions);
+    const manifest = buildManifest(regions);
+
+    markStageComplete('redacting');
+
+    console.info(
+      `[shield] redacted ${painted} region(s) onto the frame, ` +
+        `${manifest.length} manifest entries, ` +
+        `frame ${(redactedFrame.length / 1024).toFixed(0)}KB encoded`,
+    );
+    logRedactionSummary(redactedDom, regions);
+
+    // On a fixture, print the redacted frame so it can be opened and looked at.
+    // Every check up to here has been one number agreeing with another, and
+    // none of them would notice a rectangle painted in the wrong place. The
+    // frame is redacted by this point, so printing it discloses nothing — but
+    // it is still gated to fixtures, because a 40KB string on every run of
+    // every page is noise, and habits formed on noise get ignored.
+    if (isLocalFixture(snapshot.pageUrl)) {
+      console.info(
+        '[shield] redacted frame (paste into a new tab to view):',
+        redactedFrame,
+      );
+    }
+
+    // Sealing the payload is the transport boundary. Nothing downstream accepts
+    // an unsealed one, and the seal cannot be minted without passing the
+    // verification inside this call — which is what turns "we redacted it" from
+    // a claim into a checked fact.
+    //
+    // The order guard runs first: the seal proves redaction was called, the
+    // guard proves nothing before it was skipped.
+    assertStagesCompletedBefore('sending');
+
+    const payload = buildSanitizedPayload({
+      requestId: crypto.randomUUID(),
+      taskQuery,
+      redactedFrame,
+      redactedDom,
+      manifest,
+      regions,
+      // The raw values of everything flagged, so the zero-leak check has
+      // something to search for. They go no further than that function.
+      flaggedRawValues: regions
+        .map((region) =>
+          region.elementId === null
+            ? null
+            : (snapshot.elements.find(
+                (element) => element.elementId === region.elementId,
+              )?.value ?? null),
+        )
+        .filter((value): value is string => value !== null),
+    });
+
+    console.info(
+      `[shield] payload sealed — ${payload.redacted_dom_summary.length} elements, ` +
+        `${payload.redaction_manifest.length} manifest entries, ` +
+        `${(payload.redacted_frame.length / 1024).toFixed(0)}KB frame. ` +
+        'Verified: every flagged element carries a placeholder.',
+    );
+
+    // Stage 4 — Transport (ARCHITECTURE.md 2.4). The signature of `send` is the
+    // enforcement: it accepts a sealed payload and nothing else, so there is no
+    // expressible way to reach the network carrying raw page data.
+    setStatus('sending');
+    const { endpoint } = await readSettings();
+
+    // Recorded before the request, not after. If the server is unreachable the
+    // question "what did Shield send?" still has an answer, and a failed request
+    // is exactly when someone is most likely to ask it.
+    await recordTransmission(payload, endpoint);
+
+    const response = record(
+      await timed('network', 'server round trip', () => send(endpoint, payload)),
+    );
+    markStageComplete('sending');
+
+    setStatus('thinking');
+    markStageComplete('thinking');
+
+    if (response.reasoningSummary) {
+      console.info(`[shield] assistant: ${response.reasoningSummary}`);
+    }
+
+    if (response.needsMoreContext || !response.action) {
+      return {
+        acted: false,
+        summary: response.reasoningSummary,
+        signature: null,
+        repeated: false,
+      };
+    }
+
+    const signature = actionSignature(response.action);
+
+    // Refuse a repeat before performing it, not after.
+    //
+    // If the assistant proposes the same action on the same target twice in a
+    // row, the previous one changed nothing it can see, and doing it again will
+    // not either. Capping the loop is not sufficient protection: these are real
+    // actions on a real page, and five identical clicks on a submit button can
+    // mean five orders or five payments. The first duplicate is where this has
+    // to stop.
+    if (lastSignature !== null && signature === lastSignature) {
+      return {
+        acted: false,
+        summary: response.reasoningSummary,
+        signature,
+        repeated: true,
+      };
+    }
+
+    // Stage 5 — Action execution (Module E).
+    setStatus('acting');
+    const executed = await executeOnPage(tabId, response.action, snapshot);
+    markStageComplete('acting');
+
+    if (!executed.ok) throw new Error(executed.message);
+
+    console.info(`[shield] acted: ${response.action.type} — ${executed.message}`);
+    return {
+      acted: true,
+      summary: response.reasoningSummary,
+      signature,
+      repeated: false,
+    };
+  } finally {
+    // Drop the reference to the raw screenshot as soon as the step is over,
+    // whatever the outcome (PRD.md Section 16).
+    frame = null;
+
+    // The inference host is deliberately NOT torn down here. It costs about a
+    // second to recreate and warm, and closing it after every run meant paying
+    // that on a pipeline whose actual inference takes ~84ms. It closes itself
+    // once genuinely idle instead (see src/offscreen/offscreen.ts).
+  }
+}
+
+/**
+ * How many steps one task may take.
+ *
+ * PRD.md FR-22 requires a safeguard against an agent looping forever. Five is
+ * enough for the multi-step forms in scope — fill, fill, submit, confirm — and
+ * small enough that a loop caused by a page that never changes costs seconds
+ * rather than an afternoon of somebody's battery.
+ */
+const MAX_STEPS = 5;
+
+/**
+ * How long to let the page settle after an action before looking again.
+ *
+ * A click can navigate, open a dialog, or trigger a re-render, and capturing
+ * mid-transition yields a frame of a page that no longer exists. Chrome also
+ * throttles captureVisibleTab to roughly two calls per second, so a shorter
+ * wait would frequently be spent in the capture retry anyway.
+ */
+const SETTLE_MS = 600;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Run a task to completion, one step at a time.
+ *
+ * The loop ends when the assistant stops proposing actions. That is read two
+ * ways depending on what came before: after at least one action it means the
+ * work is finished, and before any action it means nothing could be determined
+ * from this screen. The API has no explicit "done" status (API_SPEC.md Section
+ * 4), so this is the honest reading of the statuses it does define, rather than
+ * inventing one.
+ */
+async function runTask(taskQuery: string): Promise<void> {
+  try {
+    const tab = await getActiveTab();
+    const tabId = tab.id as number;
+
+    beginRun(taskQuery, tabId);
+    await ensureContentScript(tabId);
+
+    // Clear any overlay left from a previous run before this one starts. It
+    // describes a capture that is no longer current, and an explanation of the
+    // wrong screen is worse than none — this panel's only value is that it can
+    // be read literally.
+    void sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
+
+    let actions = 0;
+    let lastSignature: string | null = null;
+
+    for (let step = 1; step <= MAX_STEPS; step += 1) {
+      setState({ step });
+
+      const outcome = await runStep(tab, tabId, taskQuery, lastSignature);
+
+      if (outcome.repeated) {
+        // The assistant asked for the same action again, so the previous one
+        // changed nothing it can see. Either the task is finished and the page
+        // simply looks the same, or it cannot progress — and those are
+        // indistinguishable from here. Stopping is right under both readings;
+        // repeating is wrong under both.
+        setStatus('done');
+        console.info(
+          `[shield] stopped after ${actions} action(s): the assistant repeated ` +
+            'the same action, so there was no further progress to make.',
+        );
+        return;
+      }
+
+      if (!outcome.acted) {
+        if (actions === 0) {
+          // Nothing was done and nothing could be determined. Reported as a
+          // finished run rather than an error: the assistant declining is a
+          // legitimate answer, and calling it a failure would train people to
+          // ignore real failures.
+          setStatus('done');
+          console.info(
+            `[shield] finished without acting — ${outcome.summary ?? 'no action proposed'}`,
+          );
+          return;
+        }
+
+        setStatus('done');
+        console.info(`[shield] task complete after ${actions} action(s)`);
+        return;
+      }
+
+      actions += 1;
+      lastSignature = outcome.signature;
+
+      // Re-capture on the next iteration rather than reusing the snapshot: the
+      // page has just been changed by our own action, and acting again on a
+      // stale reading is how an agent clicks the wrong thing confidently.
+      await sleep(SETTLE_MS);
+
+      // The content script may not have survived a navigation.
+      await ensureContentScript(tabId);
+    }
+
+    throw new Error(
+      `Shield stopped after ${MAX_STEPS} steps without finishing, to avoid looping.`,
+    );
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Make sure the CPU fallback has been proved on this machine, and say so.
+ *
+ * PRD.md FR-27's fallback is the path that carries Shield on machines without
+ * WebGPU, and on a machine with WebGPU it never executes — so without this it is
+ * assumed to work rather than known to. The verdict is read and stored here, in
+ * the service worker, because this is the context whose storage access is not in
+ * doubt; the offscreen document only produces the measurement.
+ *
+ * Runs after the frame has been handled, so it never delays a result.
+ */
+async function ensureCpuFallbackProved(): Promise<void> {
+  const record = await readSelfTestRecord();
+  if (record?.ok) {
+    const when = new Date(record.at).toLocaleString('sv-SE');
+    console.info(`[shield] CPU fallback verified — ${record.message} (${when})`);
+    return;
+  }
+
+  console.info('[shield] proving CPU fallback');
+  try {
+    const result = await runOffscreenSelfTest();
+    if (result.ok) {
+      // Stored before it is announced, so the line the user reads reflects a
+      // fact that survived rather than one that is about to be lost. Only a
+      // pass is stored: caching a failure would retire the retry that is the
+      // entire point of re-checking a path nothing else exercises.
+      await writeSelfTestRecord(result);
+      console.info(`[shield] CPU fallback verified — ${result.message}`);
+    } else {
+      console.error(`[shield] CPU fallback BROKEN — ${result.message}`);
+    }
+  } catch (error) {
+    console.error('[shield] CPU fallback self-test could not run', error);
+  }
+}
+
+function cancelTask(): void {
+  completedStages = new Set();
+  setState({ ...INITIAL_STATE });
+}
+
+// --- Message routing --------------------------------------------------------
+
+chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendResponse) => {
+  switch (message.type) {
+    case MSG.GET_STATE:
+      sendResponse(state);
+      return false;
+
+    case MSG.RUN_TASK:
+      // Fire-and-forget: progress reaches the popup through STATE_CHANGED
+      // broadcasts, so the popup is never blocked waiting on a whole run.
+      void runTask(message.taskQuery);
+      sendResponse({ accepted: true });
+      return false;
+
+    case MSG.PREPARE:
+      // The popup is open, so a run is likely moments away. Start the inference
+      // host now and let it warm while the user types. Errors are swallowed:
+      // this is purely an optimisation and must never block a run.
+      void ensureOffscreenDocument()
+        .then(readSettings)
+        .then(({ forceBackend }) => warmOffscreen(forceBackend))
+        .catch(() => undefined);
+      sendResponse({ accepted: true });
+      return false;
+
+    case MSG.RESTART_BACKEND:
+      // Replace the inference host so it picks up the new override. The loaded
+      // session is cached inside that document, so nothing short of restarting
+      // it will change which backend is in use.
+      // The session is rebuilt in place rather than by replacing the document:
+      // closing and recreating races, leaving the old session — and the old
+      // backend — alive, which made the override appear to do nothing.
+      void ensureOffscreenDocument()
+        .then(readSettings)
+        .then(({ forceBackend }) => reloadOffscreenModel(forceBackend))
+        .catch(() => undefined);
+      sendResponse({ accepted: true });
+      return false;
+
+    case MSG.CANCEL_TASK:
+      cancelTask();
+      sendResponse({ accepted: true });
+      return false;
+
+    default:
+      return false;
+  }
+});
+
+// A run belongs to one tab. If that tab navigates or closes, the snapshot the
+// run was reasoning about is gone, so the run is abandoned rather than allowed
+// to act on a page it never actually read.
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (state.tabId === tabId) cancelTask();
+});
+
+// Navigation is detected through tabs.onUpdated rather than the webNavigation
+// API so that Shield doesn't have to request a broad extra permission purely to
+// notice a page changed underneath it.
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (state.tabId !== tabId) return;
+  if (changeInfo.url !== undefined || changeInfo.status === 'loading') cancelTask();
+});
+
+console.info(
+  `[shield] service worker ready — v${chrome.runtime.getManifest().version}, ` +
+    `build ${__SHIELD_BUILD__} — ${STATUS_LABEL[state.status]}`,
+);

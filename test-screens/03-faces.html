@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield test screen 3 — faces</title>
+    <!--
+      TESTING.md Section 1, Screen 3: a page with visible faces. Pass criteria
+      are that faces are detected by the visual model, that their regions are
+      redacted before transmission, and that non-face content is not
+      over-redacted.
+
+      Two jobs, not one. The portraits give a known face count so detection can
+      be scored honestly. The ladder below renders the same face at descending
+      sizes, which is what turns "small faces are sometimes missed" into a
+      measured floor: the frame is downscaled to the model's 320-pixel input, so
+      there is some size below which a face stops surviving the resize. Knowing
+      where that is beats guessing at it, and it is the kind of number a judge
+      can reasonably ask for.
+
+      The images are NOT version controlled. A drawn face does not reliably
+      trigger a detector trained on photographs, and photographs of real people
+      carry licensing and likeness questions a committed fixture should not
+      decide silently — see .gitignore and README.md. Supply your own as
+      face-a.jpg and face-b.png.
+    -->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px 28px;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #1f2933;
+        background: #f5f7fa;
+      }
+
+      h1 {
+        font-size: 19px;
+        margin: 0 0 4px;
+      }
+
+      .intro {
+        margin: 0 0 18px;
+        font-size: 13px;
+        color: #52606d;
+      }
+
+      h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7b8794;
+        margin: 0 0 10px;
+      }
+
+      .portraits {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+        margin-bottom: 22px;
+      }
+
+      .portrait img {
+        height: 240px;
+        width: auto;
+        display: block;
+        border-radius: 6px;
+        background: #fff;
+      }
+
+      .ladder {
+        display: flex;
+        gap: 16px;
+        align-items: flex-end;
+      }
+
+      .rung img {
+        display: block;
+        height: auto;
+        border-radius: 4px;
+        background: #fff;
+      }
+
+      .caption {
+        font-size: 11px;
+        color: #7b8794;
+        margin-top: 5px;
+        text-align: center;
+      }
+
+      /*
+        A control region. Nothing here is a face, so anything painted over this
+        block is a false positive — the "non-face content is not over-redacted"
+        half of the pass criteria, which a page of nothing but faces cannot test.
+      */
+      .control {
+        margin-top: 22px;
+        padding: 12px 14px;
+        background: #fff;
+        border: 1px solid #e4e7eb;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #52606d;
+        max-width: 720px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Profile gallery</h1>
+    <p class="intro">
+      A mock gallery page. Every image below is a photograph of a person's face.
+    </p>
+
+    <h2>Full size — 2 faces</h2>
+    <div class="portraits">
+      <figure class="portrait" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" />
+      </figure>
+      <figure class="portrait" style="margin: 0">
+        <img src="face-b.png" alt="Profile photograph" />
+      </figure>
+    </div>
+
+    <h2>Size ladder — 6 faces, same photograph</h2>
+    <div class="ladder">
+      <figure class="rung" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" style="width: 200px" />
+        <figcaption class="caption">200px</figcaption>
+      </figure>
+      <figure class="rung" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" style="width: 150px" />
+        <figcaption class="caption">150px</figcaption>
+      </figure>
+      <figure class="rung" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" style="width: 110px" />
+        <figcaption class="caption">110px</figcaption>
+      </figure>
+      <figure class="rung" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" style="width: 80px" />
+        <figcaption class="caption">80px</figcaption>
+      </figure>
+      <figure class="rung" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" style="width: 55px" />
+        <figcaption class="caption">55px</figcaption>
+      </figure>
+      <figure class="rung" style="margin: 0">
+        <img src="face-a.jpg" alt="Profile photograph" style="width: 36px" />
+        <figcaption class="caption">36px</figcaption>
+      </figure>
+    </div>
+
+    <p class="control">
+      Control text. This paragraph, the headings and the captions contain no
+      personal data and no faces. If a redaction rectangle covers any of it, that
+      is a false positive worth recording — the pass criteria for this screen
+      require that non-face content survives untouched.
+    </p>
+  </body>
+</html>

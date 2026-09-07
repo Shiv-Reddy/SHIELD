@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shield inference host</title>
+  </head>
+  <body>
+    <!--
+      Never visible to anyone. An offscreen document exists purely to provide a
+      DOM context for work a Manifest V3 service worker cannot do, and ONNX
+      Runtime Web is exactly that: service workers disallow dynamic import() per
+      the HTML spec, and both ORT's WASM and WebGPU backends are unavailable
+      there (microsoft/onnxruntime#20876).
+
+      This document is also where every raw pixel in Shield lives. The service
+      worker hands it a captured frame and receives back only detections and,
+      once Module C lands, an already-redacted frame. Concentrating pixel
+      handling in one file makes the privacy claim auditable: if no other module
+      decodes a frame, no other module can leak one.
+    -->
+    <script type="module" src="./offscreen.ts"></script>
+  </body>
+</html>

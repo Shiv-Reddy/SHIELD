@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield test screen 4 — clean control</title>
+    <!--
+      TESTING.md Section 1, Screen 4: no sensitive fields and no faces.
+      Pass criteria: nothing is flagged.
+
+      The point of this screen is that it is boring. A detector is only as
+      trustworthy as its restraint — one that flags everything would pass every
+      other screen in this folder while being useless, and the only way to tell
+      the two apart is a page where the correct answer is "nothing".
+
+      It is deliberately not empty. Plain text, a search box, a newsletter
+      checkbox, numbers and a date range are all things that look superficially
+      like PII to a careless rule, and several of them have caught real bugs:
+      the date range below is the case that broke the first phone-number
+      pattern.
+    -->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px 40px;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #1f2933;
+        background: #f5f7fa;
+        line-height: 1.6;
+      }
+
+      main {
+        max-width: 640px;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin: 0 0 6px;
+      }
+
+      h2 {
+        font-size: 15px;
+        margin: 24px 0 8px;
+      }
+
+      p {
+        margin: 0 0 12px;
+        font-size: 14px;
+      }
+
+      .search {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0;
+      }
+
+      input[type='search'] {
+        flex: 1;
+        padding: 9px 12px;
+        border: 1px solid #cbd2d9;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 9px 16px;
+        border: 0;
+        border-radius: 6px;
+        background: #0e7490;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .meta {
+        font-size: 13px;
+        color: #7b8794;
+      }
+
+      table {
+        border-collapse: collapse;
+        font-size: 13px;
+        margin: 8px 0 16px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 6px 18px 6px 0;
+      }
+
+      th {
+        color: #7b8794;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Release notes</h1>
+      <p class="meta">Copyright 2024-2025 Acme Corp. Last updated 12-03-2025.</p>
+
+      <p>
+        This release improves rendering performance and fixes several issues
+        reported since the previous version. Nothing on this page is personal
+        data.
+      </p>
+
+      <div class="search">
+        <!--
+          A search box. It holds no PII, but it is an empty text input with no
+          autocomplete attribute and a generic name, which is exactly the shape
+          an over-eager rule mistakes for one.
+        -->
+        <input type="search" name="q" placeholder="Search the notes" />
+        <button type="button">Search</button>
+      </div>
+
+      <h2>Version history</h2>
+      <table>
+        <tr>
+          <th>Version</th>
+          <th>Build</th>
+          <th>Date</th>
+        </tr>
+        <tr>
+          <td>4.2.1</td>
+          <td>10240</td>
+          <td>2025-03-12</td>
+        </tr>
+        <tr>
+          <td>4.2.0</td>
+          <td>10188</td>
+          <td>2025-02-28</td>
+        </tr>
+        <tr>
+          <td>4.1.9</td>
+          <td>10044</td>
+          <td>2025-01-15</td>
+        </tr>
+      </table>
+
+      <h2>Sections</h2>
+      <p>
+        Rendering changes are described in sections 100-200. Pricing moved from
+        1,200 to 4,500 units per tier. Reference 1234-5678 covers the migration.
+      </p>
+
+      <h2>Notifications</h2>
+      <p>
+        <label>
+          <input type="checkbox" name="newsletter" />
+          Send me release announcements
+        </label>
+      </p>
+
+      <p class="meta">
+        Synthetic test fixture. No personal data, no faces, nothing to redact.
+      </p>
+    </main>
+  </body>
+</html>

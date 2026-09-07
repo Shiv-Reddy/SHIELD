@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Screen 1 — Basic Login Form</title>
+    <!--
+      TESTING.md Section 1, Screen 1.
+
+      Standard, well-formed markup on purpose. This screen establishes the
+      baseline: if detection cannot handle a textbook login form, nothing
+      further is worth measuring. Deliberately awkward markup — a password
+      field without type="password", ambiguous labels — belongs in Screen 5,
+      where failing is informative rather than just broken.
+
+      All data is synthetic (TESTING.md Section 10). Nothing here is a real
+      credential and nothing should ever be replaced with one.
+
+      No external resources: no CDN fonts, no remote images. The screen must
+      render identically offline and years from now, or it is not a fixture.
+    -->
+    <style>
+      :root {
+        --bg: #eef1f6;
+        --card: #ffffff;
+        --ink: #16191f;
+        --muted: #5d6675;
+        --line: #d9dee7;
+        --accent: #2563eb;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+
+      .card {
+        width: 380px;
+        padding: 32px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 650;
+      }
+
+      .intro {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .field { margin-bottom: 16px; }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+        font-weight: 550;
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        font: inherit;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 18px 0 22px;
+        font-size: 13px;
+      }
+
+      .remember {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .remember label {
+        margin: 0;
+        font-weight: 400;
+      }
+
+      a { color: var(--accent); }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        border: 0;
+        border-radius: 7px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .footnote {
+        margin: 20px 0 0;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <h1>Acme Internal Portal</h1>
+      </div>
+
+      <p class="intro">Sign in to continue to your dashboard.</p>
+
+      <form id="login-form" action="#" method="post">
+        <div class="field">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            autocomplete="username"
+            value="demo.user@example.com"
+          />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <!--
+            Pre-filled with a synthetic value on purpose. An empty field would
+            not prove anything: the point is to confirm Shield reports
+            "[has value]" and never reads the string itself.
+          -->
+          <input
+            type="password"
+            id="password"
+            name="password"
+            autocomplete="current-password"
+            value="not-a-real-password-1234"
+          />
+        </div>
+
+        <div class="row">
+          <span class="remember">
+            <input type="checkbox" id="remember" name="remember" checked />
+            <label for="remember">Keep me signed in</label>
+          </span>
+          <a href="#reset">Forgot password?</a>
+        </div>
+
+        <button type="submit" id="sign-in">Sign in</button>
+      </form>
+
+      <p class="footnote">
+        Synthetic test fixture. Not a real service, not real credentials.
+      </p>
+    </main>
+
+    <script>
+      // Submitting would navigate away and cancel the run mid-verification,
+      // which makes the screen useless for repeated testing. So the submit is
+      // intercepted — but silently intercepting it meant a successful run
+      // looked identical to a failed one: Shield clicked the button, the page
+      // did nothing, and the only evidence was a console line. That is a poor
+      // way to demonstrate the one moment in the demo where Shield acts.
+      //
+      // The confirmation is written into the existing intro paragraph rather
+      // than added as a new element, deliberately. A new node would change the
+      // element count between the first capture and the re-capture that
+      // follows an action, and that count is a recorded baseline (8 elements
+      // from 19 scanned). Reusing an element that always holds text keeps the
+      // measurement stable while making the click impossible to miss.
+      document.getElementById('login-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const intro = document.querySelector('.intro');
+        const at = new Date().toLocaleTimeString();
+        intro.textContent = `Signed in at ${at}. The form was submitted by Shield.`;
+        intro.style.color = '#047857';
+        intro.style.fontWeight = '600';
+
+        console.info('[test-screen] submit intercepted; nothing was sent anywhere');
+      });
+    </script>
+  </body>
+</html>

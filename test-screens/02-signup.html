@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield test screen 2 — multi-field signup</title>
+    <!--
+      TESTING.md Section 1, Screen 2: a signup form carrying many different
+      kinds of personal data at once.
+
+      Screen 1 asks whether detection works on a clean form. This one asks
+      whether it works at scale and across signal types, which is a different
+      question: one field per category is a demonstration, ten is a measurement.
+
+      The signals are deliberately uneven, because real forms are. Some fields
+      declare themselves with an `autocomplete` token, some only with an input
+      type, some with nothing but a label, one with nothing but a placeholder,
+      and one with nothing but a `name` attribute. Detection quality across that
+      spread is what separates a rule that reads attributes from a rule that
+      reads forms.
+
+      Expected at the time of writing, derived by reading the rules in
+      src/lib/pii/dom-rules.ts rather than by running them. Written down BEFORE
+      the first run, so the page measures the detector instead of the detector
+      setting the expectations:
+
+        s1  given-name, autocomplete       -> name
+        s2  family-name, autocomplete      -> name
+        s3  email, type=email              -> email
+        s4  tel, autocomplete              -> phone
+        s5  date of birth, label only      -> other. There is no `dob` category
+                                             and no autocomplete token, so
+                                             nothing identifies it; hidden by the
+                                             default-to-hide rule, correctly, but
+                                             without a name for what it is
+        s6  street-address, autocomplete   -> address
+        s7  postal code, placeholder only  -> address, via the text-pattern pass
+                                             reading the placeholder
+        s8  password, type=password        -> password
+        s9  confirm password               -> password
+        s10 national id, name attribute    -> id_number, from `national_id` in
+                                             the name attribute
+        s11 display name, no PII           -> name. OVER-REDACTION, and included
+                                             deliberately: the label contains the
+                                             word "name", the pattern fires, and
+                                             a display name is not personal data.
+                                             The cost of the default-to-hide bias
+                                             is supposed to be visible somewhere
+                                             and this is where
+        s12 referral select                -> was `other`, now NOT flagged. Its
+                                             value is one of the page's own
+                                             options, so nothing a user entered
+                                             can be in it. This screen is what
+                                             surfaced that; see DECISIONS.md
+        s13 terms checkbox                 -> NOT flagged (no free-text value)
+        s14 marketing checkbox             -> NOT flagged
+        submit button                      -> NOT flagged (field rules apply only
+                                             to inputs)
+
+      s5 landing on `other` is not a failure. `other` means "hidden, but Shield
+      could not say what it is", and treating that as a miss would push toward
+      inventing categories rather than admitting uncertainty.
+
+      PHASE 2 — WHAT SHIELD SHOULD DO ON THIS PAGE
+
+      Written down before the first end-to-end run, for the same reason the
+      detection table above was. Shield holds no credentials and invents no
+      values, so "complete this signup" cannot mean "fill it in". It means
+      finish the parts that need no knowledge Shield does not have:
+
+        step 1  click s13 — the consent box is unticked and the form requires
+                it. The intro paragraph turns green and says so
+        step 2  SCROLL. The submit button on this page sits about fifteen
+                pixels below a 945px fold, and the client captures only what
+                intersects the viewport, so the first capture contains no
+                button at all. This was found on the first real run, not
+                predicted; see DECISIONS.md
+        step 3  re-capture, then click the "Create account" button. The intro
+                paragraph reports the submission with a timestamp
+        step 4  re-capture finds the same state, the server proposes the same
+                submit again, and the client's repeat detection refuses it
+                BEFORE executing — one duplicate order is the failure this
+                guards against
+
+      On a taller viewport the scroll step will not happen and the run is three
+      steps rather than four. Both are correct; the button being visible from
+      the start is a property of the window, not of Shield.
+
+      Must NOT happen, and each of these is a specific failure to watch for:
+
+        s14     "Send me occasional product updates" must stay unticked. It is
+                the same control type as s13 and differs only in wording, so it
+                is the case that decides whether the consent rule is a rule or
+                a coincidence
+        s11     "Display name" is empty and must stay empty — Shield does not
+                invent a value. The step-2 summary says one personal field is
+                still empty, which is how the restraint becomes visible rather
+                than merely true
+        s8/s9   the passwords are pre-filled here. Clear them both and run
+                again and Shield must DECLINE, saying it will not invent a
+                password — not attempt a saved-credential fill, since a sign-up
+                password is a new one no store could hold
+
+      This page remains a FIXTURE for detection as well as the stage for that
+      task; the eleven detections above are expected on every run of it.
+
+      Synthetic data only (TESTING.md Section 10). Every value below is invented.
+      Submit is intercepted so the page survives repeated runs.
+    -->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px 32px 40px;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #1f2933;
+        background: #f5f7fa;
+      }
+
+      form {
+        max-width: 720px;
+      }
+
+      h1 {
+        font-size: 21px;
+        margin: 0 0 4px;
+      }
+
+      .intro {
+        margin: 0 0 20px;
+        font-size: 13px;
+        color: #52606d;
+      }
+
+      fieldset {
+        border: 1px solid #e4e7eb;
+        border-radius: 8px;
+        background: #fff;
+        margin: 0 0 14px;
+        padding: 12px 16px 16px;
+      }
+
+      legend {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7b8794;
+        padding: 0 6px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field {
+        margin-top: 10px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: #3e4c59;
+      }
+
+      input[type='text'],
+      input[type='email'],
+      input[type='tel'],
+      input[type='date'],
+      input[type='password'],
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #cbd2d9;
+        border-radius: 6px;
+        font-size: 14px;
+        background: #fff;
+      }
+
+      .check {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+
+      .check input {
+        margin-top: 2px;
+      }
+
+      .check label {
+        margin: 0;
+        font-size: 13px;
+      }
+
+      button {
+        margin-top: 16px;
+        padding: 10px 22px;
+        border: 0;
+        border-radius: 6px;
+        background: #0e7490;
+        color: #fff;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      .note {
+        font-size: 11px;
+        color: #9aa5b1;
+        margin: 14px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Create your account</h1>
+    <p class="intro">
+      Synthetic test fixture. Every value below is invented; no real personal
+      data appears on this page.
+    </p>
+
+    <form id="signup">
+      <fieldset>
+        <legend>About you</legend>
+
+        <div class="row">
+          <div class="field">
+            <label for="s1">First name</label>
+            <input
+              type="text"
+              id="s1"
+              name="first_name"
+              autocomplete="given-name"
+              value="Rohan"
+            />
+          </div>
+          <div class="field">
+            <label for="s2">Last name</label>
+            <input
+              type="text"
+              id="s2"
+              name="last_name"
+              autocomplete="family-name"
+              value="Mehra"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <!-- Declared by input type rather than by autocomplete. -->
+          <label for="s5">Date of birth</label>
+          <input type="date" id="s5" name="dob" value="1998-04-17" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Contact</legend>
+
+        <div class="row">
+          <div class="field">
+            <label for="s3">Email address</label>
+            <input
+              type="email"
+              id="s3"
+              name="email"
+              autocomplete="email"
+              value="rohan.mehra@example.com"
+            />
+          </div>
+          <div class="field">
+            <label for="s4">Mobile number</label>
+            <input
+              type="tel"
+              id="s4"
+              name="mobile"
+              autocomplete="tel"
+              value="+91 98200 11223"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="s6">Street address</label>
+          <input
+            type="text"
+            id="s6"
+            name="address1"
+            autocomplete="street-address"
+            value="14 Marine Lines, Flat 3B"
+          />
+        </div>
+
+        <div class="field">
+          <!--
+            No label element, no autocomplete, no meaningful name. The
+            placeholder is the only signal left, which is the case that tests
+            whether the pattern pass reads more than one attribute.
+          -->
+          <input type="text" id="s7" name="pc" placeholder="Postal code" value="400020" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Identity</legend>
+
+        <div class="field">
+          <!--
+            Signalled only by the `name` attribute. A form that renders its
+            label as plain text elsewhere on the page looks exactly like this
+            to a DOM reader.
+          -->
+          <input type="text" id="s10" name="national_id_number" value="ABCDE1234F" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Sign-in details</legend>
+
+        <div class="field">
+          <!--
+            Not personal data, and must not be flagged while empty. A rule that
+            hides every text input would pass every other field on this page
+            and fail here, which is the point of including it.
+          -->
+          <label for="s11">Display name</label>
+          <input type="text" id="s11" name="display_name" placeholder="Shown on your profile" />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="s8">Password</label>
+            <input
+              type="password"
+              id="s8"
+              name="password"
+              autocomplete="new-password"
+              value="not-a-real-password-1234"
+            />
+          </div>
+          <div class="field">
+            <label for="s9">Confirm password</label>
+            <input
+              type="password"
+              id="s9"
+              name="password_confirm"
+              autocomplete="new-password"
+              value="not-a-real-password-1234"
+            />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Preferences</legend>
+
+        <div class="field">
+          <label for="s12">How did you hear about us?</label>
+          <select id="s12" name="referral">
+            <option>A friend</option>
+            <option>Search</option>
+            <option>An advertisement</option>
+          </select>
+        </div>
+
+        <div class="check">
+          <input type="checkbox" id="s13" name="terms" />
+          <label for="s13">I accept the terms of service and privacy policy</label>
+        </div>
+
+        <div class="check">
+          <input type="checkbox" id="s14" name="marketing" />
+          <label for="s14">Send me occasional product updates</label>
+        </div>
+      </fieldset>
+
+      <button type="submit">Create account</button>
+      <p class="note">
+        Submit is intercepted, so the page survives repeated runs and no
+        navigation interrupts a measurement.
+      </p>
+    </form>
+
+    <script>
+      // Same reason as Screen 1: a fixture that navigates away cannot be run
+      // twice, and the second run is where the interesting numbers are.
+      //
+      // Both of Shield's steps now announce themselves, for the reason Screen 1
+      // already established: silently swallowing the submit meant a successful
+      // run looked identical to a failed one, and the observed report was
+      // literally "nothing happened after clicking sign in". This page has TWO
+      // moments to show rather than one, and the second demo task is the pair
+      // of them.
+      //
+      // Both write into the existing intro paragraph rather than adding a node.
+      // A new element would change the element count between the first capture
+      // and the re-capture that follows each action, and 11-detections-from-21
+      // is a recorded baseline. The submit line copies Screen 1's wording and
+      // clock format exactly, so it inherits that page's check that a rendered
+      // time does not match the phone-number pattern.
+      const intro = document.querySelector('.intro');
+
+      function announce(message) {
+        intro.textContent = message;
+        intro.style.color = '#047857';
+        intro.style.fontWeight = '600';
+      }
+
+      // The tick is visible on the checkbox itself, but only if you happen to be
+      // looking at that corner of a fourteen-control form.
+      document.getElementById('s13').addEventListener('change', (event) => {
+        if (event.target.checked) {
+          announce('Terms accepted. The consent box was ticked by Shield.');
+        }
+      });
+
+      document.getElementById('signup').addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const at = new Date().toLocaleTimeString();
+        announce(`Account created at ${at}. The form was submitted by Shield.`);
+
+        console.info('[test-screen] submit intercepted; nothing was sent anywhere');
+      });
+    </script>
+  </body>
+</html>

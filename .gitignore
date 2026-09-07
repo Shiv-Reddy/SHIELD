@@ -1,0 +1,19 @@
+# Test fixture images.
+#
+# Screen 3 needs photographs of real faces to exercise the face detector, and a
+# drawn or synthetic face does not reliably trigger a detector trained on
+# photographs. Real photographs of real people carry licensing and likeness
+# questions that a committed fixture should not decide silently, and
+# test-screens/README.md sets a synthetic-data-only rule for everything that is
+# version controlled.
+#
+# So the images stay local. Supply your own and name them as below to run
+# Screen 3; see test-screens/README.md.
+test-screens/face-a.jpg
+test-screens/face-b.png
+
+# Python environment and caches for the backend.
+server/.venv/
+server/__pycache__/
+**/__pycache__/
+*.pyc

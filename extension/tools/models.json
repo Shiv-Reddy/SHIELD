@@ -1,0 +1,64 @@
+{
+  "$comment": [
+    "Pinned local model manifest. ARCHITECTURE.md Section 8 requires model versions",
+    "to be pinned and shipped with the extension rather than fetched at runtime, so",
+    "the demo cannot break because someone else's host went down or changed a file.",
+    "",
+    "The sha256 values are checked by tools/verify-models.mjs on every build. Shapes",
+    "were read out of the ONNX graph itself, not copied from a README."
+  ],
+  "models": [
+    {
+      "id": "face-detector",
+      "file": "ultraface-rfb-320.onnx",
+      "name": "UltraFace version-RFB-320 (simplified)",
+      "license": "MIT",
+      "source": "https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB",
+      "sourceFile": "models/onnx/version-RFB-320_simplified.onnx",
+      "trainedOn": "WIDERFACE",
+      "bytes": 1114081,
+      "sha256": "faf6740b495e8b9508e6fda11e8c0368bbdde01143e8f0a3e511d0892c4d794e",
+      "io": {
+        "feed": "input",
+        "inputShape": [
+          1,
+          3,
+          240,
+          320
+        ],
+        "inputLayout": "NCHW, RGB",
+        "outputs": {
+          "scores": [
+            1,
+            4420,
+            2
+          ],
+          "boxes": [
+            1,
+            4420,
+            4
+          ]
+        }
+      },
+      "notes": [
+        "Exported from PyTorch 1.2, which lists every initializer in graph.input.",
+        "session.inputNames therefore returns ~100 names; only 'input' is a real feed",
+        "and the rest resolve from initializers. Do not iterate inputNames to build",
+        "the feed dictionary.",
+        "scores[...,1] is the face-class probability; scores[...,0] is background.",
+        "4420 priors require NMS before use.",
+        "boxes are NOT decoded rectangles. The output is SSD-style regression offsets",
+        "relative to a fixed prior grid; the measured raw range on a real page was",
+        "-4.268..3.368. Decode with src/offscreen/priors.ts before use. The reference",
+        "implementation's docs describe normalised 0..1 corners, which is true of some",
+        "exports of this model and false of this file. An earlier note here repeated",
+        "that claim on faith and cost a day's worth of wrong face coordinates.",
+        "The 4420 priors are 40x30x3 + 20x15x2 + 10x8x2 + 5x4x3, from strides",
+        "[8,16,32,64] and min box sizes [[10,16,24],[32,48],[64,96],[128,192,256]].",
+        "The count is asserted at runtime against the model's output shape: a mismatch",
+        "means every box would be decoded against the wrong anchor, which produces",
+        "confident detections in wrong places rather than an error."
+      ]
+    }
+  ]
+}
