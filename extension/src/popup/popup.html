@@ -38,6 +38,19 @@
         <button id="run-button" class="button button-primary" type="submit">Run</button>
         <button id="cancel-button" class="button" type="button" hidden>Cancel</button>
       </div>
+      <!--
+        Shield acts on the page. That is the point of it, and it is also why
+        running it against a live third-party site needs a way to watch without
+        touching: on an autofilled login it would click "Sign in", and on a
+        part-filled sign-up it would tick the consent box and submit.
+
+        Everything still runs — detection, redaction, the seal, the request —
+        so the run is a real measurement. Only the last step is withheld.
+      -->
+      <label class="observe">
+        <input id="observe-only" type="checkbox" />
+        <span>Observe only — run everything, but don't touch the page</span>
+      </label>
     </form>
 
     <!--

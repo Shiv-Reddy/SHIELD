@@ -14,7 +14,7 @@ import {
   type WorkerBroadcast,
 } from '../lib/messages';
 import { INITIAL_STATE, STATUS_LABEL, type ShieldState } from '../lib/status';
-import { readSettings, setForceBackend } from '../lib/settings';
+import { readSettings, setForceBackend, setObserveOnly } from '../lib/settings';
 import { readLastTransmission } from '../lib/redaction/evidence';
 
 function required<T extends Element>(selector: string): T {
@@ -32,6 +32,7 @@ const runButton = required<HTMLButtonElement>('#run-button');
 const cancelButton = required<HTMLButtonElement>('#cancel-button');
 const buildInfo = required<HTMLParagraphElement>('#build-info');
 const backendNotice = required<HTMLParagraphElement>('#backend-notice');
+const observeOnly = required<HTMLInputElement>('#observe-only');
 const evidenceToggle = required<HTMLButtonElement>('#evidence-toggle');
 const evidenceBody = required<HTMLDivElement>('#evidence-body');
 const evidenceMeta = required<HTMLParagraphElement>('#evidence-meta');
@@ -77,6 +78,27 @@ buildInfo.addEventListener('click', () => {
 });
 
 void renderBuildInfo();
+
+/**
+ * Observe-only: run the whole pipeline, then report the action instead of
+ * performing it.
+ *
+ * Persisted rather than per-run, because the runs it exists for come in
+ * batches — pointing Shield at one live site after another — and a checkbox
+ * that reset itself each time the popup closed would be off exactly when it was
+ * being relied on.
+ *
+ * The state is read back from storage on open rather than assumed, so the box
+ * always shows what the next run will actually do.
+ */
+void (async () => {
+  const { observeOnly: enabled } = await readSettings();
+  observeOnly.checked = enabled;
+})();
+
+observeOnly.addEventListener('change', () => {
+  void setObserveOnly(observeOnly.checked);
+});
 
 /**
  * Show exactly what left the machine on the last run.

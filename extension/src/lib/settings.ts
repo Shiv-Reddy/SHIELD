@@ -33,11 +33,35 @@ export interface ShieldSettings {
    *   chrome.storage.local.remove('forceBackend')          // back to automatic
    */
   forceBackend: ExecutionBackend | null;
+  /**
+   * Run the whole pipeline but never touch the page.
+   *
+   * Everything happens — capture, detection, redaction, the seal, the request,
+   * the reply — and the action that comes back is reported instead of
+   * performed.
+   *
+   * This exists because Shield is an autonomous clicker with a five-step
+   * budget, and the moment it is pointed at a real website that stops being an
+   * abstract property. On a live login form that the browser has autofilled it
+   * would click "Sign in"; on a part-filled sign-up it would tick the consent
+   * box and submit. Both are real actions on somebody else's service, and
+   * neither is undoable.
+   *
+   * A protocol — only logged-out pages, check every field is empty first —
+   * gives the same guarantee on paper. It puts the safety on remembering,
+   * every run, across every site, which is not where safety belongs.
+   *
+   * Off by default: the demo tasks act, and a mode that silently stopped Shield
+   * from doing its job would be the worse failure. It is turned on
+   * deliberately, for the runs where observing IS the job.
+   */
+  observeOnly: boolean;
 }
 
 const DEFAULTS: ShieldSettings = {
   endpoint: DEFAULT_ENDPOINT,
   forceBackend: null,
+  observeOnly: false,
 };
 
 /**
@@ -54,12 +78,21 @@ export async function setForceBackend(backend: ExecutionBackend | null): Promise
   }
 }
 
+/** Turn observe-only mode on or off. */
+export async function setObserveOnly(observeOnly: boolean): Promise<void> {
+  await chrome.storage.local.set({ observeOnly });
+}
+
 export async function readSettings(): Promise<ShieldSettings> {
   try {
     // Keys are requested by name rather than by passing the defaults object:
     // chrome.storage's typings expect an index-signature shape, which a precise
     // settings interface deliberately is not.
-    const stored = await chrome.storage.local.get(['forceBackend', 'endpoint']);
+    const stored = await chrome.storage.local.get([
+      'forceBackend',
+      'endpoint',
+      'observeOnly',
+    ]);
     const forceBackend =
       stored['forceBackend'] === 'webgpu' || stored['forceBackend'] === 'wasm'
         ? stored['forceBackend']
@@ -68,7 +101,12 @@ export async function readSettings(): Promise<ShieldSettings> {
       typeof stored['endpoint'] === 'string' && stored['endpoint'].length > 0
         ? stored['endpoint']
         : DEFAULT_ENDPOINT;
-    return { endpoint, forceBackend };
+    // Anything other than an explicit `true` means act. A corrupted or
+    // half-written value must not be able to silently disable Shield, which
+    // would look exactly like the pipeline being broken.
+    const observeOnly = stored['observeOnly'] === true;
+
+    return { endpoint, forceBackend, observeOnly };
   } catch (error) {
     // A settings read must never be able to break inference — but silently
     // returning defaults is how a backend override appears to do nothing.

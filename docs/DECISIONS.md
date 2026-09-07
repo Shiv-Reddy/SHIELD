@@ -1492,3 +1492,40 @@ the bottom — recorded here so nobody later reads "6 of 8" as a stable capabili
 **If those faces are ever wanted:** tile or upscale the frame before inference.
 The frame is ~1920px wide and the model input is 320px, so a 36px-wide image
 puts roughly 3px of face in front of the model. No threshold reaches that.
+
+---
+
+**Decision:** An observe-only mode, added before Shield is pointed at any real
+website
+**Why:** Shield is an autonomous clicker with a five-step budget. That is the
+point of it on a fixture, and it stops being an abstract property the moment the
+page belongs to somebody else. Tracing the paths: a live login form the browser
+has autofilled ends with Shield clicking "Sign in"; a sign-up the user had
+part-filled ends with Shield ticking the consent box and submitting it. Both are
+real actions on a third-party service and neither is undoable. Everything else
+is safe — an empty password produces a refusal or a decline, and a page with no
+form is declined outright — so the exposure is narrow, but it is triggered by
+browser autofill, which is on by default and easy to forget across a batch of
+sites.
+**Why not just a protocol:** "only logged-out pages, check every field is empty
+first" gives the same guarantee on paper. It puts the safety on remembering,
+every run, across every site, which is not where safety belongs when the
+alternative is forty lines.
+**How:** a `observeOnly` setting and a popup checkbox. The entire pipeline still
+runs — capture, detection, redaction, the seal, the request, the reply — so an
+observed run is a real measurement of everything except the last step. The
+action that comes back is logged in the executor's own vocabulary ("would have
+click #submit — not performed") so the log of an observed run reads like the log
+of a real one with the verbs changed, which matters when the two are compared.
+**Placed after the repeat check, not before it.** The reported action is then
+the one that would actually have been performed, refusals included. A preview
+showing an action the real run would have declined is worse than no preview.
+**Off by default, and anything other than an explicit `true` means act.** The
+demo tasks act, and a mode that silently stopped Shield from doing its job would
+be the worse failure — it would look exactly like a broken pipeline. A corrupted
+or half-written storage value must not be able to cause that.
+**Limit, stated:** an observed run only ever reveals the FIRST action of a
+multi-step task, because steps two and three depend on step one having happened.
+That is inherent, not a defect.
+**Reusable beyond testing:** this is the honest core of the "consent preview"
+item sitting unticked in the Differentiation list.

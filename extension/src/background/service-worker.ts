@@ -805,7 +805,7 @@ async function runStep(
     // enforcement: it accepts a sealed payload and nothing else, so there is no
     // expressible way to reach the network carrying raw page data.
     setStatus('sending');
-    const { endpoint } = await readSettings();
+    const { endpoint, observeOnly } = await readSettings();
 
     // Recorded before the request, not after. If the server is unreachable the
     // question "what did Shield send?" still has an answer, and a failed request
@@ -849,6 +849,30 @@ async function runStep(
         summary: response.reasoningSummary,
         signature,
         repeated: true,
+      };
+    }
+
+    // Observe-only stops HERE, after everything has been proved and before
+    // anything is touched.
+    //
+    // Placed after the repeat check rather than before it so that the reported
+    // action is the one that would actually have been performed, refusals
+    // included. A preview that showed an action the real run would have
+    // declined would be worse than no preview.
+    //
+    // Reported as an action NOT taken, in the same words the executor would
+    // have used, so the log of an observed run reads like the log of a real one
+    // with the verbs changed. That matters when the two are being compared.
+    if (observeOnly) {
+      console.info(
+        `[shield] observe-only: would have ${response.action.type} ` +
+          `${response.action.selector} — not performed`,
+      );
+      return {
+        acted: false,
+        summary: response.reasoningSummary,
+        signature,
+        repeated: false,
       };
     }
 

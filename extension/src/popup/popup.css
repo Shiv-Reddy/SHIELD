@@ -186,6 +186,30 @@ body {
   margin-top: 10px;
 }
 
+.observe {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.observe input {
+  margin: 1px 0 0;
+  flex: none;
+  cursor: pointer;
+}
+
+/* Armed, so the state is readable at a glance rather than by squinting at a
+   tick box — this is the difference between a run that acts and one that
+   does not. */
+.observe:has(input:checked) {
+  color: var(--accent);
+}
+
 .button {
   flex: 1;
   padding: 8px 12px;
