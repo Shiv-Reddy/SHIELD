@@ -23,6 +23,45 @@
       carry licensing and likeness questions a committed fixture should not
       decide silently — see .gitignore and README.md. Supply your own as
       face-a.jpg and face-b.png.
+
+      PHASE 3 — WHAT SHIELD SHOULD DO ON THIS PAGE
+
+      This screen is the third demo task, and the task is PROTECTION rather than
+      action. There is no form here, so the reasoner should decline — and that
+      pairing is the point: a detector that finds faces is only worth having if
+      the reasoner stays quiet when there is nothing to do. The same pairing was
+      shown on Screens 4 and 5.
+
+      Written before the first run at the current 0.3 threshold, so the page
+      measures the detector rather than the detector setting the expectations.
+      The reasoning, so a wrong prediction is informative rather than just
+      wrong: the frame is ~1920px wide and is downscaled to the model's 320px
+      input, a factor of about 6, and the face occupies roughly 60% of each
+      image's width. So a 200px rung puts about 20px of face in front of the
+      model and a 36px rung puts about 3px.
+
+        2 portraits (240px tall)  -> FOUND, high confidence
+        200px rung                -> found
+        150px rung                -> found
+        110px rung                -> borderline; the floor is expected here
+        80px rung                 -> borderline
+        55px rung                 -> MISSED, too small to survive the downscale
+        36px rung                 -> MISSED
+        control paragraph         -> NO BOX. Any rectangle here is a false
+                                     positive and must be recorded as one
+        reasoner                  -> declines: no form on this screen
+
+      Expected total: 5-6 of 8.
+
+      A miss is not a failure of this screen; it is the measurement the ladder
+      exists to take. What WOULD be a failure is not knowing where the floor is,
+      or a box over the control paragraph.
+
+      Read `candidates N/N/N at 0.3/0.5/0.7` in the console before concluding
+      anything. A face the model cannot see at all produces nothing at any
+      cutoff; a face it half-sees appears at 0.3 and vanishes at 0.7. Those are
+      "the face is too small" and "the threshold is too strict" respectively,
+      and they have opposite fixes.
     -->
     <style>
       * {

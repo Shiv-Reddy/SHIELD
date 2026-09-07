@@ -1438,3 +1438,30 @@ keep looking authoritative while the user scrolled into fields Shield never
 examined, and those fields would carry no box, which reads as "checked and safe"
 rather than "not looked at". Clearing keeps the claim exactly as wide as the
 evidence behind it.
+
+---
+
+**Decision:** The third demo task is protection, not action
+**Why:** A photo gallery has no form, so there is nothing for Shield to do on
+it, and inventing an action would be worse than having none. What the screen
+demonstrates instead is the thing no other screen can: the visual layer hiding
+something the DOM has no way to describe. Nothing in a page's markup announces
+that a person's face is rendered at particular coordinates, so this is not a
+second opinion on the DOM rules — it is the only opinion available for the
+category.
+**The pairing is the point:** a detector that finds faces is only worth having
+if the reasoner stays quiet when there is nothing to do, and the run is expected
+to end with "No recognised form on this screen." That is the same restraint
+check already shown on Screens 4 and 5, applied to the one screen where the
+detector is loudest.
+**Considered and not taken:** building a profile-edit fixture — a face photo
+beside name and email fields with a Save button — so that a face is redacted
+inside a real acting loop. Strictly the better demo, and it reuses the existing
+reasoner path, but it is a new fixture needing its own written-first
+expectations, and CLAUDE.md already marks the face path the higher-risk one.
+Deferred rather than dismissed; if time remains after the measurement, it is the
+obvious next thing.
+**What the deliverable actually is:** numbers. How many of the eight faces are
+found at the current 0.3 threshold, where the size floor sits on the ladder, and
+whether the control paragraph survives untouched. A demo of face redaction that
+cannot say which faces it misses is not evidence of anything.
