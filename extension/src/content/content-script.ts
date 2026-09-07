@@ -23,6 +23,12 @@ import type { ViewportInfo } from '../lib/types';
 import { extractDomMap } from './dom-map';
 import { executeAction } from './executor';
 import { clearOverlay, showOverlay } from './overlay';
+import {
+  clearManual,
+  manualRegionsInViewport,
+  setManualVisible,
+  startManual,
+} from './manual-redaction';
 
 const VERSION = chrome.runtime.getManifest().version;
 
@@ -93,6 +99,32 @@ function register(): void {
             console.warn('[shield] could not draw the redaction overlay', error);
           }
           sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.START_MANUAL: {
+          startManual();
+          sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.SET_MANUAL_VISIBLE: {
+          setManualVisible(message.visible);
+          sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.CLEAR_MANUAL: {
+          clearManual();
+          sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.GET_MANUAL_REGIONS: {
+          // Converted here rather than in the worker: this is the context that
+          // knows the scroll position, and a mark is stored against the
+          // document rather than the screen.
+          sendResponse({ regions: manualRegionsInViewport() });
           return false;
         }
 

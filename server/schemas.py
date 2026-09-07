@@ -52,7 +52,12 @@ class RedactedDomEntry(BaseModel):
 class RedactionManifestEntry(BaseModel):
     regionId: str
     category: SensitiveCategory
-    method: Literal["dom", "visual", "ocr"]
+    # "manual" means the user drew a box round something and said hide it. It is
+    # kept distinct from the three detectors because it is the only one that
+    # cannot be wrong about intent, and because an audit record that called a
+    # person's decision a pattern match would misdescribe how the redaction
+    # happened.
+    method: Literal["dom", "visual", "ocr", "manual"]
 
 
 class AnalyzeRequest(BaseModel):

@@ -1683,3 +1683,48 @@ over anything on the page and have Shield hide it too. It is the right feature
 for exactly the gap these runs exposed: automatic detection will always miss
 something on a page nobody wrote for us, and the honest answer is to let the
 person looking at the screen say so. Needs a design pass before code.
+
+**Manual redaction built.** Requested after the real-site runs, and it is the
+right answer to what they exposed: every miss so far has been met by widening a
+rule, and that has a ceiling. The rules cannot know a number in a paragraph is a
+case reference somebody considers private, because nothing in the markup says so
+and nothing ever will. The person looking at the screen knows.
+
+Stated honestly in SECURITY_PRIVACY.md 4.1 rather than sold as a fix: it does
+not improve detection and only helps a user who notices.
+
+Four decisions worth keeping, all recorded in DECISIONS.md:
+- **Document coordinates, converted at capture.** The whole design, and the
+  lesson from the overlay defect found the same morning: viewport coordinates
+  are true only until the page scrolls. `clipToViewport` was extracted as a pure
+  function so the arithmetic is testable without a browser — coordinate bugs
+  fail silently, as plausible rectangles over wrong pixels, and the only thing
+  that caught the overlay version was a person looking at a screenshot. Eleven
+  tests cover it, including both fold-straddling directions.
+- **A mark hides pixels AND tokenises every overlapping element.** Either alone
+  is worse than nothing. The rectangle by itself paints the screenshot while the
+  text underneath travels intact in the DOM summary — complete-looking and
+  incomplete, which is the more dangerous failure because it is believed.
+- **Any overlap counts, not a majority.** Over-redacts by design: geometry
+  cannot cut a value in half, so it is all or nothing, and transmitting a string
+  the user explicitly pointed at is not an option.
+- **Nothing is persisted.** Marks live in content-script module state and die
+  with the document. Storing them would create a record of which parts of which
+  pages a user considers private — a new thing worth stealing, on a project
+  whose claim is that it keeps nothing.
+
+`manual` was added as a source and a manifest method across the client types,
+`schemas.py` and API_SPEC.md Section 3. Without the server-side enum change
+every payload carrying a mark would have failed validation outright.
+
+**A stale figure was corrected while in there.** SECURITY_PRIVACY.md 4.1 said
+faces below ~110px were missed, from a measurement taken at the old 0.5
+threshold. Today's ladder run found the 80px rung, so the section now reads
+"below roughly 80px, and 80px itself is marginal at 0.312" with the resolution-
+versus-threshold distinction spelled out.
+
+**Totals:** client 67 tests (up from 56), server 82 + 35, typecheck and build
+clean.
+
+**Next:** the drawing surface itself has never been used in a browser — the
+geometry is tested, the interaction is not. That is the first thing to try.

@@ -1597,3 +1597,62 @@ is not the control that submits it.
 **Degrades rather than breaks:** with no geometry the behaviour falls back to
 document order, which is what it always did. Checked by a test that sets every
 position to the origin.
+
+---
+
+**Decision:** Manual redaction — the user can draw a rectangle over anything and
+have it hidden
+**Why:** Every miss so far has been answered by widening a rule, and that has a
+ceiling. The rules cannot know that a number in a paragraph is a case reference
+somebody considers private, because nothing in the markup says so and nothing
+ever will. The real-site runs made the ceiling concrete: a label carrying an
+account address that no field rule could see, and a shape that fooled the
+reasoner. The person looking at the screen knows. This lets them say so.
+**It is not a detection improvement and is not counted as one.** It does not
+make the rules better and it only helps a user who notices. It is stated that
+way in SECURITY_PRIVACY.md 4.1 rather than presented as closing those gaps.
+
+**Draw-then-run, not a mid-run gate.** A consent step inside every run is a
+larger feature and would put a manual pause in the demo path. This is the
+foundation such a step would sit on, and it costs nothing until used.
+
+**Marks are stored in DOCUMENT coordinates, converted at capture time.** This is
+the whole design and the reason is one floor above: the explainable overlay
+pinned boxes to the viewport with `position: fixed`, which is right at the
+instant of drawing and wrong from the next scroll onward, and every box ended up
+sitting the scroll offset away from what it named. A mark is a statement about a
+piece of the page, not a piece of the screen, and it has to survive the page
+moving underneath it. `clipToViewport` is a pure function precisely so this
+arithmetic can be tested without a browser — coordinate bugs fail silently, as
+plausible rectangles over the wrong pixels, and the only thing that caught the
+overlay version was a person looking at a screenshot.
+
+**A mark hides pixels AND tokenises every element it overlaps.** Both, or it is
+worse than nothing: the rectangle alone paints the screenshot while the text
+underneath travels intact in the DOM summary — a redaction that looks complete
+and is not, which is more dangerous than an obvious gap because it is believed.
+**Any overlap counts, not a majority.** Drawing round an address inside a
+paragraph tokenises the whole paragraph. That over-redacts, and it is the
+correct direction: geometry cannot cut a value in half, so the choice is all or
+nothing, and transmitting a string the user explicitly pointed at is not an
+option.
+
+**Marks do not persist across page loads and are never stored.** They live in
+content-script module state, which lasts exactly as long as the document.
+Carrying them across a navigation would re-apply somebody's judgement to a page
+they never saw, and writing them to storage would create a record of which parts
+of which pages a user considers private — a new thing worth stealing, on a
+project whose claim is that it keeps nothing.
+
+**The drawing surface is hidden before capture, not cleared.** Its cyan outlines
+would otherwise be baked into the frame the model is shown and into the frame
+the popup presents as a faithful record of what was sent. Shield's own UI has no
+business appearing in either.
+
+**`manual` is a distinct source and manifest method**, added to the client
+types, `schemas.py` and API_SPEC.md Section 3. "A person decided this is
+private" and "a pattern matched" are different claims about the same rectangle,
+and the manifest is the one audit record the server receives. It also carries
+confidence 1 rather than a probability, because it is not a guess. Folding it
+into `dom` or `visual` would have avoided a schema change and misdescribed how
+the redaction happened.

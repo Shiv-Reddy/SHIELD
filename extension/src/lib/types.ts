@@ -175,8 +175,17 @@ export interface FaceBox {
   score: number;
 }
 
-/** Which sub-detector flagged a region. */
-export type DetectionSource = 'dom' | 'visual' | 'ocr';
+/**
+ * Which sub-detector flagged a region.
+ *
+ * `manual` is not a detector. It means the person looking at the screen drew a
+ * box round something and said hide this, and it is kept distinct from the
+ * three that guess because it is the only one that is never wrong about intent.
+ * Automatic detection will always miss something on a page nobody wrote for us
+ * — the real-site runs proved that twice in an afternoon — and the honest
+ * answer is to let the user say so rather than to keep widening the rules.
+ */
+export type DetectionSource = 'dom' | 'visual' | 'ocr' | 'manual';
 
 /** One region the PII Detector decided is sensitive. */
 export interface SensitiveRegion {
@@ -204,7 +213,26 @@ export interface SensitiveRegion {
 // Redaction — ARCHITECTURE.md 2.3
 // ---------------------------------------------------------------------------
 
-export type RedactionMethod = 'dom' | 'visual' | 'ocr';
+export type RedactionMethod = 'dom' | 'visual' | 'ocr' | 'manual';
+
+/**
+ * A rectangle the user drew, in DOCUMENT coordinates.
+ *
+ * Document rather than viewport, deliberately. Viewport coordinates are only
+ * true until the page scrolls — that is precisely the defect found in the
+ * explainable overlay, where every box ended up sitting the scroll offset away
+ * from the thing it named. A mark the user made must stay on what they marked,
+ * so it is stored against the page and converted to viewport space at capture
+ * time, when the scroll position is known.
+ */
+export interface ManualRegion {
+  id: string;
+  /** Page coordinates: viewport position plus scroll offset at draw time. */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 /** Audit record of one redaction, mirrored to the server and to the trust UI. */
 export interface RedactionManifestEntry {

@@ -34,6 +34,14 @@ export const MSG = {
   EXECUTE_ACTION: 'shield/execute-action',
   /** Worker -> content script: draw or clear the redaction overlay. */
   SHOW_OVERLAY: 'shield/show-overlay',
+  /** Popup -> content script: let the user draw regions to hide. */
+  START_MANUAL: 'shield/start-manual',
+  /** Worker -> content script: hand back what the user drew, in viewport space. */
+  GET_MANUAL_REGIONS: 'shield/get-manual-regions',
+  /** Worker -> content script: show or hide the drawing surface, keeping the marks. */
+  SET_MANUAL_VISIBLE: 'shield/set-manual-visible',
+  /** Popup -> content script: discard every manual region on this page. */
+  CLEAR_MANUAL: 'shield/clear-manual',
   /** Worker -> offscreen document: decode a frame and run local inference. */
   ANALYSE_FRAME: 'shield/analyse-frame',
   /** Popup -> worker: the user is here; get the inference host ready. */
@@ -153,7 +161,37 @@ export interface ShowOverlayMessage {
   }[];
 }
 
+/** Popup -> content script: enter or leave the drawing mode. */
+export interface StartManualMessage {
+  type: typeof MSG.START_MANUAL;
+}
+
+/**
+ * Worker -> content script: the marks, converted to viewport coordinates.
+ *
+ * Converted on the content side because that is where the scroll position
+ * lives. Regions entirely outside the viewport are dropped: the capture only
+ * ever contains what is on screen, so a mark above or below it has nothing to
+ * cover.
+ */
+export interface GetManualRegionsMessage {
+  type: typeof MSG.GET_MANUAL_REGIONS;
+}
+
+export interface SetManualVisibleMessage {
+  type: typeof MSG.SET_MANUAL_VISIBLE;
+  visible: boolean;
+}
+
+export interface ClearManualMessage {
+  type: typeof MSG.CLEAR_MANUAL;
+}
+
 export type ContentMessage =
+  | StartManualMessage
+  | GetManualRegionsMessage
+  | SetManualVisibleMessage
+  | ClearManualMessage
   | PingMessage
   | GetViewportMessage
   | ExtractDomMessage

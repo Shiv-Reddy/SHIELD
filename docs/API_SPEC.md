@@ -35,7 +35,15 @@ returns a structured action.
     }
   ],
   "redaction_manifest": [
-    { "region_id": "string", "category": "password | name | email | phone | address | face | id_number | other", "method": "dom | visual | ocr" }
+    { "region_id": "string", "category": "password | name | email | phone | address | face | id_number | other", "method": "dom | visual | ocr | manual" }
+
+`method` records HOW a region was hidden, and `manual` is not a detector: it
+means the user drew a rectangle over something and asked for it to be hidden.
+It is distinct from the other three on purpose. A manual mark both paints its
+rectangle out of the frame and tokenises every element underneath it, and it
+carries no confidence value because it is not a guess. Conflating it with `dom`
+or `visual` would misdescribe how the redaction happened in the one audit record
+the server is given.
   ]
 }
 ```

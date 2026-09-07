@@ -60,13 +60,32 @@ document declares.
   indistinguishable from any other words without a named-entity model, which
   this build does not carry. Verified against a real social feed: names sitting
   in link and button labels produced no DOM detections.
-- **Faces below roughly 110 pixels wide can be missed.** Measured, not
-  estimated: on `test-screens/03-faces.html`, which renders the same face at
-  eight sizes, the detector found images down to 110px wide on a 1920px viewport
-  and missed 80px, 55px and 36px. The cause is the downscale into the model's
-  320-pixel input — a 6x reduction, so a 110px image reaches the model as about
-  18px and an 80px one as about 13px. Expressed independently of screen size:
-  a face needs roughly 6% of the viewport width to be detected reliably.
+- **Faces below roughly 80 pixels wide are missed, and 80px itself is
+  marginal.** Re-measured 2026-09-07 at the current 0.3 threshold, superseding
+  an earlier figure taken at 0.5. On `test-screens/03-faces.html`, which renders
+  the same face at eight sizes, the detector found 6 of 8: both portraits and
+  the 200px, 150px, 110px and 80px rungs, missing 55px and 36px. The 80px rung
+  scored 0.312 against a 0.3 threshold — twelve thousandths of margin — so it is
+  not a size that works, it is a size that barely worked on this photograph.
+  State the floor as *between 80 and 110px, unreliable at the bottom*.
+  The cause is the downscale into the model's 320-pixel input: a 6x reduction,
+  so an 80px image reaches the model as about 13px and a 36px one as about 3px.
+  The two misses produced no candidate at any cutoff, which makes this a
+  resolution limit rather than a threshold one — lowering the threshold further
+  would gain nothing and cost false positives. Independently of screen size, a
+  face needs roughly 4-6% of the viewport width to be detected reliably.
+
+**What answers all of the above, without pretending to solve any of them.**
+Shield lets the user draw a rectangle over anything and have it hidden — see
+`manual-redaction.ts`. That is not a detection improvement and is not counted as
+one: it does not make the rules better, and it only helps a user who notices.
+But every limit listed here is a case where the person looking at the screen
+knows something the rules cannot, and the honest response is to give them a way
+to say so rather than to keep widening patterns until they over-redact. A manual
+mark hides the pixels AND tokenises every element it overlaps, so it is a
+complete redaction rather than a cosmetic one, and it is recorded in the
+manifest as `manual` so an audit trail never presents a person's judgement as a
+rule having fired.
   Thumbnail avatars in a sidebar or a comment thread are therefore below the
   floor. Raising it would require running the model over tiles of the frame at
   full resolution, at roughly 4x the inference cost.

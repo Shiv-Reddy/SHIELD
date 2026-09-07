@@ -564,7 +564,24 @@ at particular coordinates.
 - [ ] Frame diffing for latency/resource optimization (stretch)
 - [ ] Naive-baseline comparison (blind blur vs. semantic redaction, with real numbers)
 - [ ] Red-team adversarial case shown live in demo
+- [x] Manual redaction — the user marks anything the rules missed
+      — draw a rectangle over anything and Shield hides it. Not a detection
+      improvement and not counted as one: it does not make the rules better and
+      only helps a user who notices. But every limit in SECURITY_PRIVACY.md 4.1
+      is a case where the person looking at the screen knows something the rules
+      cannot, and the honest answer is to let them say so rather than widen
+      patterns until they over-redact.
+      A mark hides the pixels AND tokenises every element it overlaps — both, or
+      it is worse than nothing, because a rectangle alone paints the screenshot
+      while the text underneath travels intact. Stored in document coordinates
+      and converted at capture, which is the lesson from the overlay defect the
+      same day. Recorded in the manifest as a distinct `manual` method, since a
+      person's judgement is not a pattern match. 11 unit tests on the geometry,
+      which is where this fails silently.
 - [ ] Consent-preview step before transmission (stretch)
+      — smaller now than it was: manual redaction built the drawing surface,
+      the region plumbing and the manifest provenance it needs. What remains is
+      the pause itself and its UI.
 
 ## Documentation & Submission
 - [ ] README.md finalized

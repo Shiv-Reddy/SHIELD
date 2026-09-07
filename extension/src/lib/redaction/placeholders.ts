@@ -155,7 +155,11 @@ export function buildManifest(
     category: region.category,
     // The detector that found it is also the method used to hide it: DOM
     // detections become token substitutions, visual detections become painted
-    // regions. If those ever diverge, this mapping is the thing to revisit.
+    // regions. `manual` is both at once — a mark paints its rectangle and
+    // tokenises every element under it — and it stays a distinct method rather
+    // than being folded into one of the others, because "a person decided this
+    // is private" is a different claim from "a pattern matched" and an audit
+    // record that conflated them would be lying about provenance.
     method: region.source,
   }));
 }

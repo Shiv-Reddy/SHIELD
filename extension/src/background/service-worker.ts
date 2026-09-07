@@ -39,6 +39,7 @@ import { timed, type StageTiming } from '../lib/timing';
 import type {
   DomElement,
   RawFrame,
+  Rect,
   ShieldAction,
   RedactedDomEntry,
   ScreenSnapshot,
@@ -440,6 +441,81 @@ function resolveTypeValue(
   return { value: action.value, error: null };
 }
 
+/** Do two rectangles overlap by any positive area? */
+function overlaps(a: Rect, b: Rect): boolean {
+  return (
+    a.x < b.x + b.width &&
+    b.x < a.x + a.width &&
+    a.y < b.y + b.height &&
+    b.y < a.y + a.height
+  );
+}
+
+/**
+ * Turn the user's marks into regions, covering both the pixels and the DOM.
+ *
+ * A mark produces one geometric region for the rectangle itself, and one more
+ * for every element it overlaps. Both halves are needed and neither is
+ * sufficient. The rectangle alone paints the screenshot while the text
+ * underneath travels intact in the DOM summary — a redaction that looks
+ * complete and is not, which is worse than none because it is believed. The
+ * element regions alone tokenise the values and leave the picture of them.
+ *
+ * ANY overlap counts, not a majority. If a user draws round an address inside
+ * a paragraph, half-covering the paragraph, the whole paragraph's value is
+ * tokenised. That over-redacts, and it is the correct direction: the
+ * alternative is transmitting a string the user explicitly pointed at and asked
+ * to have hidden. Geometry cannot cut a value in half, so the choice is all or
+ * nothing, and nothing is not an option here.
+ */
+async function manualRegions(
+  tabId: number,
+  elements: readonly DomElement[],
+): Promise<SensitiveRegion[]> {
+  const reply = await sendToTab<{ regions: Rect[] }>(tabId, {
+    type: MSG.GET_MANUAL_REGIONS,
+  });
+
+  const marks = reply?.regions ?? [];
+  if (marks.length === 0) return [];
+
+  const regions: SensitiveRegion[] = [];
+
+  marks.forEach((mark, index) => {
+    regions.push({
+      regionId: `manual-${index}`,
+      category: 'other',
+      source: 'manual',
+      // Not a guess, so not a probability. The user said so.
+      confidence: 1,
+      elementId: null,
+      reason: 'marked by you',
+      position: mark,
+    });
+
+    for (const element of elements) {
+      if (!overlaps(mark, element.position)) continue;
+
+      regions.push({
+        regionId: `manual-${index}-${element.elementId}`,
+        category: 'other',
+        source: 'manual',
+        confidence: 1,
+        elementId: element.elementId,
+        reason: 'inside an area you marked',
+        position: element.position,
+      });
+    }
+  });
+
+  console.info(
+    `[shield] ${marks.length} manual mark(s) covering ` +
+      `${regions.length - marks.length} element(s)`,
+  );
+
+  return regions;
+}
+
 /**
  * Send one action to the page, carrying what the element looked like when
  * captured so the content script can re-verify it.
@@ -685,7 +761,13 @@ async function runStep(
     // available for this category.
     const visualRegions = faceRegions(detection.faces, geometry);
 
-    const regions = [...domRegions, ...visualRegions];
+    // What the user drew, if anything. Asked for after detection so a mark is
+    // never mistaken for something a rule found — the two are combined, but the
+    // manifest keeps them apart, because "a person decided this is private" and
+    // "a pattern matched" are different claims about the same rectangle.
+    const manual = await manualRegions(tabId, snapshot.elements);
+
+    const regions = [...domRegions, ...visualRegions, ...manual];
     snapshot.sensitiveRegions = regions;
     logDetections(regions, snapshot.elements);
 
@@ -949,6 +1031,13 @@ async function runTask(taskQuery: string): Promise<void> {
     // wrong screen is worse than none — this panel's only value is that it can
     // be read literally.
     void sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
+
+    // Put the drawing surface away before anything is captured. The marks are
+    // kept — only the cyan outlines go — because they would otherwise be baked
+    // into the frame the model is shown AND into the frame the popup presents
+    // as a faithful record of what was sent. Shield's own UI has no business
+    // appearing in either.
+    await sendToTab(tabId, { type: MSG.SET_MANUAL_VISIBLE, visible: false });
 
     let actions = 0;
     let lastSignature: string | null = null;

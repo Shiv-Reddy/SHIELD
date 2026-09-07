@@ -33,6 +33,8 @@ const cancelButton = required<HTMLButtonElement>('#cancel-button');
 const buildInfo = required<HTMLParagraphElement>('#build-info');
 const backendNotice = required<HTMLParagraphElement>('#backend-notice');
 const observeOnly = required<HTMLInputElement>('#observe-only');
+const manualButton = required<HTMLButtonElement>('#manual-button');
+const manualClear = required<HTMLButtonElement>('#manual-clear');
 const evidenceToggle = required<HTMLButtonElement>('#evidence-toggle');
 const evidenceBody = required<HTMLDivElement>('#evidence-body');
 const evidenceMeta = required<HTMLParagraphElement>('#evidence-meta');
@@ -95,6 +97,41 @@ void (async () => {
   const { observeOnly: enabled } = await readSettings();
   observeOnly.checked = enabled;
 })();
+
+/**
+ * Hand the page over to the user to mark up.
+ *
+ * The popup closes immediately afterwards, and that is not a side effect to
+ * work around — it is required. Drawing needs the mouse over the page, and a
+ * popup holds focus until it is dismissed, so leaving it open would mean the
+ * first drag went to the popup rather than to the page.
+ */
+async function withActiveTab(message: unknown): Promise<void> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+  try {
+    await chrome.tabs.sendMessage(tab.id, message);
+  } catch {
+    // The content script is injected on demand, so it may not be there yet on a
+    // page Shield has never run against. Injecting it here would need the
+    // scripting permission for a merely preparatory action; asking the user to
+    // run once first is the smaller ask.
+    statusDetail.textContent =
+      'Run Shield on this page once before marking areas, so it can attach to the page.';
+    statusDetail.hidden = false;
+  }
+}
+
+manualButton.addEventListener('click', () => {
+  void (async () => {
+    await withActiveTab({ type: MSG.START_MANUAL });
+    window.close();
+  })();
+});
+
+manualClear.addEventListener('click', () => {
+  void withActiveTab({ type: MSG.CLEAR_MANUAL });
+});
 
 observeOnly.addEventListener('change', () => {
   void setObserveOnly(observeOnly.checked);

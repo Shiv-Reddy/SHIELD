@@ -39,6 +39,15 @@
         <button id="cancel-button" class="button" type="button" hidden>Cancel</button>
       </div>
       <!--
+        Manual redaction. The rules will always miss something on a page nobody
+        wrote for us; the person looking at the screen is the one who knows.
+      -->
+      <div class="actions">
+        <button id="manual-button" class="button" type="button">Hide an area</button>
+        <button id="manual-clear" class="button" type="button">Clear marks</button>
+      </div>
+
+      <!--
         Shield acts on the page. That is the point of it, and it is also why
         running it against a live third-party site needs a way to watch without
         touching: on an autofilled login it would click "Sign in", and on a
