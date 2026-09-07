@@ -67,6 +67,25 @@ Smart Automation theme). Deadline: 20 September 2026.
 - **docs/SESSION_LOG.md** — append-only log of what happened each session, read
   this first every time to know exactly where things left off
 
+## Team and Ownership
+
+| # | Name | Year / Branch | Role | Primary ownership |
+|---|------|---------------|------|-------------------|
+| 1 | Shivkumar Reddy | 3rd yr, ECE | Team Lead + Core ML/Vision Pipeline | Local vision model (ONNX Runtime Web, WebGPU/WASM), overall integration, final demo ownership |
+| 2 | Shashank Kumar | 3rd yr, CSE | PII Detection & Redaction | DOM rule engine, UltraFace RFB-320 + OCR, ensemble cross-check, semantic placeholder system |
+| 3 | Ayush Verma | 3rd yr, CSE | Backend | FastAPI server, API gateway, redaction-aware prompt builder, reasoning-model integration, Action Response Builder |
+| 4 | Satyanand Gupta | 3rd yr, CSE | Extension & UI | Extension shell (MV3), Action Executor, consent preview UI, live network inspector, status indicators |
+| 5 | Vanshika Chamoli | 2nd yr, CSE (Data Science) | Testing, Latency & Data | The 5 test screens, Zero-Leak Verification runs, latency instrumentation, naive-baseline comparison |
+| 6 | Isha Kumari | 1st yr, CSE (AI/ML) | Documentation & Demo Support | TASKS.md / SESSION_LOG.md / DECISIONS.md upkeep, README, pitch deck content, notes during test runs |
+
+These are ownership areas, i.e. who a question about that module goes to — not
+a record of who wrote which commit.
+
+Write all project documentation in the team's voice ("we", or neutral/passive),
+never in the first person singular. Do not attribute a specific task, commit or
+test run to a named individual unless that attribution is directly verifiable —
+docs/SESSION_LOG.md records what happened, not who did it.
+
 ## Code Style
 
 - Clear, natural comments explaining _why_, not just _what_
@@ -118,6 +137,22 @@ Append a new entry to docs/SESSION_LOG.md with: date, what was completed this
 session, current blockers (if any), and exactly what the next session should
 start with. This is the single most important habit for continuity — never
 skip it, even for a short session.
+
+**At the end of every phase — push to GitHub:**
+
+When a phase in docs/TASKS.md is closed, commit and push to
+https://github.com/Shiv-Reddy/SHIELD.git on `main`, so the whole team is
+working from the same code rather than from a description of it. Before every
+push:
+
+- Check what is actually staged, not what you expect to be. `test-screens/face-a.jpg`
+  and `face-b.png` must never be committed — they are photographs of real
+  people, kept local by decision (see test-screens/README.md).
+- `extension/public/models/ultraface-rfb-320.onnx` must stay committed:
+  tools/verify-models.mjs checks its hash but does not download it, so a fresh
+  clone cannot build without it.
+- Confirm the suites are green first. A pushed phase is one the rest of the team
+  will build on.
 
 **Code hygiene (non-negotiable):**
 
