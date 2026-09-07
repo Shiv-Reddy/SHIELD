@@ -1529,3 +1529,71 @@ multi-step task, because steps two and three depend on step one having happened.
 That is inherent, not a defect.
 **Reusable beyond testing:** this is the honest core of the "consent preview"
 item sitting unticked in the Differentiation list.
+
+---
+
+**Decision:** Labels are scrubbed before transmission, like values
+**Why:** `RedactedDomEntry` carries a label as well as a value, and until this
+the label was passed through verbatim on every path — never scanned, never
+redacted. Our five fixtures could not have shown it: a fixture's labels are
+things like "Email address", which describe a field rather than being its
+contents. On real pages an accessible name is routinely the content itself — a
+link whose text is the account address, an `aria-label` reading "Account:
+someone@example.com". Those went to the server intact, which is precisely what
+the hard constraint in CLAUDE.md says cannot happen under any code path.
+**How it was found, which matters:** by luck, not by design. A live page put the
+same address in both a flagged value and a label, and the zero-leak sweep —
+which searches the whole serialised payload rather than only the places it
+expects a value — refused the transmission. Had that address appeared ONLY in
+the label, nothing in the pipeline would have looked at it. The sweep was
+written for "a password echoed into a label"; it caught a case nobody had
+thought of, which is the argument for having it.
+**How:** `scrubTextContent` replaces every content-pattern match inside a string
+with its token, and `redactDomElements` runs it over every label. Substring
+replacement rather than discarding the string, because a label is how the
+reasoning model tells one control from another: "Account: [EMAIL]" keeps that
+and "[EMAIL]" alone throws it away. The words around the value were never the
+sensitive part.
+**Shared rule, not a copy:** the phone digit-count guard now lives in one
+function used by both the classifier and the scrubber. Two copies would
+eventually disagree, and silently — text scrubbed but not flagged, or the
+reverse.
+
+---
+
+**Decision:** Form kind is decided from fields only; buttons no longer vote
+**Why:** Measured on a live login page. One password field and one email field,
+both detected correctly, and the reasoner then announced "Sign-up form filled
+and consented. Submitting it." and chose the sign-up LINK as the control to
+click. Outside observe-only mode that click navigates away from the form the
+user asked Shield to fill. The cause was a rule that treated any sign-up-worded
+control as evidence of a sign-up form — and nearly every real login page carries
+a "Sign up" link for people without an account.
+**The irony is worth recording.** `LOGIN_SUBMIT_WORDS` and
+`SIGNUP_SUBMIT_WORDS` were split apart precisely so a sign-up page's "Sign in"
+link could not win. The identical mistake in the opposite direction was left
+wide open, because our login fixture has no sign-up link and every real one
+does. A fixture cannot fail on markup it does not contain.
+**How:** two field signals remain — two or more password fields, or three or
+more distinct categories of personal field. Buttons still choose WHICH control
+to click once the kind is known; they get no vote on what kind of form it is,
+because a link to somewhere else says nothing about the form in front of you.
+**Cost, stated:** a sign-up with a single password field and only two personal
+categories now reads as a login. Its empty password then produces a
+credential-fill refusal rather than the sign-up decline — a worse message, but
+no wrong action.
+
+---
+
+**Decision:** The submit control is chosen by position, not document order
+**Why:** the same real-page run. Even with the kind decided correctly, the old
+rule took the first word-match in document order, so a header "Sign in" link
+would beat the form's own submit button. Both match the wording; only one sits
+under the fields the user just filled.
+**How:** candidates must lie below the bottom of the last field, with an 8px
+tolerance for a button sitting inline beside it, and the nearest one wins.
+Buttons above the fields are dropped outright — a control that precedes the form
+is not the control that submits it.
+**Degrades rather than breaks:** with no geometry the behaviour falls back to
+document order, which is what it always did. Checked by a test that sets every
+position to the origin.

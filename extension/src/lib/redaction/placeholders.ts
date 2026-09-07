@@ -14,6 +14,7 @@
  * Pure: no Chrome APIs, no canvas, no I/O.
  */
 
+import { CONTENT_PATTERNS, phoneMatchIsCredible } from '../pii/dom-rules';
 import type {
   DomElement,
   RedactedDomEntry,
@@ -59,6 +60,47 @@ export function placeholderFor(category: SensitiveCategory): string {
  * same treatment is applied to every category, since partial exposure of an
  * email or a phone number is just a slower leak.
  */
+/**
+ * Replace every sensitive-looking value inside a string with its token.
+ *
+ * WHY THIS EXISTS. `RedactedDomEntry` carries a `label` as well as a `value`,
+ * and until this was written the label went out verbatim on every path - never
+ * scanned, never redacted. On our own fixtures that was invisible, because a
+ * fixture's labels are things like "Email address". On real pages an accessible
+ * name is routinely the content itself: a link whose text is the account
+ * address, an `aria-label` reading "Account: someone@example.com". Those went to
+ * the server intact, which is the one thing this project promises cannot happen.
+ *
+ * It surfaced by luck rather than by design. A live page happened to put the
+ * same address in both a flagged value and a label, and the zero-leak sweep -
+ * which searches the whole payload rather than only the places it expects -
+ * refused the transmission. Had that address appeared ONLY in the label,
+ * nothing in the pipeline would have looked at it.
+ *
+ * Substring replacement rather than discarding the string: a label is how the
+ * reasoning model tells one control from another, and "Account: [EMAIL]" keeps
+ * that while "[EMAIL]" alone throws it away. The words around the value were
+ * never the sensitive part.
+ */
+export function scrubTextContent(text: string): string {
+  let scrubbed = text;
+
+  for (const [category, pattern] of CONTENT_PATTERNS) {
+    // A fresh global copy per call. The source patterns are non-global and
+    // shared with the classifier, and advancing their lastIndex here would
+    // corrupt detection in a way that only shows up on the second call.
+    const global = new RegExp(pattern.source, pattern.flags + 'g');
+
+    scrubbed = scrubbed.replace(global, (match) =>
+      category === 'phone' && !phoneMatchIsCredible(match)
+        ? match
+        : placeholderFor(category),
+    );
+  }
+
+  return scrubbed;
+}
+
 export function redactDomElements(
   elements: readonly DomElement[],
   regions: readonly SensitiveRegion[],
@@ -81,7 +123,9 @@ export function redactDomElements(
     return {
       elementId: element.elementId,
       elementType: element.elementType,
-      label: element.label,
+      // Scrubbed, not passed through. See scrubTextContent: a label can carry
+      // the value itself rather than a description of it.
+      label: element.label === null ? null : scrubTextContent(element.label),
       // A flagged element with no value still yields its token rather than
       // null: an empty password box and an unflagged one look identical
       // otherwise, and the model should know a password belongs here.

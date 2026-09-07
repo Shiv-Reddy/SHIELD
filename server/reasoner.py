@@ -121,28 +121,64 @@ def _matches(label: str, words: tuple[str, ...]) -> bool:
 
 
 def _find_button(
-    elements: list[RedactedDomEntry], words: tuple[str, ...]
+    elements: list[RedactedDomEntry],
+    words: tuple[str, ...],
+    below: float | None = None,
 ) -> RedactedDomEntry | None:
-    return next(
-        (
-            entry
-            for entry in elements
-            if entry.elementType == "button" and _matches(_label(entry), words)
-        ),
-        None,
-    )
+    """The best word-matching button, nearest first from `below` downward.
+
+    `below` is the bottom of the last field in the form. Ordering by distance
+    from it rather than by document order is what keeps a header's "Sign in"
+    from beating the form's own submit button: both match the wording, but only
+    one of them sits directly under the fields the user just filled. Buttons
+    above the fields are dropped outright — a control that precedes the form is
+    not the control that submits it.
+
+    With no geometry to work from the behaviour falls back to document order,
+    which is what it always did.
+    """
+    candidates = [
+        entry
+        for entry in elements
+        if entry.elementType == "button" and _matches(_label(entry), words)
+    ]
+
+    if below is None:
+        return candidates[0] if candidates else None
+
+    # A small tolerance, because a submit button sitting inline beside the last
+    # field is common and its top edge can be a pixel or two above it.
+    below_fields = [
+        entry for entry in candidates if entry.position.y + entry.position.height >= below - 8
+    ]
+    if not below_fields:
+        return None
+
+    return min(below_fields, key=lambda entry: entry.position.y)
+
+
+def _last_field_bottom(fields: list[RedactedDomEntry]) -> float | None:
+    """The bottom edge of the lowest field, or None when there are none."""
+    if not fields:
+        return None
+    return max(field.position.y + field.position.height for field in fields)
 
 
 def _find_submit(
-    elements: list[RedactedDomEntry], preferred: tuple[str, ...]
+    elements: list[RedactedDomEntry],
+    preferred: tuple[str, ...],
+    below: float | None = None,
 ) -> RedactedDomEntry | None:
     """The control that submits this form, preferring the form's own wording.
 
     Two passes rather than one combined word list, so a sign-up page's "Sign in"
     link can never win over its "Create account" button by appearing first in
-    the DOM.
+    the DOM — and, since the real-site runs, positioned below the fields so a
+    navigation link cannot win over the form's own button either.
     """
-    return _find_button(elements, preferred) or _find_button(elements, NEUTRAL_SUBMIT_WORDS)
+    return _find_button(elements, preferred, below) or _find_button(
+        elements, NEUTRAL_SUBMIT_WORDS, below
+    )
 
 
 def _is_checkbox(entry: RedactedDomEntry) -> bool:
@@ -189,21 +225,36 @@ def _form_kind(
 ) -> str | None:
     """Which of the two shapes this is, or None for "not one Shield knows".
 
-    Three independent signals say sign-up, any one of which is enough:
+    Decided from the FIELDS, never from the buttons. Two signals, either enough:
 
       - two or more password fields, since a confirmation pair exists only where
         a password is being *set*;
-      - a submit control worded as a sign-up;
       - three or more distinct categories of personal field, which a login form
         has no reason to ask for.
+
+    A third signal used to sit between those two — "a control worded as a
+    sign-up exists" — and it was wrong on real pages in a way no fixture could
+    show. Nearly every real login page carries a "Sign up" or "Create account"
+    link for people without an account, so that rule classified real login pages
+    as sign-ups. Measured on a live login page: one password field and one email
+    field, both detected correctly, and the reasoner then announced "Sign-up form
+    filled and consented. Submitting it." and chose the sign-up LINK as the
+    control to click. Outside observe-only mode that click navigates away from
+    the form the user asked Shield to fill.
+
+    The irony is worth recording. `LOGIN_SUBMIT_WORDS` and `SIGNUP_SUBMIT_WORDS`
+    were split precisely so a sign-up page's "Sign in" link could not win — and
+    the same mistake in the opposite direction was left wide open, because the
+    login fixture has no sign-up link and real login pages all do.
+
+    Buttons still choose WHICH control to click, once the kind is known. They no
+    longer get a vote on what kind of form it is: the presence of a link to
+    somewhere else says nothing about the form in front of you.
     """
     if not password_fields or not identity_fields:
         return None
 
     if len(password_fields) >= 2:
-        return "signup"
-
-    if _find_button(elements, SIGNUP_SUBMIT_WORDS) is not None:
         return "signup"
 
     if len({field.value for field in identity_fields}) >= 3:
@@ -236,7 +287,9 @@ def _decide_login(
             ),
         )
 
-    submit = _find_submit(elements, LOGIN_SUBMIT_WORDS)
+    submit = _find_submit(
+        elements, LOGIN_SUBMIT_WORDS, _last_field_bottom(password_fields)
+    )
     if submit:
         return Decision(
             action=Action(type="click", selector=submit.elementId, value=None),
@@ -367,7 +420,11 @@ def _decide_signup(
             ),
         )
 
-    submit = _find_submit(elements, SIGNUP_SUBMIT_WORDS)
+    submit = _find_submit(
+        elements,
+        SIGNUP_SUBMIT_WORDS,
+        _last_field_bottom(password_fields + identity_fields),
+    )
     if submit is None:
         return _look_further_down(elements)
 

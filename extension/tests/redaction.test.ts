@@ -10,7 +10,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildManifest, placeholderFor, redactDomElements } from '../src/lib/redaction/placeholders';
+import {
+  buildManifest,
+  placeholderFor,
+  redactDomElements,
+  scrubTextContent,
+} from '../src/lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../src/lib/redaction/payload';
 import type { DomElement, SensitiveRegion } from '../src/lib/types';
 
@@ -252,4 +257,80 @@ test('the zero-leak refusal does not name the value it found', () => {
   } catch (error) {
     assert.ok(!(error as Error).message.includes(secret));
   }
+});
+
+/*
+ * Labels were a hole in redaction until a real page found it.
+ *
+ * `RedactedDomEntry` carries a label as well as a value, and the label went out
+ * verbatim on every path. Our fixtures could not show this: a fixture's labels
+ * are things like "Email address", which describe the field rather than being
+ * its contents. On a live page an accessible name is routinely the content
+ * itself.
+ *
+ * It surfaced by luck. A real page put the same address in a flagged value AND
+ * a label, and the zero-leak sweep refused the transmission. Had it been in the
+ * label only, nothing would have looked at it.
+ */
+test('an email inside a label is replaced with its token', () => {
+  const scrubbed = scrubTextContent('Account: casey.tan@example.com');
+  assert.equal(scrubbed, `Account: ${placeholderFor('email')}`);
+  assert.ok(!scrubbed.includes('casey.tan@example.com'));
+});
+
+test('the words around a value survive, because the model needs them', () => {
+  // "[EMAIL]" alone would lose which control this is. The surrounding words
+  // were never the sensitive part.
+  assert.equal(
+    scrubTextContent('Signed in as someone@example.com — open menu'),
+    `Signed in as ${placeholderFor('email')} — open menu`,
+  );
+});
+
+test('an ordinary label is left exactly as it was', () => {
+  for (const label of ['Email address', 'Password', 'Search the notes', 'Sign in']) {
+    assert.equal(scrubTextContent(label), label);
+  }
+});
+
+test('every sensitive value in one label is replaced, not just the first', () => {
+  const scrubbed = scrubTextContent('a@example.com and b@example.com');
+  assert.ok(!scrubbed.includes('a@example.com'));
+  assert.ok(!scrubbed.includes('b@example.com'));
+});
+
+test('the phone rule in labels is the same one the detector uses', () => {
+  // A date range is the shape that broke the first phone pattern, and it must
+  // not be scrubbed out of a label either.
+  assert.equal(
+    scrubTextContent('Copyright 2024-2025 Acme Corp'),
+    'Copyright 2024-2025 Acme Corp',
+  );
+  assert.ok(!scrubTextContent('Call +91 98200 11223').includes('98200'));
+});
+
+test('scrubbing runs on labels as elements are redacted', () => {
+  const [entry] = redactDomElements(
+    [
+      {
+        elementId: 'e0',
+        elementType: 'button',
+        selector: 'html > body #e0',
+        label: 'Account: casey.tan@example.com',
+        value: null,
+        inputType: null,
+        autocomplete: null,
+        name: null,
+        placeholder: null,
+        position: { x: 0, y: 0, width: 100, height: 20 },
+      },
+    ],
+    [],
+  );
+
+  // Note the element was NOT flagged. That is the point: nothing about a button
+  // says it is sensitive, and its label carried an address anyway.
+  assert.ok(entry !== undefined);
+  assert.ok(!entry.label?.includes('casey.tan@example.com'));
+  assert.ok(entry.label?.includes(placeholderFor('email')));
 });

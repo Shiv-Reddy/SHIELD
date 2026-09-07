@@ -551,7 +551,11 @@ check(
 )
 
 # Once the button is on screen, Shield submits instead of scrolling further.
-scrolled = list(BELOW_THE_FOLD) + [_at("e21", "button", None, "Create account", 520, 36)]
+# Below the checkboxes at 890/912, which is where a submit button actually sits
+# once the page has been scrolled far enough to reveal it. The first draft of
+# this fixture put it at y=520 — above the fields — and the positional rule
+# rightly refused it.
+scrolled = list(BELOW_THE_FOLD) + [_at("e21", "button", None, "Create account", 950, 36)]
 decision = decide_by_rules(_request(scrolled, task="create this account"))
 check(
     "once the button is visible it is clicked, not scrolled past",
@@ -572,6 +576,121 @@ decision = decide_by_rules(_request(login_no_submit))
 check(
     "a login form with no submit control still declines rather than scrolling",
     decision.action is None,
+    f"got {decision.action}",
+)
+
+
+# --- What the real pages found -----------------------------------------------
+#
+# Four live sites were run through the full pipeline in observe-only mode. The
+# fixtures had never produced either of these, and could not have: our login
+# fixture has no "Sign up" link, and real login pages all do.
+
+
+# THE BUG, exactly as measured: a live login page, one password field and one
+# email field, both detected correctly. The reasoner announced "Sign-up form
+# filled and consented. Submitting it." and chose the sign-up LINK as the
+# control to click. Outside observe-only that navigates away from the form the
+# user asked Shield to fill.
+login_with_signup_link = [
+    _at("e11", "input", "[EMAIL]", "Email address", 387, 46, filled=True),
+    _at("e13", "input", "[PASSWORD]", "Password", 472, 46, filled=True),
+    _at("e15", "button", None, "Sign in", 550, 44),
+    # "Don't have an account? Sign up" — below the real submit, as it is on
+    # nearly every login page ever built.
+    _at("e17", "button", None, "Sign up", 620, 20),
+]
+decision = decide_by_rules(_request(login_with_signup_link))
+check(
+    "a login page carrying a Sign up link is still a login page",
+    "sign-up" not in decision.summary.lower(),
+    f"got {decision.summary!r}",
+)
+check(
+    "and it is submitted at Sign in, not at the Sign up link",
+    decision.action is not None and decision.action.selector == "e15",
+    f"got {decision.action}",
+)
+
+# The same page with the sign-up link placed FIRST in the DOM, which is where a
+# header link would be. Document order must not decide this.
+login_link_first = [
+    _at("e01", "button", None, "Sign up", 40, 20),
+    _at("e11", "input", "[EMAIL]", "Email address", 387, 46, filled=True),
+    _at("e13", "input", "[PASSWORD]", "Password", 472, 46, filled=True),
+    _at("e15", "button", None, "Sign in", 550, 44),
+]
+decision = decide_by_rules(_request(login_link_first))
+check(
+    "a sign-up link above the form does not turn it into a sign-up form",
+    decision.action is not None and decision.action.selector == "e15",
+    f"got {decision.action}",
+)
+
+# A header "Sign in" link sits above the fields and matches the login wording
+# exactly. The form's own button is below them. Only one of the two submits it.
+header_link_above = [
+    _at("e01", "button", None, "Sign in", 30, 20),
+    _at("e11", "input", "[EMAIL]", "Email address", 387, 46, filled=True),
+    _at("e13", "input", "[PASSWORD]", "Password", 472, 46, filled=True),
+    _at("e15", "button", None, "Sign in", 550, 44),
+]
+decision = decide_by_rules(_request(header_link_above))
+check(
+    "a header link above the fields never wins over the form's own button",
+    decision.action is not None and decision.action.selector == "e15",
+    f"got {decision.action}",
+)
+
+# A genuine sign-up is still recognised without any help from button wording:
+# two password fields are the whole of the evidence here, and the button is
+# neutrally worded.
+real_signup = [
+    _at("s1", "input", "[NAME]", "Full name", 417, 46, filled=True),
+    _at("s2", "input", "[EMAIL]", "Email", 501, 46, filled=True),
+    _at("s3", "input", "[PASSWORD]", "Password", 585, 46, filled=True),
+    _at("s4", "input", "[PASSWORD]", "Confirm password", 669, 46, filled=True),
+    _at("s5", "button", None, "Continue", 750, 44),
+]
+decision = decide_by_rules(_request(real_signup, task="create this account"))
+check(
+    "a real sign-up is still identified from its fields alone",
+    "sign-up" in decision.summary.lower(),
+    f"got {decision.summary!r}",
+)
+check(
+    "and it is submitted at the control below its fields",
+    decision.action is not None and decision.action.selector == "s5",
+    f"got {decision.action}",
+)
+
+# Three distinct personal categories beside a single password still reads as a
+# sign-up. A login form has no reason to ask for name, phone and address.
+three_categories = [
+    _at("t1", "input", "[NAME]", "Full name", 100, 46, filled=True),
+    _at("t2", "input", "[PHONE]", "Mobile", 160, 46, filled=True),
+    _at("t3", "input", "[ADDRESS]", "Address", 220, 46, filled=True),
+    _at("t4", "input", "[PASSWORD]", "Password", 280, 46, filled=True),
+    _at("t5", "button", None, "Continue", 340, 44),
+]
+decision = decide_by_rules(_request(three_categories))
+check(
+    "three personal categories beside one password still reads as a sign-up",
+    "sign-up" in decision.summary.lower(),
+    f"got {decision.summary!r}",
+)
+
+# With no geometry at all — an older client, or a payload built by hand — the
+# rule must degrade to document order rather than refusing to find anything.
+no_geometry = [
+    _element("g1", "input", "[EMAIL]", "Email", filled=True),
+    _element("g2", "input", "[PASSWORD]", "Password", filled=True),
+    _element("g3", "button", None, "Sign in"),
+]
+decision = decide_by_rules(_request(no_geometry))
+check(
+    "with every position at the origin, the submit control is still found",
+    decision.action is not None and decision.action.selector == "g3",
     f"got {decision.action}",
 )
 

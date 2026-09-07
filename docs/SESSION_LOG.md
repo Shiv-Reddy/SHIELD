@@ -1617,3 +1617,69 @@ class of error, which is why it was worth doing rather than assuming.
 Phases 1, 2 and 3 are now complete apart from the two items needing other
 laptops and the deliberately deferred profile-edit fixture. The largest
 remaining block of work is Documentation & Submission.
+
+## 2026-09-07 — REAL SITES: two defects no fixture could have found
+
+Four live pages run through the full pipeline in observe-only mode. This was
+worth more than any fixture work done so far.
+
+**Two predictions were wrong, in the good direction.** Zero unresolved selectors
+on every real page, at 238 and 278 elements scanned — the absolute-path selector
+fix holds on markup we did not write. And the DOM scan ran 5.2-6.5ms against a
+100ms budget on those pages, so the scan cost is not a problem at real page
+sizes. Both were expected to break.
+
+**Defect 1: labels were a hole in redaction.** `RedactedDomEntry` carries a
+label as well as a value, and the label went out verbatim on every path — never
+scanned, never redacted. Our fixtures could not have shown it: a fixture's
+labels are things like "Email address", which describe a field rather than being
+its contents. On a live page an accessible name is routinely the content itself.
+
+It was found by luck rather than by design, and that is the part worth keeping.
+A real page put the same address in both a flagged value and a label, and the
+zero-leak sweep refused to transmit. That sweep was written for "a password
+echoed into a label"; it caught something nobody had thought of, which is the
+whole argument for having a check that searches the entire payload rather than
+the places it expects. Had the address appeared ONLY in the label, nothing would
+have looked at it — a violation of the hard constraint, shipped and unnoticed.
+
+Fixed with `scrubTextContent`, replacing every content-pattern match inside a
+string with its token, run over every label. Substring replacement, so "Account:
+[EMAIL]" keeps what the model needs while losing what it must not have. The
+phone digit-count guard now lives in one function shared by the classifier and
+the scrubber; two copies would have disagreed eventually, and silently.
+
+**Defect 2: a live login page was classified as a sign-up, and Shield would have
+clicked the wrong control.** One password field, one email field, both detected
+correctly — and then "Sign-up form filled and consented. Submitting it." with
+the sign-up LINK chosen as the control to click. Outside observe-only that
+navigates away from the form the user asked Shield to fill.
+
+The cause was a rule treating any sign-up-worded control as evidence of a
+sign-up form, and nearly every real login page carries a "Sign up" link. The
+irony is exact: `LOGIN_SUBMIT_WORDS` and `SIGNUP_SUBMIT_WORDS` were split apart
+precisely so a sign-up page's "Sign in" link could not win, and the identical
+mistake in the opposite direction was left open — because our login fixture has
+no sign-up link and every real one does. A fixture cannot fail on markup it does
+not contain.
+
+Fixed twice over. Form kind now comes from fields only: two or more password
+fields, or three or more distinct personal categories. Buttons still choose
+which control to click once the kind is known, but get no vote on what kind of
+form it is. And the submit control is now chosen by position — below the last
+field, nearest first — so a header link cannot beat the form's own button.
+
+**Observe-only mode earned itself immediately.** It was built as a precaution an
+hour before these runs, and the very first real login page produced an action
+that would have navigated away from the page. The precaution was not
+theoretical.
+
+**Totals:** server 82 checks (reasoner 82, prompt 35 — reasoner grew from 74 by
+the seven real-site regressions), client 56 (up from 50 by the label tests),
+typecheck and build clean.
+
+**Next:** the user has asked for manual redaction — a way to draw a rectangle
+over anything on the page and have Shield hide it too. It is the right feature
+for exactly the gap these runs exposed: automatic detection will always miss
+something on a page nobody wrote for us, and the honest answer is to let the
+person looking at the screen say so. Needs a design pass before code.

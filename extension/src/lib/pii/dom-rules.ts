@@ -176,7 +176,7 @@ const AUTHOR_SUPPLIED_VALUE_TYPES: ReadonlySet<string> = new Set([
  * loose pattern here would black out ordinary prose and make the page
  * unreadable to the reasoning model, which fails the task a different way.
  */
-const CONTENT_PATTERNS: ReadonlyArray<readonly [SensitiveCategory, RegExp]> = [
+export const CONTENT_PATTERNS: ReadonlyArray<readonly [SensitiveCategory, RegExp]> = [
   ['email', /[\w.+-]+@[\w-]+\.[\w.-]+/],
   // An Indian PAN, or a long unbroken digit run: card numbers, Aadhaar,
   // account numbers. Nine digits is above any plausible year, price or count.
@@ -343,6 +343,21 @@ export function classifyElement(element: DomElement): DomRuleHit | null {
 }
 
 /**
+ * True when a phone-shaped match carries enough digits to be believed.
+ *
+ * Split out so the classifier and the scrubber apply exactly the same rule. Two
+ * copies of this threshold would eventually disagree, and the disagreement
+ * would be silent: text scrubbed but not flagged, or the reverse.
+ */
+export function phoneMatchIsCredible(matched: string): boolean {
+  const digits = matched.replace(/\D/g, '').length;
+  const required = matched.trim().startsWith('+')
+    ? MIN_PHONE_DIGITS_WITH_COUNTRY_CODE
+    : MIN_PHONE_DIGITS_PLAIN;
+  return digits >= required;
+}
+
+/**
  * Classify visible text by what it looks like, rather than by what surrounds it.
  *
  * Used only for elements that display content directly. Returns null for
@@ -356,14 +371,7 @@ export function classifyTextContent(text: string): DomRuleHit | null {
     // A phone number is the one shape that collides with ordinary content —
     // dates, prices, reference codes. Counting digits is what separates
     // "+91 98765 43210" from "2024 - 2025".
-    if (category === 'phone') {
-      const matched = match[0].trim();
-      const digits = matched.replace(/\D/g, '').length;
-      const required = matched.startsWith('+')
-        ? MIN_PHONE_DIGITS_WITH_COUNTRY_CODE
-        : MIN_PHONE_DIGITS_PLAIN;
-      if (digits < required) continue;
-    }
+    if (category === 'phone' && !phoneMatchIsCredible(match[0])) continue;
 
     return {
       category,
