@@ -1507,3 +1507,34 @@ video-call screens) is unblocked once that is done.
 **The extension must be reloaded in Chrome before the next run** — `dist` was
 rebuilt with the overlay change, and unlike every other change this session, it
 is client-side.
+
+**DEMO_SCRIPT.md retargeted rather than updated or deleted.** It was three
+documents under one name: a minute-by-minute narration script, a technical
+pre-demo checklist, and prepared answers to judge questions. The narration is
+owned by whoever presents and changes every rehearsal, so keeping it in the repo
+was maintenance with no reader; it is gone, along with the rehearsal and
+contingency sections.
+
+What stayed is the part that comes out of the code and therefore goes stale
+silently: the conditions a demo must be run under to show true numbers, and the
+Q&A. Both now update as a by-product of normal work rather than as a separate
+chore. The file is honest about earning nothing on the rubric
+(EVALUATION_CRITERIA.md is 100% technical) and about existing only to protect
+the scores that do count.
+
+Four fixture gotchas were added, each one hit for real this session and each one
+capable of making a correct run look broken on camera:
+- `02-signup.html` keeps its terms box ticked after a run, so a second take is
+  two actions rather than three. Reload between takes.
+- `02-signup.html` with empty passwords makes Shield decline — correct, and a
+  fine demo of its own, but not the acting demo.
+- `01-login.html` keeps its "Signed in at ..." confirmation.
+- The overlay clears on scroll deliberately, so scrolling mid-shot removes the
+  boxes. Anyone recording without knowing that will film what looks like a bug.
+
+Also recorded: warm the backend before recording. Measured 1085ms, then 344ms,
+then 84ms across three successive requests after a restart, so an unwarmed
+backend films the one number that breaks its budget.
+
+Doc-list descriptions in CLAUDE.md and README.md updated to say what the file
+now is, so nobody opens it expecting a script.

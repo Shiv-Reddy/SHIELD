@@ -61,7 +61,9 @@ Smart Automation theme). Deadline: 20 September 2026.
   post-hackathon production hardening and public launch
 - **docs/TASKS.md** — current build status, module by module
 - **docs/DECISIONS.md** — why every settled choice was made
-- **docs/DEMO_SCRIPT.md** — live demo walkthrough, anticipated judge Q&A, contingency plans
+- **docs/DEMO_SCRIPT.md** — demo reference: the technical conditions a demo must
+  be run under to show true numbers, and prepared answers to judge questions. Not
+  a narration script; the presentation wording is owned by whoever presents
 - **docs/EVALUATION_CRITERIA.md** — standalone quick-reference version of the
   official weighted rubric (also embedded in docs/PRD.md Section 7)
 - **docs/SESSION_LOG.md** — append-only log of what happened each session, read

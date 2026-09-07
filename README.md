@@ -46,7 +46,7 @@ if you're new to the project:
 8. [ROADMAP.md](./docs/ROADMAP.md) — timeline from prep through production
 9. [TASKS.md](./docs/TASKS.md) — current build status
 10. [DECISIONS.md](./docs/DECISIONS.md) — log of settled choices and reasoning
-11. [DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md) — live demo walkthrough and Q&A prep
+11. [DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md) — demo prerequisites, fixture gotchas and judge Q&A
 12. [EVALUATION_CRITERIA.md](./docs/EVALUATION_CRITERIA.md) — the weighted judging rubric
 13. [SESSION_LOG.md](./docs/SESSION_LOG.md) — what happened each work session
 
