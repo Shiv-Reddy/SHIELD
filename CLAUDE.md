@@ -91,8 +91,10 @@ docs/SESSION_LOG.md records what happened, not who did it.
 - Clear, natural comments explaining _why_, not just _what_
 - No comments, headers, or commit messages referencing any AI coding assistant,
   tool, or company
-- Commit messages written plainly, describing the change itself, as a human
-  developer would write them
+- Commit messages are ONE LINE. A subject line and nothing else — no body, no
+  bullet list, no trailers. Written plainly, describing the change itself, as a
+  human developer would write them. If a change genuinely cannot be summarised
+  in one line, that is a sign it should have been more than one commit.
 
 ## Working Priority
 
@@ -158,4 +160,4 @@ push:
 
 - No comments, commit messages, or file headers referencing Claude Code or
   any AI assistant.
-- Commit messages written plainly, describing the change itself.
+- Commit messages written plainly, describing the change itself, on ONE LINE.
