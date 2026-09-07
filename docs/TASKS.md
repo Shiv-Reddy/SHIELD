@@ -496,9 +496,59 @@ summary and the docstring now describe what the code does.
       the content — see DECISIONS.md for why pinning is worse, and the Module F
       entry above, whose "NEEDS VISUAL VERIFICATION" note this closes.
 
-## Phase 3 — Second Stretch Goal (Only If Real Time Remains)
-- [ ] Face detection integrated and working on video-call/profile-photo screens
-- [ ] Working end-to-end as a third demo task, or captured as a backup clip
+## Phase 3 — Second Stretch Goal (Unblocked 2026-09-07)
+
+**The third demo task is protection, not action** — decided before any work,
+recorded in DECISIONS.md. A photo gallery has no form, so there is nothing to do
+on it, and inventing an action would be worse than having none. What it shows is
+the one thing no other screen can: the visual layer hiding something the DOM has
+no way to describe. Nothing in a page's markup says a person's face is rendered
+at particular coordinates.
+
+- [x] Face detection integrated and working on video-call/profile-photo screens
+      — MEASURED IN CHROME against the live backend: **6 of 8 faces**, matching
+      the 5-6 predicted in the fixture before the run. Peak score 0.990,
+      inference 40.0ms on WebGPU, redaction 75.1ms/200 for 6 regions, round trip
+      61.3ms, every stage inside budget. All 8 images were in the viewport (the
+      element map lists 8), so the two misses are real misses and not off-screen
+      elements.
+      Boxes matched to ladder rungs by size, box width running ~0.4x the
+      rendered image width: portraits 0.990 and 0.980, then 200px 0.937, 150px
+      0.962, 110px 0.538, and 80px at **0.312**. The 55px and 36px rungs were
+      missed.
+      **The floor is soft, and that is the number worth quoting rather than the
+      count.** 0.312 against a 0.3 threshold is twelve thousandths of margin —
+      not "80px works" but "80px barely worked on this photograph". The honest
+      claim is a floor between 80 and 110px, unreliable at the bottom.
+      **The two misses are a resolution limit, not a threshold one.**
+      `candidates 20/14/9 at 0.3/0.5/0.7`, and the rungs are spatially separate
+      so NMS cannot be suppressing them against each other — those two produced
+      nothing at any cutoff. Lowering the threshold further gains nothing and
+      costs false positives; the fix would be tiling or upscaling before
+      inference, which is different work.
+      This also settles the earlier 0.5 -> 0.3 change arithmetically: at 0.5 the
+      survivors are exactly the five above 0.5, which is what was recorded then.
+      The change bought the 80px rung and nothing else.
+- [x] No over-redaction on non-face content
+      — the other half of this screen's pass criteria, which a page of nothing
+      but faces could not test. Zero DOM detections ("no DOM values needed
+      replacing"), so the headings, captions and control paragraph were untouched
+      at the DOM level, and all six face boxes are accounted for by six known
+      faces, leaving no spare box to have landed on the control paragraph.
+- [x] Working end-to-end as a third demo task
+      — the run completed the full pipeline and ended with the reasoner
+      declining: "No recognised form on this screen." That pairing is the task.
+      A detector that finds faces is only worth having if the reasoner stays
+      quiet when there is nothing to do, and this is the screen where the
+      detector is loudest — 6 regions painted, 6 manifest entries, payload
+      sealed, and no action proposed.
+- [ ] Profile-edit fixture, so a face is redacted inside an acting loop
+      — DEFERRED, not forgotten. Considered during the Phase 3 decision and
+      recorded in DECISIONS.md: a face photo beside name and email fields with a
+      Save button would be the strictly better demo, since it would show visual
+      and DOM detection together followed by an action. It needs a new fixture
+      with its own written-first expectations, and CLAUDE.md already marks the
+      face path the higher-risk one. The obvious next thing if time remains.
 
 ## Differentiation Features (After Core Phase 1 Works)
 - [ ] Live network inspector shown in demo

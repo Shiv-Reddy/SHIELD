@@ -1538,3 +1538,70 @@ backend films the one number that breaks its budget.
 
 Doc-list descriptions in CLAUDE.md and README.md updated to say what the file
 now is, so nobody opens it expecting a script.
+
+## 2026-09-07 — PHASE 3: face detection measured
+
+**The design question was answered before any work again.** A photo gallery has
+no form, so the third demo task is PROTECTION rather than action: Shield hides
+what the DOM cannot describe, and then declines to act because there is nothing
+to do. The pairing is the point — a detector that finds faces is only worth
+having if the reasoner stays quiet — and this is the screen where the detector
+is loudest. Considered and deferred: a profile-edit fixture putting a face
+beside name/email fields with a Save button, which would be the better demo but
+needs a new fixture with written-first expectations on the path CLAUDE.md
+already marks higher-risk.
+
+**Predictions were written into the fixture before the run**, as on every other
+screen, including the reasoning behind them: the frame is ~1920px downscaled to
+a 320px model input, a factor of about 6, and a face occupies roughly 60% of
+each image's width, so a 200px rung shows the model ~20px of face and a 36px
+rung ~3px. Predicted 5-6 of 8 with the floor at 110px.
+
+**Result: 6 of 8.** Count correct, floor one rung pessimistic — it is at 80px.
+Peak score 0.990, inference 40.0ms on WebGPU, redaction 75.1ms/200 for six
+regions, round trip 61.3ms. Every stage inside budget. All eight images were in
+the viewport, so the two misses are genuine misses rather than off-screen
+elements.
+
+Boxes were matched to rungs by size, box width running consistently ~0.4x the
+rendered image width: portraits 0.990 and 0.980, then 200px 0.937, 150px 0.962,
+110px 0.538, 80px 0.312. The 55px and 36px rungs produced nothing.
+
+**Two findings worth more than the count.**
+
+The floor is SOFT. The 80px rung cleared a 0.3 threshold at 0.312 — twelve
+thousandths of margin. That is not "80px works", it is "80px barely worked on
+this photograph", and a different face, crop or lighting could fail there. The
+claim to make is a floor between 80 and 110px that is unreliable at the bottom.
+Recorded so nobody later reads "6 of 8" as a stable capability.
+
+The two misses are a RESOLUTION limit, not a threshold one. `candidates 20/14/9
+at 0.3/0.5/0.7`, and the rungs are spatially separate so NMS cannot be
+suppressing them against each other — a rung producing any candidate above 0.3
+would have survived as its own face. Those two produced nothing at any cutoff.
+Lowering the threshold further buys no faces and costs false positives; the fix
+would be tiling or upscaling before inference, which is different work. This is
+exactly the distinction the `candidatesByCutoff` diagnostic was built to make,
+and it is the first time it has actually earned its place.
+
+**It also settles the earlier threshold change arithmetically.** Dropping 0.5 to
+0.3 was decided on a partial measurement. The full ladder shows the survivors at
+0.5 would be exactly the five above 0.5 — which is what was recorded then — so
+the change bought the 80px rung and nothing else. Small, real, and worth having
+given the asymmetry: a false positive paints over background, a false negative
+puts a face on a server.
+
+**The over-redaction half passed too**, which a page of nothing but faces could
+not have tested. Zero DOM detections, so headings, captions and the control
+paragraph were untouched, and all six face boxes are accounted for by six known
+faces — leaving no spare box to have landed on the control paragraph.
+
+**Still outstanding:** the redacted frame has not been looked at. Every check so
+far is one number agreeing with another, and none of them would notice a
+rectangle painted in the wrong place — which is precisely the bug found on the
+overlay earlier today. The frame data URL is printed on fixture runs; pasting it
+into a tab is the last check.
+
+**Next session:** confirm that frame visually, then either the deferred
+profile-edit fixture or the Documentation & Submission items, which are now the
+largest block of unticked work left.

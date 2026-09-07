@@ -1465,3 +1465,30 @@ obvious next thing.
 found at the current 0.3 threshold, where the size floor sits on the ladder, and
 whether the control paragraph survives untouched. A demo of face redaction that
 cannot say which faces it misses is not evidence of anything.
+
+---
+
+**Decision:** The 0.3 face threshold stays, and the two missed faces are not
+chased by lowering it further
+**Why:** Measurement rather than preference. On Screen 3 the detector reports
+`candidates 20/14/9 at 0.3/0.5/0.7` and keeps 6 faces from 8. The ladder rungs
+are spatially separate, so non-maximum suppression cannot be removing the
+missing two against each other — a rung producing any candidate above 0.3 would
+survive as its own face. They therefore produced nothing at any cutoff, which
+makes them a resolution limit and not a threshold one. Lowering further would
+buy no faces and cost false positives, and the two failure modes have opposite
+fixes.
+**It also settles the earlier change with arithmetic.** Dropping 0.5 to 0.3 was
+decided on a partial measurement. The full ladder now shows the survivors at 0.5
+would be 0.990, 0.980, 0.962, 0.937 and 0.538 — exactly the five recorded at the
+time — so the change bought the 80px rung and nothing else. Small, real, and
+worth having given the asymmetry: a false positive paints over background, a
+false negative puts a face on a server.
+**The number to quote is the margin, not the count.** The 80px rung cleared the
+threshold at 0.312. Twelve thousandths. That is not "80px works", it is "80px
+barely worked on this photograph", and a different face or crop could fail
+there. The claim to make is a floor between 80 and 110px that is unreliable at
+the bottom — recorded here so nobody later reads "6 of 8" as a stable capability.
+**If those faces are ever wanted:** tile or upscale the frame before inference.
+The frame is ~1920px wide and the model input is 320px, so a 36px-wide image
+puts roughly 3px of face in front of the model. No threshold reaches that.
