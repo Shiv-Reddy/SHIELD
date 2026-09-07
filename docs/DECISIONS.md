@@ -1686,3 +1686,64 @@ stay empty — API_SPEC.md gives `task_query` a minimum length and the server
 would reject the payload outright. The default is a reading task rather than an
 acting one, because somebody who clicked Run from the marking toolbar was hiding
 things and has not asked for the page to be touched.
+
+---
+
+**Decision:** Marking is reachable before a run, and the popup never injects to
+find that out
+**Why:** the popup messaged the tab directly, which fails on any page the
+content script has not been injected into — and the guidance for that failure
+was to run Shield once first. That inverts the feature. The first run transmits
+the page, so the user had already sent the thing they opened marking mode to
+hide. Reported from a real signup screen as "only after click log in it run and
+then after that again i have to click on hide manually".
+**How:** the popup sends BEGIN_MANUAL to the service worker, which is the
+context that can inject, and which already owns `ensureContentScript`. Marking
+is now the first thing that can be done on a page, which is the order the
+feature only makes sense in. Injection stays tied to a deliberate user action —
+starting a run, or choosing to mark — so the "no reach into pages you never
+pointed Shield at" property is unchanged.
+**The mark count is asked of the tab directly and never through the worker**,
+because the worker would inject in order to answer. Opening the popup must not
+be what puts Shield on a page. A page with no content script has no marks, and
+the failed send is exactly that answer.
+
+---
+
+**Decision:** The rectangle being dragged is painted in viewport space, from
+corners held in document space
+**Why:** reported as "marking area is not working properly". The stored mark was
+correct; the live preview was painted at its document coordinate on a surface
+anchored to the viewport, so on any scrolled page the rectangle drew a full
+scroll-height below the cursor. The same coordinate mistake as the surface bug,
+one layer down, and it survived because every test covered the stored mark and
+none covered the thing the user actually looks at while drawing.
+**How:** both corners are kept in document space — the space the finished mark
+is stored in — and `previewRect` subtracts the scroll offset at paint time. It
+is pure and exported for the same reason `clipToViewport` is: this arithmetic is
+the whole risk in the feature and can be checked without a browser. Six tests
+cover it, including one asserting the preview and the stored mark agree, so the
+two conversions cannot drift apart again.
+**Escape during a drag abandons that rectangle only**, rather than leaving the
+whole mode: throwing away every mark already made is a punishing response to the
+most ordinary mistake in a drawing tool.
+**The toolbar sits at the bottom and fades while drawing.** Page headers are
+where account names, email addresses and avatars live — exactly the material
+this tool exists to cover — so a bar pinned to the top would be sitting on it.
+
+---
+
+**Decision:** Every colour in the popup is a token defined in both themes
+**Why:** not tidiness. The latency panel hardcoded slate greys chosen for a dark
+surface (`#cbd5e1` for labels, `#94a3b8` for values) and rendered them on the
+light background, so the entire timing breakdown was near-white text on white
+and could not be read at all in light mode. The payload panel hardcoded its own
+teal and grey the same way, and its separator referenced `--hairline`, a
+variable defined nowhere, so it silently took a light-mode fallback in dark
+mode.
+**How:** one accent, one border, three text weights, all tokenised, with the
+payload viewer keeping its own explicitly dark pair the way an editor pane does.
+Brand and status share one row rather than two stacked blocks, which spent a
+third of a 320px popup restating that this is Shield; and marking is a quiet
+full-width button rather than a peer of Run, because it opens a step rather than
+performing one.

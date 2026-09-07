@@ -10,6 +10,8 @@
 import {
   MSG,
   sendToWorker,
+  type BeginManualResult,
+  type ManualStatusResult,
   type StateChangedMessage,
   type WorkerBroadcast,
 } from '../lib/messages';
@@ -35,6 +37,8 @@ const backendNotice = required<HTMLParagraphElement>('#backend-notice');
 const observeOnly = required<HTMLInputElement>('#observe-only');
 const manualButton = required<HTMLButtonElement>('#manual-button');
 const manualClear = required<HTMLButtonElement>('#manual-clear');
+const manualState = required<HTMLParagraphElement>('#manual-state');
+const manualCount = required<HTMLSpanElement>('#manual-count');
 const evidenceToggle = required<HTMLButtonElement>('#evidence-toggle');
 const evidenceBody = required<HTMLDivElement>('#evidence-body');
 const evidenceMeta = required<HTMLParagraphElement>('#evidence-meta');
@@ -105,33 +109,77 @@ void (async () => {
  * work around — it is required. Drawing needs the mouse over the page, and a
  * popup holds focus until it is dismissed, so leaving it open would mean the
  * first drag went to the popup rather than to the page.
+ *
+ * The request goes to the service worker rather than straight to the tab. It
+ * used to go straight to the tab, which fails on any page the content script
+ * has not been injected into yet — and the advice for that failure was to run
+ * Shield once first. That inverted the whole feature: the first run transmits
+ * the page, so the user had already sent the thing they opened this to hide.
+ * The worker can inject, so marking now works as the FIRST thing done on a
+ * page, which is the order that makes sense.
  */
-async function withActiveTab(message: unknown): Promise<void> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) return;
-  try {
-    await chrome.tabs.sendMessage(tab.id, message);
-  } catch {
-    // The content script is injected on demand, so it may not be there yet on a
-    // page Shield has never run against. Injecting it here would need the
-    // scripting permission for a merely preparatory action; asking the user to
-    // run once first is the smaller ask.
-    statusDetail.textContent =
-      'Run Shield on this page once before marking areas, so it can attach to the page.';
-    statusDetail.hidden = false;
-  }
-}
-
 manualButton.addEventListener('click', () => {
   void (async () => {
-    await withActiveTab({ type: MSG.START_MANUAL });
-    window.close();
+    manualButton.disabled = true;
+    const result = await sendToWorker<BeginManualResult>({ type: MSG.BEGIN_MANUAL });
+    manualButton.disabled = false;
+
+    if (result?.ok) {
+      window.close();
+      return;
+    }
+
+    // Closing onto a page where nothing will happen would look like the button
+    // did nothing, so the popup stays open and says why instead.
+    statusDetail.textContent =
+      result?.message ?? 'Shield could not open marking mode on this page.';
+    statusDetail.hidden = false;
   })();
 });
 
 manualClear.addEventListener('click', () => {
-  void withActiveTab({ type: MSG.CLEAR_MANUAL });
+  void (async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: MSG.CLEAR_MANUAL });
+    } catch {
+      // No content script means no marks to clear. Nothing to report.
+    }
+    await renderManualCount();
+  })();
 });
+
+/**
+ * Show how many areas this page is carrying, if any.
+ *
+ * Asked of the tab DIRECTLY, never through the worker, because the worker would
+ * inject the content script to answer it. Opening the popup must not be what
+ * puts Shield on a page — injection stays tied to the user actually starting a
+ * run or choosing to mark. A page with no content script has no marks, and the
+ * failed send is exactly that answer.
+ */
+async function renderManualCount(): Promise<void> {
+  let count = 0;
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id) {
+    try {
+      const status = (await chrome.tabs.sendMessage(tab.id, {
+        type: MSG.MANUAL_STATUS,
+      })) as ManualStatusResult | undefined;
+      count = status?.count ?? 0;
+    } catch {
+      count = 0;
+    }
+  }
+
+  manualState.hidden = count === 0;
+  manualCount.textContent =
+    count === 1 ? '1 area marked on this page' : `${count} areas marked on this page`;
+}
+
+void renderManualCount();
 
 observeOnly.addEventListener('change', () => {
   void setObserveOnly(observeOnly.checked);

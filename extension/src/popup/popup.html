@@ -6,31 +6,33 @@
     <link rel="stylesheet" href="./popup.css" />
   </head>
   <body>
+    <!--
+      Brand and current state share one row. They were two stacked blocks, which
+      spent a third of a 320px popup restating that this is Shield. The state is
+      the only thing here that changes during a run, so it gets the position the
+      eye returns to.
+    -->
     <header class="header">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <h1 class="brand-name">Shield</h1>
-      </div>
-      <p class="tagline">Your screen stays yours.</p>
+      <span class="brand-mark" aria-hidden="true"></span>
+      <h1 class="brand-name">Shield</h1>
+      <span class="status" aria-live="polite">
+        <span id="status-dot" class="status-dot" data-status="idle" aria-hidden="true"></span>
+        <span id="status-label" class="status-label">Idle</span>
+      </span>
     </header>
 
-    <section class="status" aria-live="polite">
-      <span id="status-dot" class="status-dot" data-status="idle" aria-hidden="true"></span>
-      <span id="status-label" class="status-label">Idle</span>
-    </section>
-
-    <p id="status-detail" class="status-detail" hidden></p>
+    <p id="status-detail" class="notice notice-error" hidden></p>
     <!-- FR-27: a fallback to CPU must be visible, not a silent slowdown. -->
-    <p id="backend-notice" class="backend-notice" hidden></p>
+    <p id="backend-notice" class="notice" hidden></p>
 
     <form id="task-form" class="task-form">
-      <label class="field-label" for="task-input">What should Shield do?</label>
       <input
         id="task-input"
         class="task-input"
         type="text"
         name="task"
         placeholder="Log me in"
+        aria-label="What should Shield do?"
         autocomplete="off"
         required
       />
@@ -38,13 +40,22 @@
         <button id="run-button" class="button button-primary" type="submit">Run</button>
         <button id="cancel-button" class="button" type="button" hidden>Cancel</button>
       </div>
+
       <!--
         Manual redaction. The rules will always miss something on a page nobody
         wrote for us; the person looking at the screen is the one who knows.
+
+        Marking is a step before a run, not a setting on one, so it sits apart
+        from the Run row rather than beside it as an equal-weight button.
       -->
-      <div class="actions">
-        <button id="manual-button" class="button" type="button">Hide an area</button>
-        <button id="manual-clear" class="button" type="button">Clear marks</button>
+      <div class="manual">
+        <button id="manual-button" class="button button-quiet" type="button">
+          Hide an area on this page
+        </button>
+        <p class="manual-state" hidden id="manual-state">
+          <span id="manual-count"></span>
+          <button id="manual-clear" class="linkish" type="button">Clear</button>
+        </p>
       </div>
 
       <!--
@@ -63,34 +74,32 @@
     </form>
 
     <!--
-      Where the time went, measured rather than estimated.
-      Every stage is already timed against the ARCHITECTURE.md Section 6 budget;
-      this shows the numbers instead of leaving them in a console. It answers
-      the obvious question about an on-device privacy layer — what does it cost?
-      — with the run the judge just watched.
-    -->
-    <section class="latency">
-      <button id="latency-toggle" class="evidence-toggle" type="button" aria-expanded="false" hidden>
-        Where did the time go?
-      </button>
-      <div id="latency-body" class="latency-body" hidden>
-        <ul id="latency-list" class="latency-list"></ul>
-        <p id="latency-total" class="latency-total"></p>
-      </div>
-    </section>
+      Two disclosures, same shape, one after the other.
 
-    <!--
-      The outgoing payload, shown in the extension itself.
-      DEMO_SCRIPT.md step 5: every other guarantee in this project is an
-      assurance about code the reader has not read. This is the bytes.
+      Where the time went, measured rather than estimated, against the
+      ARCHITECTURE.md Section 6 budget; and the outgoing payload itself
+      (DEMO_SCRIPT.md step 5), because every other guarantee in this project is
+      an assurance about code the reader has not read. This is the bytes.
     -->
-    <section class="evidence">
-      <button id="evidence-toggle" class="evidence-toggle" type="button" aria-expanded="false">
-        What was sent?
-      </button>
-      <div id="evidence-body" class="evidence-body" hidden>
-        <p id="evidence-meta" class="evidence-meta"></p>
-        <pre id="evidence-json" class="evidence-json"></pre>
+    <section class="panels">
+      <div class="panel">
+        <button id="latency-toggle" class="panel-toggle" type="button" aria-expanded="false" hidden>
+          Where did the time go?
+        </button>
+        <div id="latency-body" class="panel-body" hidden>
+          <ul id="latency-list" class="latency-list"></ul>
+          <p id="latency-total" class="latency-total"></p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <button id="evidence-toggle" class="panel-toggle" type="button" aria-expanded="false">
+          What was sent?
+        </button>
+        <div id="evidence-body" class="panel-body" hidden>
+          <p id="evidence-meta" class="evidence-meta"></p>
+          <pre id="evidence-json" class="evidence-json"></pre>
+        </div>
       </div>
     </section>
 

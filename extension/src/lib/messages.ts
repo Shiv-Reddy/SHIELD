@@ -34,8 +34,20 @@ export const MSG = {
   EXECUTE_ACTION: 'shield/execute-action',
   /** Worker -> content script: draw or clear the redaction overlay. */
   SHOW_OVERLAY: 'shield/show-overlay',
-  /** Popup -> content script: let the user draw regions to hide. */
+  /**
+   * Popup -> worker: get the page ready to be marked up, then hand it over.
+   *
+   * Routed through the worker rather than sent straight to the tab because the
+   * content script is injected on demand and is absent until a run has
+   * happened. Talking to the tab directly meant the only way to reach a live
+   * script was to run first — which transmits the very page the user opened
+   * this to hide something on.
+   */
+  BEGIN_MANUAL: 'shield/begin-manual',
+  /** Worker -> content script: let the user draw regions to hide. */
   START_MANUAL: 'shield/start-manual',
+  /** Popup -> content script: how many marks are set on this page. */
+  MANUAL_STATUS: 'shield/manual-status',
   /** Worker -> content script: hand back what the user drew, in viewport space. */
   GET_MANUAL_REGIONS: 'shield/get-manual-regions',
   /** Worker -> content script: show or hide the drawing surface, keeping the marks. */
@@ -98,11 +110,28 @@ export interface RestartBackendMessage {
   type: typeof MSG.RESTART_BACKEND;
 }
 
+/**
+ * Prepare the page for marking, injecting the content script if needed.
+ *
+ * The reply distinguishes "ready" from "this page cannot be read", so the popup
+ * can close on success and explain itself on failure instead of closing onto a
+ * page where nothing will happen.
+ */
+export interface BeginManualMessage {
+  type: typeof MSG.BEGIN_MANUAL;
+}
+
+export interface BeginManualResult {
+  ok: boolean;
+  message: string;
+}
+
 export type PopupMessage =
   | RunTaskMessage
   | CancelTaskMessage
   | GetStateMessage
   | PrepareMessage
+  | BeginManualMessage
   | RestartBackendMessage;
 
 // --- Service worker -> content script ---------------------------------------
@@ -187,8 +216,25 @@ export interface ClearManualMessage {
   type: typeof MSG.CLEAR_MANUAL;
 }
 
+/**
+ * How many marks this page is carrying.
+ *
+ * Sent straight to the tab and NOT through the worker, so that a popup opening
+ * never injects anything. A page with no content script has no marks, and the
+ * failed send is that answer — asking the question must not be what puts Shield
+ * on a page the user never pointed it at.
+ */
+export interface ManualStatusMessage {
+  type: typeof MSG.MANUAL_STATUS;
+}
+
+export interface ManualStatusResult {
+  count: number;
+}
+
 export type ContentMessage =
   | StartManualMessage
+  | ManualStatusMessage
   | GetManualRegionsMessage
   | SetManualVisibleMessage
   | ClearManualMessage

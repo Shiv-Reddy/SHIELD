@@ -1,23 +1,38 @@
 /*
  * Popup styling.
  *
- * Deliberately restrained: the popup's job during the demo is to make Shield's
+ * Restrained on purpose: during a demo this popup's job is to make Shield's
  * current state readable at a glance from across a room, so state legibility
- * beats decoration. The explainable-redaction overlay and network inspector
- * (Module F) are separate surfaces and are not built here.
+ * beats decoration. One accent colour, one border colour, three text weights.
+ *
+ * EVERY colour is a token defined in both themes. That is not tidiness — the
+ * previous version hardcoded slate greys chosen for a dark panel (#cbd5e1 for
+ * labels, #94a3b8 for values) and used them on the light background, so the
+ * whole latency breakdown was near-white text on white and could not be read
+ * at all in light mode. It also referenced `--hairline`, which is defined
+ * nowhere, and so silently took its light-mode fallback in dark mode. Hardcoded
+ * colour in a themed surface is a defect waiting to happen, so there is none.
  */
 
 :root {
   color-scheme: light dark;
 
   --bg: #ffffff;
+  --surface: #f7f8fa;
   --fg: #14161a;
   --fg-muted: #5b6472;
+  --fg-faint: #858e9c;
   --border: #e3e7ed;
   --field-bg: #ffffff;
   --accent: #2563eb;
   --accent-fg: #ffffff;
   --danger: #c2334d;
+  --warn: #a15c00;
+
+  /* The payload viewer is a code surface and stays dark in both themes, the way
+     an editor pane does. Its own tokens, so nothing else has to follow it. */
+  --code-bg: #0f172a;
+  --code-fg: #e2e8f0;
 
   --status-idle: #9aa4b2;
   --status-working: #2563eb;
@@ -28,12 +43,19 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #16181d;
+    --surface: #1c1f26;
     --fg: #eef1f5;
     --fg-muted: #9aa4b2;
+    --fg-faint: #79828f;
     --border: #2a2e37;
     --field-bg: #1d2027;
     --accent: #4f86f7;
     --accent-fg: #0b0d10;
+    --danger: #e2657d;
+    --warn: #e0a458;
+
+    --code-bg: #0b0e15;
+    --code-fg: #dde3ec;
 
     --status-idle: #6b7482;
     --status-working: #4f86f7;
@@ -49,27 +71,30 @@
 body {
   width: 320px;
   margin: 0;
-  padding: 16px;
+  padding: 14px;
   background: var(--bg);
   color: var(--fg);
   font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* --- Header --------------------------------------------------------------- */
 
 .header {
-  margin-bottom: 14px;
-}
-
-.brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .brand-mark {
-  width: 16px;
-  height: 18px;
+  flex: none;
+  width: 14px;
+  height: 16px;
   background: var(--accent);
   /* Shield silhouette: square shoulders tapering to a point. */
   clip-path: polygon(50% 0%, 100% 14%, 100% 58%, 50% 100%, 0% 58%, 0% 14%);
@@ -77,32 +102,25 @@ body {
 
 .brand-name {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 
-.tagline {
-  margin: 3px 0 0 24px;
+/* Pushed to the far edge: it is the only thing in this row that changes. */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
   color: var(--fg-muted);
   font-size: 12px;
 }
 
-/* --- Status --------------------------------------------------------------- */
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 11px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
 .status-dot {
   flex: none;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--status-idle);
 }
@@ -139,35 +157,33 @@ body {
   }
 }
 
-.status-label {
-  font-weight: 550;
+/* --- Notices -------------------------------------------------------------- */
+
+/* One shape for anything Shield needs to say mid-run, so a second message never
+   arrives looking like a different kind of thing. */
+.notice {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--fg-muted);
+  font-size: 11.5px;
 }
 
-.status-detail {
-  margin: 8px 0 0;
-  padding: 9px 11px;
-  border-radius: 8px;
+.notice-error {
   background: color-mix(in srgb, var(--danger) 12%, transparent);
   color: var(--danger);
-  font-size: 12px;
 }
 
 /* --- Task form ------------------------------------------------------------ */
 
 .task-form {
-  margin-top: 14px;
-}
-
-.field-label {
-  display: block;
-  margin-bottom: 5px;
-  color: var(--fg-muted);
-  font-size: 12px;
+  margin-top: 12px;
 }
 
 .task-input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--field-bg);
@@ -175,39 +191,20 @@ body {
   font: inherit;
 }
 
+.task-input::placeholder {
+  color: var(--fg-faint);
+}
+
 .task-input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 0;
 }
 
 .actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
-}
-
-.observe {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  margin-top: 10px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--fg-muted);
-  cursor: pointer;
-}
-
-.observe input {
-  margin: 1px 0 0;
-  flex: none;
-  cursor: pointer;
-}
-
-/* Armed, so the state is readable at a glance rather than by squinting at a
-   tick box — this is the difference between a run that acts and one that
-   does not. */
-.observe:has(input:checked) {
-  color: var(--accent);
+  margin-top: 8px;
 }
 
 .button {
@@ -222,6 +219,10 @@ body {
   cursor: pointer;
 }
 
+.button:hover:not(:disabled) {
+  border-color: var(--fg-faint);
+}
+
 .button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -233,84 +234,162 @@ body {
   color: var(--accent-fg);
 }
 
+.button-primary:hover:not(:disabled) {
+  border-color: transparent;
+  filter: brightness(1.06);
+}
+
 .button:disabled {
   cursor: default;
   opacity: 0.5;
 }
 
-/* --- Footer --------------------------------------------------------------- */
+/* --- Manual marking ------------------------------------------------------- */
 
-.footer {
+.manual {
+  margin-top: 12px;
+}
+
+/* Quieter than Run, and deliberately so: this opens a step, it does not perform
+   one. Two buttons of equal weight would make the popup ask a question it does
+   not need to ask. */
+.button-quiet {
+  width: 100%;
+  font-weight: 500;
+  color: var(--fg-muted);
+}
+
+.manual-state {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 7px 0 0;
+  color: var(--accent);
+  font-size: 11.5px;
+}
+
+.linkish {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-muted);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.linkish:hover {
+  color: var(--fg);
+}
+
+.observe {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 12px;
+  color: var(--fg-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.observe input {
+  flex: none;
+  margin: 1px 0 0;
+  cursor: pointer;
+}
+
+/* Armed, so the state is readable at a glance rather than by squinting at a
+   tick box — this is the difference between a run that acts and one that
+   does not. */
+.observe:has(input:checked) {
+  color: var(--accent);
+}
+
+/* --- Disclosure panels ---------------------------------------------------- */
+
+.panels {
   margin-top: 14px;
-  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
-.footer p {
-  margin: 0;
-  color: var(--fg-muted);
-  font-size: 11px;
+.panel + .panel {
+  border-top: 1px solid var(--border);
 }
 
-[hidden] {
-  display: none !important;
-}
-
-.build-info {
-  margin-top: 6px !important;
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  font-size: 10px !important;
-  opacity: 0.75;
-}
-
-/* Shown only when WebGPU was unavailable and Shield fell back to CPU. Informative
-   rather than alarming: the task still completes, it is simply slower. */
-.backend-notice {
-  margin: 8px 0 0 !important;
-  padding: 8px 11px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--fg-muted) 12%, transparent);
-  font-size: 11.5px !important;
-}
-
-/* The build line doubles as the backend override toggle. */
-.build-info {
-  cursor: pointer;
-  user-select: none;
-}
-
-.build-info:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-/* --- Outgoing payload inspector ------------------------------------------ */
-
-.evidence {
-  margin-top: 14px;
-  border-top: 1px solid var(--hairline, #e4e7eb);
-  padding-top: 12px;
-}
-
-.evidence-toggle {
+.panel-toggle {
+  display: block;
   width: 100%;
-  text-align: left;
-  background: none;
+  padding: 9px 0;
   border: 0;
-  padding: 0;
-  font: 600 12px/1.4 inherit;
-  color: #0e7490;
+  background: none;
+  color: var(--fg-muted);
+  font: 550 12px/1.4 inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-.evidence-toggle:hover {
-  text-decoration: underline;
+.panel-toggle:hover {
+  color: var(--fg);
+}
+
+.panel-toggle[aria-expanded="true"] {
+  color: var(--fg);
+}
+
+.panel-body {
+  padding-bottom: 10px;
+}
+
+.latency-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.latency-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.latency-row:last-child {
+  border-bottom: 0;
+}
+
+.latency-label {
+  color: var(--fg-muted);
+}
+
+.latency-value {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Over budget is marked, not hidden. A panel that only ever shows good numbers
+   is decoration; the reason to measure is to see the runs that were slow. */
+.latency-row[data-over="true"] .latency-value {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.latency-total {
+  margin: 8px 0 0;
+  color: var(--fg-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 .evidence-meta {
-  margin: 8px 0 6px;
+  margin: 0 0 7px;
+  color: var(--fg-muted);
   font-size: 11px;
-  color: #7b8794;
 }
 
 /*
@@ -321,61 +400,39 @@ body {
   margin: 0;
   max-height: 220px;
   overflow: auto;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: #0f172a;
-  color: #e2e8f0;
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: var(--code-bg);
+  color: var(--code-fg);
   font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   white-space: pre;
   tab-size: 2;
 }
 
-/* --- Latency breakdown ---------------------------------------------------- */
+/* --- Footer --------------------------------------------------------------- */
 
-.latency {
-  margin: 0 16px;
+.footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
-.latency-body {
-  margin-top: 6px;
-}
-
-.latency-list {
-  list-style: none;
+.footer p {
   margin: 0;
-  padding: 0;
-}
-
-.latency-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 3px 0;
-  font-size: 12px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-}
-
-.latency-label {
-  color: #cbd5e1;
-}
-
-.latency-value {
-  color: #94a3b8;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* Over budget is marked, not hidden. A panel that only ever shows good numbers
-   is decoration; the reason to measure is to see the runs that were slow. */
-.latency-row[data-over='true'] .latency-value {
-  color: #fbbf24;
-  font-weight: 600;
-}
-
-.latency-total {
-  margin: 6px 0 0;
+  color: var(--fg-faint);
   font-size: 11px;
-  color: #94a3b8;
-  font-variant-numeric: tabular-nums;
+}
+
+/* The build line doubles as the backend override toggle. */
+.build-info {
+  margin-top: 5px !important;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 10px !important;
+  cursor: pointer;
+  user-select: none;
+}
+
+.build-info:hover {
+  color: var(--fg-muted);
+  text-decoration: underline;
 }

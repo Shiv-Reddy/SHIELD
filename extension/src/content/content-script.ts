@@ -17,6 +17,7 @@ import {
   MSG,
   type ContentMessage,
   type ExecuteActionResult,
+  type ManualStatusResult,
   type PingResult,
 } from '../lib/messages';
 import type { ViewportInfo } from '../lib/types';
@@ -25,6 +26,7 @@ import { executeAction } from './executor';
 import { clearOverlay, showOverlay } from './overlay';
 import {
   clearManual,
+  manualRegionCount,
   manualRegionsInViewport,
   setManualVisible,
   startManual,
@@ -105,6 +107,12 @@ function register(): void {
         case MSG.START_MANUAL: {
           startManual();
           sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.MANUAL_STATUS: {
+          const result: ManualStatusResult = { count: manualRegionCount() };
+          sendResponse(result);
           return false;
         }
 

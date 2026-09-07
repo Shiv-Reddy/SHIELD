@@ -19,6 +19,7 @@ import {
   broadcast,
   sendToTab,
   type PopupMessage,
+  type BeginManualResult,
   type PingResult,
   type ExtractDomResult,
   sendToOffscreen,
@@ -1171,6 +1172,32 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
       void runTask(message.taskQuery.trim() || state.taskQuery || DEFAULT_TASK);
       sendResponse({ accepted: true });
       return false;
+
+    case MSG.BEGIN_MANUAL:
+      // Marking has to be reachable BEFORE a run, not only after one.
+      //
+      // The popup used to message the tab directly, which fails on a page the
+      // content script has never been injected into — so the advice was to run
+      // once first. That inverts the feature: the first run transmits the page,
+      // including whatever the user opened this to hide. Ensuring the script
+      // here costs nothing extra in reach, since opening the popup is itself
+      // the user invoking Shield on this tab, and it makes mark-then-run the
+      // ordinary path.
+      void (async () => {
+        try {
+          const tab = await getActiveTab();
+          await ensureContentScript(tab.id as number);
+          await sendToTab(tab.id as number, { type: MSG.START_MANUAL });
+          sendResponse({ ok: true, message: '' } satisfies BeginManualResult);
+        } catch (error) {
+          sendResponse({
+            ok: false,
+            message: error instanceof Error ? error.message : String(error),
+          } satisfies BeginManualResult);
+        }
+      })();
+      // Async reply, so the channel must be held open.
+      return true;
 
     case MSG.PREPARE:
       // The popup is open, so a run is likely moments away. Start the inference

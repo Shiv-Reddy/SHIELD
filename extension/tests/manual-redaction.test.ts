@@ -14,7 +14,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clipToViewport } from '../src/content/manual-redaction';
+import { clipToViewport, previewRect } from '../src/content/manual-redaction';
 import type { ManualRegion } from '../src/lib/types';
 
 function marks(
@@ -119,4 +119,87 @@ test('several marks are converted independently, and only the visible survive', 
 
 test('no marks means no regions, not an empty rectangle', () => {
   assert.deepEqual(clipToViewport([], 0, 0, 1000, 800), []);
+});
+
+// --- The rectangle being dragged -------------------------------------------
+//
+// Reported from a real page as "marking area is not working properly". The
+// stored mark was correct; the PREVIEW was painted at its document coordinate
+// on a viewport-anchored surface, so on any scrolled page the rectangle drew a
+// full scroll-height away from the cursor. That is the same coordinate mistake
+// as the one above, one layer down, and it went unnoticed because every test
+// covered the mark and none covered the thing the user actually looks at.
+
+test('an unscrolled drag draws exactly between the two corners', () => {
+  assert.deepEqual(previewRect(100, 50, 300, 90, 0, 0), {
+    x: 100,
+    y: 50,
+    width: 200,
+    height: 40,
+  });
+});
+
+test('a drag on a scrolled page draws under the cursor, not below it', () => {
+  // Dragging from document y=900 to y=1000 with the page scrolled 800 is a
+  // rectangle at viewport y=100. Painting y=900 — what the code did — puts it
+  // 800px below the mouse, usually off screen entirely.
+  assert.deepEqual(previewRect(100, 900, 300, 1000, 0, 800), {
+    x: 100,
+    y: 100,
+    width: 200,
+    height: 100,
+  });
+});
+
+test('dragging up and left is the same rectangle as dragging down and right', () => {
+  const upLeft = previewRect(300, 400, 100, 200, 0, 0);
+  const downRight = previewRect(100, 200, 300, 400, 0, 0);
+  assert.deepEqual(upLeft, downRight);
+  assert.deepEqual(upLeft, { x: 100, y: 200, width: 200, height: 200 });
+});
+
+test('horizontal scroll shifts the drag the same way vertical does', () => {
+  assert.deepEqual(previewRect(500, 20, 560, 60, 250, 0), {
+    x: 250,
+    y: 20,
+    width: 60,
+    height: 40,
+  });
+});
+
+test('a click that never moved is a zero-area rectangle, not a negative one', () => {
+  // Below MIN_SIZE, so `onMouseUp` discards it. What matters here is that the
+  // preview drawn on the way is degenerate rather than inverted.
+  assert.deepEqual(previewRect(10, 10, 10, 10, 0, 0), {
+    x: 10,
+    y: 10,
+    width: 0,
+    height: 0,
+  });
+});
+
+test('the preview and the stored mark agree on where the rectangle is', () => {
+  // The two conversions are written separately and must not drift apart: a
+  // preview that disagrees with the mark is precisely the reported bug.
+  const [startX, startY, endX, endY] = [120, 940, 320, 1010];
+  const [scrollX, scrollY] = [0, 800];
+
+  const preview = previewRect(startX, startY, endX, endY, scrollX, scrollY);
+  const [stored] = clipToViewport(
+    [
+      {
+        id: 'm0',
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+        width: Math.abs(endX - startX),
+        height: Math.abs(endY - startY),
+      },
+    ],
+    scrollX,
+    scrollY,
+    1000,
+    800,
+  );
+
+  assert.deepEqual(preview, stored);
 });

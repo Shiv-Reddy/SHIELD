@@ -55,14 +55,35 @@ const MIN_SIZE = 8;
 let regions: ManualRegion[] = [];
 
 let surface: HTMLElement | null = null;
-let drawing: { startX: number; startY: number; box: HTMLElement } | null = null;
+let toolbar: HTMLElement | null = null;
+
+/**
+ * The drag in progress.
+ *
+ * Both corners are held in DOCUMENT space, the same space the finished mark is
+ * stored in, and converted to screen position only when painted. Keeping the
+ * live rectangle in one space and the stored one in another was the original
+ * defect here: it made the preview and the mark two different rectangles.
+ */
+let drawing: {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  box: HTMLElement;
+} | null = null;
 let nextId = 0;
 
 /** Remove the drawing surface, keeping the marks themselves. */
 function teardownSurface(): void {
+  // First, because the surface can be taken down mid-drag — the worker hides it
+  // before every capture — and that would otherwise leave the drag listeners
+  // attached to `window` with nothing to draw on.
+  cancelDrawing();
+
   surface?.remove();
   surface = null;
-  drawing = null;
+  toolbar = null;
   document.removeEventListener('keydown', onKeyDown, true);
   window.removeEventListener('scroll', reposition, true);
 }
@@ -73,7 +94,26 @@ function onKeyDown(event: KeyboardEvent): void {
   // clear a search box on the page underneath.
   event.preventDefault();
   event.stopPropagation();
+
+  // Escape during a drag abandons that rectangle and nothing else. Leaving the
+  // whole mode on a mis-drag would throw away every mark already made, which is
+  // a punishing response to the most ordinary mistake in a drawing tool.
+  if (drawing) {
+    cancelDrawing();
+    return;
+  }
+
   stopManual();
+}
+
+/** Abandon the rectangle being dragged, keeping every finished mark. */
+function cancelDrawing(): void {
+  if (!drawing) return;
+  drawing.box.remove();
+  drawing = null;
+  window.removeEventListener('mousemove', onMouseMove, true);
+  window.removeEventListener('mouseup', onMouseUp, true);
+  setToolbarDimmed(false);
 }
 
 /** Paint one stored mark onto the surface. */
@@ -121,7 +161,7 @@ function renderAll(): void {
   refreshHint();
 }
 
-/** Re-place every mark after the page has scrolled. */
+/** Re-place every mark, and any rectangle mid-drag, after the page has scrolled. */
 function reposition(): void {
   if (!surface) return;
   for (const child of Array.from(surface.children)) {
@@ -133,6 +173,7 @@ function reposition(): void {
     child.style.left = `${region.x - window.scrollX}px`;
     child.style.top = `${region.y - window.scrollY}px`;
   }
+  paintDrawing();
 }
 
 /** Say how many marks are set, so the count is never in doubt. */
@@ -146,42 +187,49 @@ function refreshHint(): void {
 }
 
 /**
- * The bar across the top: what to do, and a way to run without leaving.
+ * The control bar: what to do, and a way to run without leaving.
  *
  * The Run button is here rather than only in the popup because the popup must
  * close before you can draw — it holds focus, so the first drag would go to the
  * popup rather than the page. Marking and then running therefore meant opening
  * the popup a second time, which is a poor sequence for the one action the
  * marks were made for.
+ *
+ * It sits at the BOTTOM. Page headers are where account names, email addresses
+ * and avatars live, which is exactly the material someone reaches for this tool
+ * to cover, and a bar pinned over the top of the page would be sitting on it.
  */
 function buildToolbar(): HTMLElement {
   const bar = document.createElement('div');
+  toolbar = bar;
   Object.assign(bar.style, {
     position: 'fixed',
     left: '50%',
-    top: '12px',
+    bottom: '20px',
     transform: 'translateX(-50%)',
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    padding: '7px 8px 7px 14px',
-    borderRadius: '999px',
-    background: '#0e7490',
-    color: '#ecfeff',
-    font: '600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
-    boxShadow: '0 2px 12px rgba(8, 47, 73, 0.4)',
+    gap: '8px',
+    padding: '6px 6px 6px 14px',
+    borderRadius: '10px',
+    background: 'rgba(15, 23, 42, 0.94)',
+    color: '#e2e8f0',
+    font: '500 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
+    boxShadow: '0 4px 20px rgba(2, 6, 23, 0.45)',
     pointerEvents: 'auto',
     whiteSpace: 'nowrap',
+    // Only the fade is animated. Moving the bar would make it a thing to track
+    // rather than a thing to use.
+    transition: 'opacity 120ms ease',
   } satisfies Partial<CSSStyleDeclaration>);
 
   const text = document.createElement('span');
   text.id = `${SURFACE_ID}-hint`;
-  text.textContent = 'Drag over anything you want hidden';
   text.style.pointerEvents = 'none';
   bar.appendChild(text);
 
   bar.appendChild(
-    toolbarButton('Run Shield', '#ecfeff', '#0e7490', () => {
+    toolbarButton('Run Shield', true, () => {
       // The surface comes down first. The worker hides it before capturing
       // anyway, but doing it here means the page is already clean when the
       // capture lands rather than relying on a message arriving in time.
@@ -193,7 +241,7 @@ function buildToolbar(): HTMLElement {
   );
 
   bar.appendChild(
-    toolbarButton('Done', 'transparent', '#ecfeff', () => {
+    toolbarButton('Done', false, () => {
       stopManual();
     }),
   );
@@ -201,22 +249,32 @@ function buildToolbar(): HTMLElement {
   return bar;
 }
 
+/**
+ * Fade the bar while a rectangle is being dragged.
+ *
+ * Faded rather than hidden: something has to stay visible at the bottom of the
+ * screen, or a bar that vanishes and returns reads as a glitch. It keeps its
+ * pointer events, so a drag that ends over it still completes normally.
+ */
+function setToolbarDimmed(dimmed: boolean): void {
+  if (toolbar) toolbar.style.opacity = dimmed ? '0.25' : '1';
+}
+
 function toolbarButton(
   label: string,
-  background: string,
-  color: string,
+  primary: boolean,
   onClick: () => void,
 ): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = label;
   Object.assign(button.style, {
-    padding: '5px 12px',
-    border: background === 'transparent' ? '1px solid rgba(236, 254, 255, 0.5)' : '0',
-    borderRadius: '999px',
-    background,
-    color,
-    font: '650 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
+    padding: '6px 12px',
+    border: primary ? '0' : '1px solid rgba(226, 232, 240, 0.28)',
+    borderRadius: '7px',
+    background: primary ? '#22d3ee' : 'transparent',
+    color: primary ? '#083344' : '#e2e8f0',
+    font: '600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
     cursor: 'pointer',
     pointerEvents: 'auto',
   } satisfies Partial<CSSStyleDeclaration>);
@@ -294,32 +352,71 @@ function onMouseDown(event: MouseEvent): void {
   const box = document.createElement('div');
   Object.assign(box.style, {
     position: 'absolute',
-    left: `${startX}px`,
-    top: `${startY}px`,
-    width: '0px',
-    height: '0px',
     background: 'rgba(34, 211, 238, 0.22)',
     border: '2px dashed #22d3ee',
+    borderRadius: '3px',
     pointerEvents: 'none',
   } satisfies Partial<CSSStyleDeclaration>);
 
   surface.appendChild(box);
-  drawing = { startX, startY, box };
+  drawing = { startX, startY, endX: startX, endY: startY, box };
+  paintDrawing();
+
+  // Out of the way while a rectangle is being dragged, so the bar is never the
+  // reason a piece of the page cannot be marked.
+  setToolbarDimmed(true);
 
   window.addEventListener('mousemove', onMouseMove, true);
   window.addEventListener('mouseup', onMouseUp, true);
 }
 
+/**
+ * Where the rectangle being dragged belongs on screen.
+ *
+ * The one conversion that matters, and the one that was wrong: the corners are
+ * held in document space, the surface is anchored to the viewport, so the
+ * scroll offset has to come off here. Painting the document coordinate
+ * directly put the live rectangle a full scroll-height away from the cursor —
+ * the finished mark landed where the user meant it, but the preview did not,
+ * so the tool looked broken while behaving correctly. A drawing tool whose
+ * rectangle does not follow the mouse is not usable at all.
+ *
+ * Pure and exported for the same reason `clipToViewport` is: this arithmetic is
+ * the whole risk, and it can be checked without a browser.
+ */
+export function previewRect(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  offsetX: number,
+  offsetY: number,
+): Rect {
+  return {
+    x: Math.min(startX, endX) - offsetX,
+    y: Math.min(startY, endY) - offsetY,
+    width: Math.abs(endX - startX),
+    height: Math.abs(endY - startY),
+  };
+}
+
+/** Place the in-progress rectangle on screen. */
+function paintDrawing(): void {
+  if (!drawing) return;
+  const { startX, startY, endX, endY, box } = drawing;
+  const rect = previewRect(startX, startY, endX, endY, window.scrollX, window.scrollY);
+
+  box.style.left = `${rect.x}px`;
+  box.style.top = `${rect.y}px`;
+  box.style.width = `${rect.width}px`;
+  box.style.height = `${rect.height}px`;
+}
+
 function onMouseMove(event: MouseEvent): void {
   if (!drawing) return;
-  const { startX, startY, box } = drawing;
-
-  const x = Math.min(startX, event.pageX);
-  const y = Math.min(startY, event.pageY);
-  box.style.left = `${x}px`;
-  box.style.top = `${y}px`;
-  box.style.width = `${Math.abs(event.pageX - startX)}px`;
-  box.style.height = `${Math.abs(event.pageY - startY)}px`;
+  drawing.endX = event.pageX;
+  drawing.endY = event.pageY;
+  paintDrawing();
 }
 
 function onMouseUp(event: MouseEvent): void {
@@ -330,6 +427,7 @@ function onMouseUp(event: MouseEvent): void {
   window.removeEventListener('mousemove', onMouseMove, true);
   window.removeEventListener('mouseup', onMouseUp, true);
   box.remove();
+  setToolbarDimmed(false);
 
   const width = Math.abs(event.pageX - startX);
   const height = Math.abs(event.pageY - startY);

@@ -1762,3 +1762,51 @@ touched.
 **Still unverified in a browser:** whether marks now hide correctly end to end.
 The geometry is tested and the positioning cause is understood and fixed, but
 the interaction has still never been exercised by a person.
+
+---
+
+## 2026-09-07 (later) — Manual marking: ordering, drawing, and the popup
+
+Three defects reported from a real signup screen, all in the manual-redaction
+path, none of them the one fixed earlier the same day.
+
+**1. Marking could not be done before a run.** The popup messaged the tab
+directly, which fails on a page the content script has never been injected into,
+and the guidance for that failure was to run Shield once first. That inverts the
+feature: the first run transmits the page, so the user had already sent whatever
+they opened marking mode to hide. The request now goes to the service worker,
+which is the context that can inject and already owns `ensureContentScript`, so
+mark-then-run is the ordinary path. The popup also shows how many areas the page
+is carrying, asked of the tab directly and never through the worker — routing it
+through the worker would inject the content script merely to answer, and opening
+the popup must not be what puts Shield on a page.
+
+**2. The rectangle being dragged was painted in the wrong space.** The stored
+mark was correct; the live preview used its document coordinate on a surface
+anchored to the viewport, so on any scrolled page the rectangle drew a full
+scroll-height below the cursor. This is the same coordinate mistake as the
+surface bug, one layer down, and it survived because every test covered the
+stored mark and none covered the thing the user looks at while drawing. The
+arithmetic is now `previewRect`, pure and exported, with six tests including one
+asserting the preview and the stored mark agree so the two conversions cannot
+drift apart. Escape during a drag now abandons that rectangle rather than the
+whole mode, and the toolbar moved to the bottom of the screen — page headers are
+where account names and avatars live, which is exactly what the tool is for.
+
+**3. The popup had unreadable panels, not just an unpolished look.** The latency
+breakdown hardcoded slate greys chosen for a dark surface and painted them on
+the light background: near-white text on white, unreadable in light mode. The
+payload panel hardcoded its own colours the same way, and its separator
+referenced `--hairline`, which is defined nowhere. Every colour is now a token
+defined in both themes, brand and status share one row instead of two stacked
+blocks, and marking is a quiet full-width button rather than a peer of Run.
+
+73 client tests pass (67 before), typecheck and build clean.
+
+**Next session starts with:** a browser pass over the whole marking flow, which
+has still never been exercised end to end by a person. Specifically — on a page
+Shield has NOT been run against yet, open the popup, click "Hide an area on this
+page", draw a mark, scroll, draw a second, then click Run Shield on the toolbar.
+The console line `[shield] N manual mark(s) covering M element(s)` says whether
+the marks reached the worker. If that passes, Phase 3's remaining items are the
+profile-edit fixture and the OCR pass.
