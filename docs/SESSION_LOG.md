@@ -1728,3 +1728,37 @@ clean.
 
 **Next:** the drawing surface itself has never been used in a browser — the
 geometry is tested, the interaction is not. That is the first thing to try.
+
+**Manual redaction, second pass — a positioning bug and the missing Run button.**
+
+Reported as "the marked area is not hidden". Reading the rendering rather than
+guessing found a real cause: the surface was a document-sized
+`position: absolute` layer on `<body>`, and an absolutely positioned element
+resolves against its nearest POSITIONED ancestor. Any page setting
+`body { position: relative }` — a large class of real sites — displaced every
+mark by the body's own box. The marks were stored correctly and drawn in the
+wrong place, so the user was aiming at something that did not represent what
+they had actually marked. Worst combination available.
+
+Now `position: fixed` over the viewport, with each mark rendered at its stored
+document coordinate minus the current scroll offset and a passive scroll
+listener re-placing them. Document space stays the storage format — that part
+was right, and the tests for it still pass unchanged — while the rendering no
+longer depends on what the page's CSS does.
+
+The requested Run button is on the toolbar, along with Done and a live count of
+marked areas. The reason it was needed is structural rather than cosmetic: the
+popup must close before drawing can begin, because it holds focus and would
+swallow the first drag, so marking and then running previously meant opening the
+popup a second time — for the one action the marks were made for.
+
+An empty task query from the toolbar falls back to the user's last task, or to
+"Describe what is on this screen". It must never stay empty: `task_query` has a
+minimum length in API_SPEC.md and the server would reject the payload. The
+default is a reading task rather than an acting one, since somebody who clicked
+Run from the marking toolbar was hiding things, not asking for the page to be
+touched.
+
+**Still unverified in a browser:** whether marks now hide correctly end to end.
+The geometry is tested and the positioning cause is understood and fixed, but
+the interaction has still never been exercised by a person.

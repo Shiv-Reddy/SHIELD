@@ -1656,3 +1656,33 @@ and the manifest is the one audit record the server receives. It also carries
 confidence 1 rather than a probability, because it is not a guess. Folding it
 into `dom` or `visual` would have avoided a schema change and misdescribed how
 the redaction happened.
+
+---
+
+**Decision:** The manual-marking surface is viewport-anchored, and carries its
+own Run button
+**Why (the surface):** the first version was a document-sized
+`position: absolute` layer appended to `<body>`, which is wrong on a large class
+of real pages. An absolutely positioned element resolves against its nearest
+POSITIONED ancestor, and plenty of sites set `body { position: relative }`. On
+those, a mark is drawn in one place, stored correctly in document coordinates,
+and displayed somewhere else entirely — offset by the body's own box. The marks
+were right and the picture of them was not, which is the worst combination,
+because the user aims at what they can see.
+**How:** the surface is `position: fixed` over the viewport and each mark is
+rendered at its stored document coordinate minus the current scroll offset, with
+a passive scroll listener re-placing them. Document space remains the storage
+format — that part was right — and the viewport is now the only thing the
+rendering depends on, rather than whatever the page's CSS happens to do.
+**Why (the Run button):** the popup must close before drawing can start, since
+it holds focus and would swallow the first drag. So marking and then running
+meant reopening the popup — a second trip for the one action the marks exist
+for. The toolbar now carries "Run Shield" and "Done", and the bar reports how
+many areas are marked so the count is never in doubt.
+**The empty task query is handled deliberately:** the toolbar has no field to
+type one into, so it sends an empty string, and the worker substitutes the
+user's last task or a plain "Describe what is on this screen". It must never
+stay empty — API_SPEC.md gives `task_query` a minimum length and the server
+would reject the payload outright. The default is a reading task rather than an
+acting one, because somebody who clicked Run from the marking toolbar was hiding
+things and has not asked for the page to be touched.

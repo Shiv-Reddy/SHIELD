@@ -36,6 +36,7 @@
  * worker, which is the only place holding both the marks and the element map.
  */
 
+import { MSG } from '../lib/messages';
 import type { ManualRegion, Rect } from '../lib/types';
 
 const SURFACE_ID = 'shield-manual-surface';
@@ -63,6 +64,7 @@ function teardownSurface(): void {
   surface = null;
   drawing = null;
   document.removeEventListener('keydown', onKeyDown, true);
+  window.removeEventListener('scroll', reposition, true);
 }
 
 function onKeyDown(event: KeyboardEvent): void {
@@ -80,10 +82,13 @@ function renderRegion(region: ManualRegion): void {
 
   const box = document.createElement('div');
   box.dataset['shieldRegion'] = region.id;
+  // Drawn at the mark's CURRENT screen position: stored document coordinate
+  // minus the scroll offset. The surface is viewport-anchored, so this is the
+  // one place the two spaces meet, and `reposition` re-runs it on every scroll.
   Object.assign(box.style, {
     position: 'absolute',
-    left: `${region.x}px`,
-    top: `${region.y}px`,
+    left: `${region.x - window.scrollX}px`,
+    top: `${region.y - window.scrollY}px`,
     width: `${region.width}px`,
     height: `${region.height}px`,
     background: 'rgba(15, 23, 42, 0.82)',
@@ -101,6 +106,7 @@ function renderRegion(region: ManualRegion): void {
     event.stopPropagation();
     regions = regions.filter((candidate) => candidate.id !== region.id);
     box.remove();
+    refreshHint();
   });
 
   surface.appendChild(box);
@@ -112,13 +118,135 @@ function renderAll(): void {
     if (child instanceof HTMLElement && child.dataset['shieldRegion']) child.remove();
   }
   for (const region of regions) renderRegion(region);
+  refreshHint();
+}
+
+/** Re-place every mark after the page has scrolled. */
+function reposition(): void {
+  if (!surface) return;
+  for (const child of Array.from(surface.children)) {
+    if (!(child instanceof HTMLElement)) continue;
+    const id = child.dataset['shieldRegion'];
+    if (!id) continue;
+    const region = regions.find((candidate) => candidate.id === id);
+    if (!region) continue;
+    child.style.left = `${region.x - window.scrollX}px`;
+    child.style.top = `${region.y - window.scrollY}px`;
+  }
+}
+
+/** Say how many marks are set, so the count is never in doubt. */
+function refreshHint(): void {
+  const hint = surface?.querySelector<HTMLElement>(`#${SURFACE_ID}-hint`);
+  if (!hint) return;
+  hint.textContent =
+    regions.length === 0
+      ? 'Drag over anything you want hidden'
+      : `${regions.length} area${regions.length === 1 ? '' : 's'} marked \u00b7 click a mark to remove it`;
+}
+
+/**
+ * The bar across the top: what to do, and a way to run without leaving.
+ *
+ * The Run button is here rather than only in the popup because the popup must
+ * close before you can draw — it holds focus, so the first drag would go to the
+ * popup rather than the page. Marking and then running therefore meant opening
+ * the popup a second time, which is a poor sequence for the one action the
+ * marks were made for.
+ */
+function buildToolbar(): HTMLElement {
+  const bar = document.createElement('div');
+  Object.assign(bar.style, {
+    position: 'fixed',
+    left: '50%',
+    top: '12px',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '7px 8px 7px 14px',
+    borderRadius: '999px',
+    background: '#0e7490',
+    color: '#ecfeff',
+    font: '600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
+    boxShadow: '0 2px 12px rgba(8, 47, 73, 0.4)',
+    pointerEvents: 'auto',
+    whiteSpace: 'nowrap',
+  } satisfies Partial<CSSStyleDeclaration>);
+
+  const text = document.createElement('span');
+  text.id = `${SURFACE_ID}-hint`;
+  text.textContent = 'Drag over anything you want hidden';
+  text.style.pointerEvents = 'none';
+  bar.appendChild(text);
+
+  bar.appendChild(
+    toolbarButton('Run Shield', '#ecfeff', '#0e7490', () => {
+      // The surface comes down first. The worker hides it before capturing
+      // anyway, but doing it here means the page is already clean when the
+      // capture lands rather than relying on a message arriving in time.
+      teardownSurface();
+      // An empty query lets the worker reuse whatever the user last asked for,
+      // so running from here does not silently change the task.
+      void chrome.runtime.sendMessage({ type: MSG.RUN_TASK, taskQuery: '' });
+    }),
+  );
+
+  bar.appendChild(
+    toolbarButton('Done', 'transparent', '#ecfeff', () => {
+      stopManual();
+    }),
+  );
+
+  return bar;
+}
+
+function toolbarButton(
+  label: string,
+  background: string,
+  color: string,
+  onClick: () => void,
+): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  Object.assign(button.style, {
+    padding: '5px 12px',
+    border: background === 'transparent' ? '1px solid rgba(236, 254, 255, 0.5)' : '0',
+    borderRadius: '999px',
+    background,
+    color,
+    font: '650 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
+    cursor: 'pointer',
+    pointerEvents: 'auto',
+  } satisfies Partial<CSSStyleDeclaration>);
+
+  // Stops the drag handler on the surface underneath from reading this as the
+  // start of a new mark.
+  button.addEventListener('mousedown', (event) => event.stopPropagation());
+  button.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClick();
+  });
+
+  return button;
 }
 
 /**
  * Enter drawing mode.
  *
- * The surface spans the whole document rather than the viewport, so a mark can
- * be drawn, the page scrolled, and another drawn, without the first moving.
+ * The surface is VIEWPORT-anchored — `position: fixed`, covering the screen —
+ * while the marks it shows are stored in document space and re-placed on every
+ * scroll.
+ *
+ * The obvious alternative, a document-sized `position: absolute` layer, was
+ * built first and is wrong. An absolutely positioned element resolves against
+ * its nearest positioned ancestor, and plenty of real pages set
+ * `body { position: relative }`. On those, every mark is drawn in one place,
+ * stored correctly, and displayed somewhere else entirely. Anchoring to the
+ * viewport has no dependency on the page's CSS, which is the point: this has to
+ * work on markup nobody wrote for us.
  */
 export function startManual(): void {
   if (surface) {
@@ -130,11 +258,8 @@ export function startManual(): void {
   container.id = SURFACE_ID;
 
   Object.assign(container.style, {
-    position: 'absolute',
-    left: '0',
-    top: '0',
-    width: `${Math.max(document.documentElement.scrollWidth, window.innerWidth)}px`,
-    height: `${Math.max(document.documentElement.scrollHeight, window.innerHeight)}px`,
+    position: 'fixed',
+    inset: '0',
     zIndex: '2147483646',
     cursor: 'crosshair',
     // Unlike the explainable overlay, this one DOES take events — that is its
@@ -144,28 +269,15 @@ export function startManual(): void {
     background: 'transparent',
   } satisfies Partial<CSSStyleDeclaration>);
 
-  const hint = document.createElement('div');
-  hint.textContent = 'Drag to hide an area · click a mark to remove it · Esc when done';
-  Object.assign(hint.style, {
-    position: 'fixed',
-    left: '50%',
-    top: '12px',
-    transform: 'translateX(-50%)',
-    padding: '6px 12px',
-    borderRadius: '999px',
-    background: '#0e7490',
-    color: '#ecfeff',
-    font: '600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
-    pointerEvents: 'none',
-    whiteSpace: 'nowrap',
-  } satisfies Partial<CSSStyleDeclaration>);
-  container.appendChild(hint);
+  container.appendChild(buildToolbar());
 
   container.addEventListener('mousedown', onMouseDown);
   document.addEventListener('keydown', onKeyDown, true);
+  // Passive: this only reads the scroll position and moves our own elements.
+  window.addEventListener('scroll', reposition, { passive: true, capture: true });
 
   surface = container;
-  document.body.appendChild(container);
+  document.documentElement.appendChild(container);
   renderAll();
 }
 
@@ -238,6 +350,7 @@ function onMouseUp(event: MouseEvent): void {
 
   regions.push(region);
   renderRegion(region);
+  refreshHint();
 }
 
 /** Leave drawing mode. The marks stay; only the drawing surface goes. */

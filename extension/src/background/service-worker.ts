@@ -59,6 +59,15 @@ import {
 const CONTENT_SCRIPT_FILE = 'content-script.js';
 
 /**
+ * The task used when a run is started from the page rather than the popup.
+ *
+ * Deliberately a reading task rather than an acting one. A run launched from
+ * the marking toolbar is about hiding things, and the person clicking it has
+ * not asked for anything to be done to the page.
+ */
+const DEFAULT_TASK = 'Describe what is on this screen';
+
+/**
  * Shown whenever Chrome will not let us near a page at all.
  *
  * Deliberately says what the user can do about it rather than what went wrong
@@ -1152,7 +1161,14 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
     case MSG.RUN_TASK:
       // Fire-and-forget: progress reaches the popup through STATE_CHANGED
       // broadcasts, so the popup is never blocked waiting on a whole run.
-      void runTask(message.taskQuery);
+      //
+      // An empty query comes from the Run button on the manual-marking
+      // toolbar, where there is no field to type one into. It reuses whatever
+      // the user last asked for, so running from the page does not silently
+      // change the task, and falls back to a plain description otherwise. It
+      // must never stay empty: API_SPEC.md gives task_query a minimum length
+      // and the server would reject the payload outright.
+      void runTask(message.taskQuery.trim() || state.taskQuery || DEFAULT_TASK);
       sendResponse({ accepted: true });
       return false;
 
