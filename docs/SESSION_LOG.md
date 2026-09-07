@@ -1605,3 +1605,15 @@ into a tab is the last check.
 **Next session:** confirm that frame visually, then either the deferred
 profile-edit fixture or the Documentation & Submission items, which are now the
 largest block of unticked work left.
+
+**Frame confirmed visually — Phase 3 closed.** All six boxes sit on the six
+detected faces, the blackout covers them cleanly, and nothing is painted on the
+control paragraph, headings or captions. That was the one check none of the
+numbers could make: every other result on this screen is one number agreeing
+with another, and a rectangle painted in the wrong place would have satisfied
+all of them. The overlay defect found earlier the same day was exactly that
+class of error, which is why it was worth doing rather than assuming.
+
+Phases 1, 2 and 3 are now complete apart from the two items needing other
+laptops and the deliberately deferred profile-edit fixture. The largest
+remaining block of work is Documentation & Submission.

@@ -529,6 +529,13 @@ at particular coordinates.
       This also settles the earlier 0.5 -> 0.3 change arithmetically: at 0.5 the
       survivors are exactly the five above 0.5, which is what was recorded then.
       The change bought the 80px rung and nothing else.
+- [x] Redacted frame inspected visually, not just counted
+      — the check none of the numbers could make. All six boxes sit on the six
+      detected faces and the blackout covers them cleanly; nothing is painted on
+      the control paragraph, the headings or the captions. This mattered because
+      every other check on this screen is one number agreeing with another, and
+      a rectangle painted in the wrong place would satisfy all of them — which
+      is exactly the overlay defect found earlier the same day.
 - [x] No over-redaction on non-face content
       — the other half of this screen's pass criteria, which a page of nothing
       but faces could not test. Zero DOM detections ("no DOM values needed
