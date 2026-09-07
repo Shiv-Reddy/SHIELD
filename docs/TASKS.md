@@ -341,7 +341,7 @@ and the free-tier provider is unchosen, which costs generality but not the demo.
       this is now "run the demo once on that laptop and confirm it did not
       refuse", not a separate manual procedure. Still needs the laptop.
 
-## Phase 2 — First Stretch Goal (Unblocked 2026-09-07)
+## Phase 2 — First Stretch Goal (CLOSED 2026-09-07)
 
 **Detection is already done and measured.** `02-signup.html` yields 11
 detections from 21 mapped elements with 0 unresolved selectors, every category
@@ -496,7 +496,12 @@ summary and the docstring now describe what the code does.
       the content — see DECISIONS.md for why pinning is worse, and the Module F
       entry above, whose "NEEDS VISUAL VERIFICATION" note this closes.
 
-## Phase 3 — Second Stretch Goal (Unblocked 2026-09-07)
+## Phase 3 — Second Stretch Goal (CLOSED 2026-09-07)
+
+**Closed with one item deferred, not abandoned** — the profile-edit fixture
+below. Everything the phase set out to prove is measured: the visual layer hides
+what the DOM cannot describe, and the reasoner stays quiet on a screen with
+nothing to do.
 
 **The third demo task is protection, not action** — decided before any work,
 recorded in DECISIONS.md. A photo gallery has no form, so there is nothing to do
@@ -558,9 +563,26 @@ at particular coordinates.
       face path the higher-risk one. The obvious next thing if time remains.
 
 ## Differentiation Features (After Core Phase 1 Works)
-- [ ] Live network inspector shown in demo
-- [ ] Explainable redaction overlay polished for demo clarity
-- [ ] Semantic placeholder redaction (not blind blackout)
+- [x] Live network inspector shown in demo
+      — BUILT. The "What was sent?" panel in the popup reads the recorded
+      transmission back from storage and prints the exact JSON that left the
+      machine, with the endpoint and timestamp. Read fresh each time it opens
+      rather than cached: showing a stale payload as though it were current
+      would be worse than showing nothing, because the whole value of the panel
+      is that it can be read literally. Putting it in front of an audience is a
+      demo decision, not a build one.
+- [x] Explainable redaction overlay polished for demo clarity
+      — BUILT and twice corrected against real pages. It draws category, reason
+      and geometry over the page before anything is transmitted, carrying rule
+      names and never values. Two defects were found and fixed by looking at it
+      rather than by any test: boxes going stale on scroll, and the misplacement
+      caused by the same coordinate confusion that later hit manual marking.
+- [x] Semantic placeholder redaction (not blind blackout)
+      — BUILT, and it is the difference between Shield and a blur filter. Values
+      become `[PASSWORD]`, `[EMAIL]`, `[NAME]`, `[PHONE]`, `[ADDRESS]`,
+      `[ID_NUMBER]`, `[FACE]`, so the reasoner still knows what kind of field it
+      is looking at and can act on it without ever seeing the content. A blanked
+      field would tell it nothing.
 - [ ] Frame diffing for latency/resource optimization (stretch)
 - [ ] Naive-baseline comparison (blind blur vs. semantic redaction, with real numbers)
 - [ ] Red-team adversarial case shown live in demo
