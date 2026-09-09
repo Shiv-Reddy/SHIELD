@@ -1096,7 +1096,17 @@ async function ocrImageRegions(
   }
 
   if (unread.length > 0) {
-    console.warn(`[shield] ${unread.length} image(s) could not be read — covering them whole`);
+    // The reason travels with the result and is printed HERE, in the console
+    // people actually have open. The offscreen document has its own console
+    // that nobody opens during a demo, and a diagnosis stranded there is no
+    // diagnosis at all.
+    const failure = results.find((entry): entry is Extract<OcrReadResult, { ok: false }> =>
+      !entry.ok,
+    );
+    const why = failure?.message ?? 'no reason given';
+    console.warn(
+      `[shield] ${unread.length} image(s) could not be read — covering them whole (${why})`,
+    );
     regions.push(...unreadableImageRegions(unread));
   }
 

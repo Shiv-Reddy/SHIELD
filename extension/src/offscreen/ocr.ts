@@ -43,6 +43,7 @@ export type OcrReadResult =
 
 let worker: Worker | null = null;
 let loadFailed = false;
+let loadError = '';
 
 /**
  * The smallest a crop is scaled to before recognition.
@@ -70,11 +71,25 @@ async function ensureWorker(): Promise<Worker | null> {
       workerPath: chrome.runtime.getURL('tesseract/worker.min.js'),
       corePath: chrome.runtime.getURL('tesseract/tesseract-core.wasm.js'),
       langPath: chrome.runtime.getURL('tessdata'),
+      // Tesseract fetches its worker script and re-wraps it in a `blob:` URL by
+      // default, to sidestep cross-origin restrictions on the open web. Under
+      // the extension CSP — `script-src 'self'` — a blob worker is blocked
+      // outright, so the default silently prevents the engine from ever
+      // starting. Ours is already same-origin; the workaround is unnecessary
+      // here and fatal.
+      workerBlobURL: false,
+      // The language data is a local extension file. Caching a local file in
+      // IndexedDB buys nothing and adds a storage path that can fail.
+      cacheMethod: 'none',
       gzip: true,
     });
     return worker;
   } catch (error) {
     loadFailed = true;
+    loadError = error instanceof Error ? error.message : String(error);
+    // Logged here AND returned to the worker. This console belongs to the
+    // offscreen document, which nobody has open during a demo, so a failure
+    // that only appears here is a failure nobody can diagnose.
     console.error('[shield] OCR engine could not be loaded', error);
     return null;
   }
@@ -93,7 +108,11 @@ export async function readCrop(
 ): Promise<OcrReadResult> {
   const engine = await ensureWorker();
   if (!engine) {
-    return { ok: false, elementId: crop.elementId, message: 'OCR engine unavailable' };
+    return {
+      ok: false,
+      elementId: crop.elementId,
+      message: `OCR engine unavailable: ${loadError || 'unknown reason'}`,
+    };
   }
 
   try {
