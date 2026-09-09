@@ -1,0 +1,206 @@
+/**
+ * The scan record.
+ *
+ * Same palette and type as the popup, deliberately — this opens in a tab of its
+ * own and has to read as the same product rather than as a debug page that
+ * escaped. The layout is the one thing that differs: the popup is 348px and
+ * glanced at, this is full width and looked at.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0a0e17;
+  --surface: #111725;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --hairline-strong: rgba(255, 255, 255, 0.12);
+
+  --fg: #e6edf9;
+  --fg-muted: #8b97ac;
+  --fg-faint: #6b7789;
+
+  --accent: #3b82f6;
+  --accent-bright: #60a5fa;
+  --accent-tint: rgba(59, 130, 246, 0.12);
+  --warn: #fbbf24;
+
+  --radius-lg: 14px;
+  --radius: 11px;
+
+  --font: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui,
+    -apple-system, "Inter", sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", ui-sans-serif,
+    system-ui, -apple-system, "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 14px/1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Header --------------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+}
+
+.brand-mark {
+  width: 22px;
+  height: 22px;
+}
+
+.brand-name {
+  color: var(--fg);
+  font: 600 15px/1 var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.title {
+  margin: 0;
+  padding-left: 14px;
+  border-left: 1px solid var(--hairline-strong);
+  color: var(--fg-muted);
+  font: 400 15px/1 var(--font-display);
+}
+
+/* --- Body ----------------------------------------------------------------- */
+
+/* Capped rather than full-bleed. A screenshot stretched across a 32-inch
+   monitor is not more legible, and a measured column keeps the captions
+   readable beside the images they describe. */
+.body {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 32px 64px;
+}
+
+.summary {
+  margin: 0 0 14px;
+  font: 400 17px/1.5 var(--font-display);
+}
+
+.promise {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 32px;
+  padding: 12px 14px;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: var(--radius);
+  background: var(--accent-tint);
+  color: var(--accent-bright);
+  font-size: 13px;
+}
+
+.icon {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.empty strong {
+  color: var(--fg);
+  font-weight: 550;
+}
+
+/* --- The filmstrip -------------------------------------------------------- */
+
+.screens {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.screen {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 11px 15px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.caption-label {
+  color: var(--fg-muted);
+  font-size: 12.5px;
+}
+
+.caption-covered {
+  color: var(--accent-bright);
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+/* A screen with nothing on it is not a failure and must not read as one. */
+.caption-covered[data-none="true"] {
+  color: var(--fg-faint);
+  font-weight: 400;
+}
+
+/* Shown at its natural size up to the column width. These are the evidence, so
+   they are never cropped and never zoomed past 1:1 — a scaled-up screenshot
+   invites the question of what else was altered. */
+.shot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.boundary {
+  margin: 28px 0 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: var(--radius);
+  background: rgba(251, 191, 36, 0.08);
+  color: #fcd34d;
+  font-size: 13px;
+}

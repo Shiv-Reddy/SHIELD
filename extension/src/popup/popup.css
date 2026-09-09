@@ -539,6 +539,15 @@ body {
   cursor: pointer;
 }
 
+/* Two links in one strip: only the first pushes itself to the right. */
+.linkish-tight {
+  margin-left: 0;
+}
+
+.marked .linkish + .linkish {
+  margin-left: 12px;
+}
+
 .linkish:hover {
   color: var(--fg);
   text-decoration: underline;

@@ -60,6 +60,10 @@ export default defineConfig({
         // The inference host. A separate extension page because ONNX Runtime
         // Web cannot run in an MV3 service worker at all.
         offscreen: fileURLToPath(new URL('./src/offscreen/offscreen.html', import.meta.url)),
+        // The scan record. Its own tab because it exists to be looked at — a
+        // 348px popup cannot show a screenshot at a size where somebody can
+        // check that their ID number really was covered.
+        proof: fileURLToPath(new URL('./src/proof/proof.html', import.meta.url)),
       },
       output: {
         entryFileNames: '[name].js',

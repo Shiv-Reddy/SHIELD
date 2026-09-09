@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shield — what was examined</title>
+    <link rel="stylesheet" href="./proof.css" />
+  </head>
+  <body>
+    <!--
+      A full tab rather than a panel in the popup. This is the one artefact in
+      the product meant to be looked AT rather than glanced at — every screen of
+      a page, at a size where the black rectangles and the text beside them are
+      both legible. A 348px popup cannot show that, and a person checking
+      whether their ID number was really covered needs to be able to see it.
+    -->
+    <header class="header">
+      <span class="brand">
+        <svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 725 725" fill="currentColor">
+          <clipPath id="sh"><rect x="0" y="0" width="347.5" height="725"/></clipPath>
+          <path d="M347.5 0C245 28 128 92 47.5 163C47.5 380 140 600 347.5 725ZM100 352C165 245 258 232 347.5 232C347.5 232 347.5 472 347.5 472C258 472 165 459 100 352ZM363 352C363 390.659932486 331.659932486 422 293 422C254.340067514 422 223 390.659932486 223 352C223 313.340067514 254.340067514 282 293 282C331.659932486 282 363 313.340067514 363 352ZM349 352C349 362.4934102462 340.4934102462 371 330 371C319.5065897538 371 311 362.4934102462 311 352C311 341.5065897538 319.5065897538 333 330 333C340.4934102462 333 349 341.5065897538 349 352Z" fill-rule="evenodd" clip-path="url(#sh)"/>
+          <rect x="352" y="214" width="40" height="40"/><rect x="352" y="297" width="36" height="36"/><rect x="352" y="372" width="36" height="36"/><rect x="352" y="449" width="40" height="40"/><rect x="398" y="258" width="46" height="46"/><rect x="400" y="340" width="28" height="28"/><rect x="398" y="398" width="44" height="44"/><rect x="452" y="166" width="50" height="50"/><rect x="455" y="320" width="30" height="30"/><rect x="452" y="440" width="48" height="48"/><rect x="505" y="96" width="34" height="34"/><rect x="512" y="250" width="56" height="56"/><rect x="515" y="355" width="36" height="36"/><rect x="500" y="512" width="50" height="50"/><rect x="568" y="158" width="46" height="46"/><rect x="566" y="310" width="50" height="50"/><rect x="560" y="440" width="40" height="40"/><rect x="530" y="592" width="36" height="36"/><rect x="636" y="232" width="28" height="28"/><rect x="640" y="366" width="34" height="34"/><rect x="620" y="536" width="28" height="28"/><rect x="478" y="610" width="24" height="24"/>
+        </svg>
+        <span class="brand-name">Shield</span>
+      </span>
+      <h1 class="title">What was examined</h1>
+    </header>
+
+    <main class="body">
+      <p id="summary" class="summary"></p>
+
+      <!--
+        The claim, stated where the evidence is rather than only in the popup.
+        Somebody shown this tab did not necessarily see anything that came
+        before it.
+      -->
+      <p class="promise">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M6 8.5V6a4 4 0 0 1 8 0v2.5"/>
+          <rect x="4" y="8.5" width="12" height="8.5" rx="2"/>
+        </svg>
+        These pictures were taken on this computer, redacted on this computer,
+        and stored on this computer. No screen below was transmitted anywhere.
+      </p>
+
+      <p id="empty" class="empty" hidden>
+        No scan has been recorded yet. Open Shield on a page and choose
+        <strong>Scan the whole page</strong>.
+      </p>
+
+      <!--
+        SCREEN BY SCREEN, NEVER JOINED
+        Sticky headers repeat at a stitch seam, so a joined image shows content
+        that never coexisted on screen. This is the surface whose whole value is
+        that it can be believed literally.
+      -->
+      <ol id="screens" class="screens"></ol>
+
+      <p id="boundary" class="boundary" hidden>
+        The scan stopped here. Everything below this point on the page was not
+        examined.
+      </p>
+    </main>
+
+    <script type="module" src="./proof.ts"></script>
+  </body>
+</html>

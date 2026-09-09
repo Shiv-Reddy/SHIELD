@@ -44,7 +44,7 @@
  * written nowhere.
  */
 
-import type { ScanFinding } from '../lib/coverage';
+import { clipFindings, type ScanFinding } from '../lib/coverage';
 import type { SensitiveCategory } from '../lib/types';
 
 const SURFACE_ID = 'shield-scan-overlay';
@@ -126,49 +126,6 @@ export function clearScanOverlay(): void {
 /** How many findings this page is carrying. */
 export function scanFindingCount(): number {
   return findings.length;
-}
-
-/**
- * Findings in viewport coordinates, clipped to the frame.
- *
- * Pure and separately tested, and deliberately the same shape as
- * `clipToViewport` in `manual-redaction.ts` rather than a second convention for
- * the same arithmetic. Every coordinate defect in this project has been a
- * plausible rectangle over the wrong pixels, and each one came from doing this
- * conversion somewhere new.
- *
- * A finding scrolled out of sight is dropped — the capture only contains the
- * viewport, so there is nothing there to cover. One straddling an edge is
- * CLIPPED rather than dropped: its visible part is in the frame and must be
- * covered, while passing the whole rectangle downstream would paint outside the
- * image.
- */
-export function clipFindings(
-  found: readonly ScanFinding[],
-  offsetX: number,
-  offsetY: number,
-  viewWidth: number,
-  viewHeight: number,
-): ScanFinding[] {
-  const visible: ScanFinding[] = [];
-
-  for (const finding of found) {
-    const { x, y, width, height } = finding.position;
-
-    const left = Math.max(x - offsetX, 0);
-    const top = Math.max(y - offsetY, 0);
-    const right = Math.min(x - offsetX + width, viewWidth);
-    const bottom = Math.min(y - offsetY + height, viewHeight);
-
-    if (right <= left || bottom <= top) continue;
-
-    visible.push({
-      ...finding,
-      position: { x: left, y: top, width: right - left, height: bottom - top },
-    });
-  }
-
-  return visible;
 }
 
 /** The findings in viewport coordinates. Reads the live scroll position. */

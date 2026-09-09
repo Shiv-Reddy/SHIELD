@@ -79,6 +79,15 @@ is what makes it affordable to spend several seconds and several captures on.
 A scan that stops early, on an endless page or a scroll-locked one, draws the
 line where it stopped on the page itself.
 
+**The whole page, redacted, is kept locally and never sent.** The scan redacts
+each screen it examined and stores it, viewable as a filmstrip. A full-page
+image is deliberately not transmitted: vision APIs downscale to roughly 1500px
+on the longest side, so a five-screen page would reach the model about 600px
+wide with 16px text at ~5px — strictly less than it sees now. Only redacted
+frames are ever written to storage; a screen whose redaction failed is omitted
+and counted rather than stored raw, because storage outlives the tab and the
+session.
+
 **What a scan finds is hidden on every later run of that page — as of the moment
 it ran.** Findings are kept in the content script in document coordinates and
 clipped to the viewport at capture time, so an identifier the scan found below

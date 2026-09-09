@@ -20,8 +20,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   MAX_SCAN_STOPS,
+  clipFindings,
   countByCategory,
   dedupeFindings,
+  dedupeRegions,
   describeCoverage,
   planScanStops,
   unexaminedImages,
@@ -29,8 +31,7 @@ import {
   type ScannedImage,
 } from '../src/lib/coverage';
 import { fullyVisible } from '../src/lib/pii/image-candidates';
-import { clipFindings } from '../src/content/scan-overlay';
-import type { Rect } from '../src/lib/types';
+import type { Rect, SensitiveRegion } from '../src/lib/types';
 
 function finding(
   category: ScanFinding['category'],
@@ -473,4 +474,135 @@ test('the category and rule survive the conversion', () => {
 
   assert.equal(visible?.category, 'id_number');
   assert.match(visible?.reason ?? '', /Aadhaar/);
+});
+
+// --- Merging live detections with remembered ones -----------------------------
+//
+// A run detects the email field itself AND carries the same field forward from
+// a scan. Nothing is under-protected by that — everything is still hidden — but
+// the manifest the model reads, the payload inspector and the audit log all
+// report eight things where five exist.
+
+function merged(
+  category: SensitiveRegion['category'],
+  source: SensitiveRegion['source'],
+  elementId: string | null,
+  position: Rect,
+  reason = 'test',
+): SensitiveRegion {
+  return { regionId: reason, category, source, confidence: 1, elementId, reason, position };
+}
+
+const BOX = { x: 100, y: 200, width: 314, height: 43 };
+
+test('the same field detected live and carried forward is reported once', () => {
+  const kept = dedupeRegions([
+    merged('email', 'dom', 'e0', BOX, 'autocomplete="email"'),
+    merged('email', 'dom', 'e0', BOX, 'found by a whole-page scan'),
+  ]);
+
+  assert.equal(kept.length, 1);
+});
+
+test('the live detection is the one kept, not the remembered one', () => {
+  // Order is the rule. A live detection carries the rule that actually fired
+  // just now; a carried one is a claim as of whenever the scan ran.
+  const [kept] = dedupeRegions([
+    merged('email', 'dom', 'e0', BOX, 'autocomplete="email"'),
+    merged('email', 'dom', 'e0', BOX, 'found by a whole-page scan'),
+  ]);
+
+  assert.equal(kept?.reason, 'autocomplete="email"');
+});
+
+test('two different fields of the same kind both survive', () => {
+  const kept = dedupeRegions([
+    merged('email', 'dom', 'e0', BOX),
+    merged('email', 'dom', 'e4', { ...BOX, y: 900 }),
+  ]);
+
+  assert.equal(kept.length, 2);
+});
+
+test('different categories on one element are both kept', () => {
+  // A field can be more than one thing, and collapsing that would drop a
+  // manifest entry describing a real reason it was hidden.
+  const kept = dedupeRegions([
+    merged('email', 'dom', 'e0', BOX),
+    merged('id_number', 'ocr', 'e0', BOX),
+  ]);
+
+  assert.equal(kept.length, 2);
+});
+
+test('a manual mark is never merged away by anything', () => {
+  // A person pointing at a rectangle is not making the same claim as a rule
+  // matching there, which is why `manual` is its own source at all.
+  const kept = dedupeRegions([
+    merged('other', 'ocr', 'e0', BOX),
+    merged('other', 'manual', 'e0', BOX),
+  ]);
+
+  assert.equal(kept.length, 2);
+});
+
+test('a manual mark never swallows a rule detection either', () => {
+  const kept = dedupeRegions([
+    merged('other', 'manual', 'e0', BOX),
+    merged('other', 'ocr', 'e0', BOX),
+  ]);
+
+  assert.equal(kept.length, 2);
+});
+
+test('geometric regions with no element merge on overlap', () => {
+  // Carried findings arrive with no elementId, so geometry is all there is.
+  const kept = dedupeRegions([
+    merged('id_number', 'ocr', null, { x: 100, y: 900, width: 220, height: 30 }),
+    merged('id_number', 'ocr', null, { x: 102, y: 901, width: 218, height: 29 }),
+  ]);
+
+  assert.equal(kept.length, 1);
+});
+
+test('regions far apart are never merged, however alike', () => {
+  const kept = dedupeRegions([
+    merged('id_number', 'ocr', null, { x: 100, y: 200, width: 220, height: 30 }),
+    merged('id_number', 'ocr', null, { x: 100, y: 900, width: 220, height: 30 }),
+  ]);
+
+  assert.equal(kept.length, 2);
+});
+
+// --- One finding, every screen it appears on ----------------------------------
+//
+// The regression this file exists to prevent from recurring. The scan first
+// painted each screen with the regions found AT that stop — but a scan
+// discovers as it goes. The Aadhaar number was read at the second stop, and the
+// first stop's picture, where the same card is fully visible, had already been
+// written without it. A screenshot of an unredacted ID number went into
+// storage, from the feature whose whole purpose is proving the opposite.
+//
+// Nothing is painted now until every stop has been read, and then every screen
+// is painted with all of them.
+
+test('a finding is covered on every screen it is visible in', () => {
+  // Document y=815, the position the Aadhaar number actually sat at. Visible in
+  // the first look (0-945) and again in the second (229-1174).
+  const found = [documentFinding(815, 16)];
+
+  const first = clipFindings(found, 0, 0, 1920, 945);
+  const second = clipFindings(found, 0, 229, 1920, 945);
+
+  assert.equal(first.length, 1, 'missing from the first screen — the original bug');
+  assert.equal(second.length, 1, 'missing from the second screen');
+  assert.equal(first[0]?.position.y, 815);
+  assert.equal(second[0]?.position.y, 586);
+});
+
+test('a finding below a screen is not painted onto it', () => {
+  // The other direction. Painting everything onto every screen would black out
+  // rectangles over unrelated content and make the record untrustworthy in the
+  // opposite way.
+  assert.deepEqual(clipFindings([documentFinding(2000)], 0, 0, 1920, 945), []);
 });

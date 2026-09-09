@@ -34,6 +34,8 @@ import {
 import {
   countByCategory,
   dedupeFindings,
+  clipFindings,
+  dedupeRegions,
   describeCoverage,
   planScanStops,
   unexaminedImages,
@@ -53,6 +55,11 @@ import { buildManifest, redactDomElements } from '../lib/redaction/placeholders'
 import { buildSanitizedPayload } from '../lib/redaction/payload';
 import { recordTransmission } from '../lib/redaction/evidence';
 import { buildAuditEntry, recordAudit } from '../lib/audit';
+import {
+  clearScanProof,
+  recordScanProof,
+  type ProofScreen,
+} from '../lib/scan-proof';
 import { send } from '../lib/transport/client';
 import { readSettings } from '../lib/settings';
 import { readSelfTestRecord, writeSelfTestRecord } from '../lib/self-test-record';
@@ -893,7 +900,17 @@ async function runStep(
     // attribute declares and no face model recognises.
     const ocr = await ocrImageRegions(rawFrame, snapshot.elements, geometry);
 
-    const regions = [...domRegions, ...visualRegions, ...ocr, ...remembered, ...manual];
+    // This pass's own detections FIRST, then what a scan carried forward. The
+    // dedupe keeps the first of any pair describing the same thing, so a live
+    // detection — with the rule that actually fired just now — wins over a
+    // remembered one.
+    const regions = dedupeRegions([
+      ...domRegions,
+      ...visualRegions,
+      ...ocr,
+      ...remembered,
+      ...manual,
+    ]);
     snapshot.sensitiveRegions = regions;
     logDetections(regions, snapshot.elements);
 
@@ -1458,6 +1475,11 @@ async function scanPage(): Promise<void> {
     // Shield's own UI must not appear in the frames Shield examines. A previous
     // scan's boxes would be captured, read by OCR, and reported as findings of
     // their own — the tool detecting itself.
+    // The previous record goes before this scan starts, not when it finishes.
+    // A scan that fails halfway would otherwise leave the last page's filmstrip
+    // sitting there looking like the current one.
+    await clearScanProof();
+
     await sendToTab(tabId, { type: MSG.CLEAR_SCAN });
     await sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
     await sendToTab(tabId, { type: MSG.SET_MANUAL_VISIBLE, visible: false });
@@ -1488,6 +1510,33 @@ async function scanPage(): Promise<void> {
     // of it. An image clipped at every stop was never actually read, however
     // many times OCR ran on a piece of it.
     const images: ScannedImage[] = [];
+    /**
+     * The raw frames, held until the walk is over.
+     *
+     * REDACTION CANNOT HAPPEN PER STOP, AND THAT WAS A REAL DEFECT
+     *
+     * The first version painted each screen as it was captured, using the
+     * regions found at that stop. But a scan discovers things as it goes: the
+     * Aadhaar number was read at the second stop, and the first stop's picture
+     * — where the same card is fully visible — had already been written
+     * without it. That put a screenshot of an unredacted ID number into
+     * storage, from the feature whose entire purpose is proving the opposite.
+     *
+     * So nothing is painted until every stop has been read, and then each
+     * screen is painted with ALL of them. Data URLs are strings, not decoded
+     * bitmaps — twelve JPEG frames is under a megabyte of memory for the
+     * length of the scan, and none of it is stored or sent.
+     */
+    const captured: {
+      scrollX: number;
+      scrollY: number;
+      viewportHeight: number;
+      dataUrl: string;
+      scaleX: number;
+      scaleY: number;
+    }[] = [];
+    const screens: ProofScreen[] = [];
+    let omittedScreens = 0;
     let examinedTo = 0;
     let stoppedEarly = plan.truncated;
     let previousLanding: number | null = null;
@@ -1552,6 +1601,17 @@ async function scanPage(): Promise<void> {
           ...(await ocrImageRegions(frame, domMap.elements, analysis.frame)),
         ];
 
+        // Kept, not painted. What is sensitive on this screen is not fully known
+        // until every screen has been read — see the note on `captured`.
+        captured.push({
+          scrollX: landed.scrollX,
+          scrollY: landed.scrollY,
+          viewportHeight: landed.viewportHeight,
+          dataUrl: frame.dataUrl,
+          scaleX: analysis.frame.scaleX,
+          scaleY: analysis.frame.scaleY,
+        });
+
         // Viewport to document, in one place. Every coordinate bug in this
         // project has been a plausible rectangle over the wrong pixels, and
         // every one came from doing a conversion like this in two places.
@@ -1600,6 +1660,66 @@ async function scanPage(): Promise<void> {
       counts: countByCategory(all),
       total: all.length,
     };
+
+    // Now that every stop has been read, paint every screen with everything the
+    // whole scan found. A finding discovered at the last stop is covered on the
+    // first screen too, wherever it was visible there.
+    for (const shot of captured) {
+      if (abandoned()) return;
+
+      const onScreen = clipFindings(
+        all,
+        shot.scrollX,
+        shot.scrollY,
+        viewport.width,
+        shot.viewportHeight,
+      );
+
+      try {
+        const painted = await redactOffscreenFrame({
+          dataUrl: shot.dataUrl,
+          regions: onScreen.map((finding, index) => ({
+            regionId: `proof-${shot.scrollY}-${index}`,
+            category: finding.category,
+            source: finding.source,
+            confidence: 1,
+            elementId: null,
+            reason: finding.reason,
+            position: finding.position,
+          })),
+          scaleX: shot.scaleX,
+          scaleY: shot.scaleY,
+        });
+
+        if (painted.ok) {
+          screens.push({ at: shot.scrollY, dataUrl: painted.dataUrl, covered: painted.painted });
+        } else {
+          // The RAW frame is never kept as a substitute. Storage outlives the
+          // tab, the browser and the session, so a raw screen written there is
+          // a screenshot of a private page left on disk — a far longer-lived
+          // exposure than anything else in this pipeline creates. A missing
+          // screen is counted and declared in the caption instead.
+          omittedScreens += 1;
+          console.warn(`[shield] screen at ${shot.scrollY}px omitted: ${painted.message}`);
+        }
+      } catch (error) {
+        omittedScreens += 1;
+        console.warn('[shield] a screen could not be redacted for the record', error);
+      }
+    }
+
+    // Dropped as soon as they are no longer needed rather than left to the end
+    // of the function. These are unredacted pictures of somebody's screen.
+    captured.length = 0;
+
+    await recordScanProof({
+      at: Date.now(),
+      documentHeight: origin.documentHeight,
+      viewportHeight: origin.viewportHeight,
+      truncated: stoppedEarly,
+      omitted: omittedScreens,
+      screens,
+    });
 
     console.info(
       `[shield] scan complete — ${all.length} finding(s) across ` +

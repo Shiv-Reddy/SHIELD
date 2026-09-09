@@ -3,7 +3,7 @@
 **Deadline: 2026-09-09. Today is 2026-09-09 — deadline day.**
 **Goal: push as far toward Full Product as 2 days allows.**
 
-Status: core complete. Phases 1-3 closed. 168 client tests, 82 reasoner checks,
+Status: core complete. Phases 1-3 closed. 186 client tests, 82 reasoner checks,
 35 prompt checks - all green. One pass ≈150ms, every stage inside budget.
 
 ---
@@ -100,7 +100,14 @@ Rubric weight: PII detection + redaction = 40%. This is where the marks are.
       document coordinates like a drawn mark, clipped to the viewport at capture.
       Stale after a reflow — over-redacts, which is the safe direction, and said
       out loud in SECURITY_PRIVACY.md rather than left to be found.
-      33 tests. Scan verified in Chrome; the carry-over is not yet.
+      **The whole page, redacted, is produced as PROOF** — the scan redacts each
+      screen it examined and keeps them, shown as a filmstrip in its own tab.
+      Never transmitted. A full-page image is deliberately NOT sent: vision APIs
+      downscale to ~1500px, so five screens arrive ~600px wide with 16px text at
+      ~5px — the model would get a third of the detail it has now.
+      A filmstrip, not a stitch: sticky headers repeat at every seam and this is
+      the one surface that must be literally true.
+      51 tests. Scan and carry-over verified in Chrome; the record is not yet.
 - [ ] **Consent preview** — show what leaves, pause, require approval
       — Small now: manual marking already built the surface and region plumbing.
 - [ ] **Profile-edit fixture** — face + name/email + Save, in one acting loop

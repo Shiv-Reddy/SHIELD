@@ -20,6 +20,7 @@ import { INITIAL_STATE, STATUS_LABEL, type ShieldState } from '../lib/status';
 import { readSettings, setForceBackend, setObserveOnly } from '../lib/settings';
 import { readLastTransmission } from '../lib/redaction/evidence';
 import { auditJson, clearAudit, readAudit } from '../lib/audit';
+import { clearScanProof } from '../lib/scan-proof';
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -46,6 +47,7 @@ const scanButton = required<HTMLButtonElement>('#scan-button');
 const scanState = required<HTMLParagraphElement>('#scan-state');
 const scanSummary = required<HTMLSpanElement>('#scan-summary');
 const scanClear = required<HTMLButtonElement>('#scan-clear');
+const scanProof = required<HTMLButtonElement>('#scan-proof');
 const manualButton = required<HTMLButtonElement>('#manual-button');
 const manualClear = required<HTMLButtonElement>('#manual-clear');
 const manualState = required<HTMLParagraphElement>('#manual-state');
@@ -476,6 +478,7 @@ function renderScan(state: ShieldState): void {
     scanState.hidden = false;
     scanState.dataset['tone'] = 'accent';
     scanClear.hidden = true;
+    scanProof.hidden = true;
     scanSummary.textContent =
       progress && progress.total > 0
         ? `Reading screen ${progress.stop} of ${progress.total}…`
@@ -491,6 +494,7 @@ function renderScan(state: ShieldState): void {
       const count = await scanFindingCount();
       scanState.hidden = count === 0;
       scanClear.hidden = count === 0;
+      scanProof.hidden = count === 0;
       scanState.dataset['tone'] = 'accent';
       scanSummary.textContent = `${count} area${count === 1 ? '' : 's'} from the last scan · hidden on every run`;
     })();
@@ -499,6 +503,10 @@ function renderScan(state: ShieldState): void {
 
   scanState.hidden = false;
   scanClear.hidden = false;
+  // Offered even when nothing was found. "Shield looked at all six screens and
+  // there was nothing to hide" is a result worth being able to show somebody,
+  // not an empty state to suppress.
+  scanProof.hidden = false;
   scanState.dataset['tone'] = scan.truncated ? 'warn' : 'accent';
 
   const looked = `${scan.stops} screen${scan.stops === 1 ? '' : 's'}`;
@@ -524,6 +532,18 @@ function renderScan(state: ShieldState): void {
     : `${breakdown} across ${looked} · hidden on every run`;
 }
 
+/**
+ * Open the scan record in a tab of its own.
+ *
+ * A tab rather than a panel: this is the one artefact meant to be looked at
+ * rather than glanced at, and a 348px popup cannot show a screenshot at a size
+ * where somebody can check that their ID number really was covered.
+ */
+scanProof.addEventListener('click', () => {
+  void chrome.tabs.create({ url: chrome.runtime.getURL('proof/proof.html') });
+  window.close();
+});
+
 scanClear.addEventListener('click', () => {
   void (async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -533,6 +553,10 @@ scanClear.addEventListener('click', () => {
     } catch {
       // No content script means nothing to clear.
     }
+    // The pictures go with the findings. Leaving a filmstrip behind after the
+    // protection it documents has been cleared would show a record of something
+    // that is no longer true.
+    await clearScanProof();
     scanState.hidden = true;
   })();
 });

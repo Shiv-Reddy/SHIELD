@@ -212,6 +212,49 @@ export interface ScanFinding {
 }
 
 /**
+ * Findings in viewport coordinates, clipped to the frame.
+ *
+ * Pure and separately tested, and deliberately the same shape as
+ * `clipToViewport` in `manual-redaction.ts` rather than a second convention for
+ * the same arithmetic. Every coordinate defect in this project has been a
+ * plausible rectangle over the wrong pixels, and each one came from doing this
+ * conversion somewhere new.
+ *
+ * A finding scrolled out of sight is dropped — the capture only contains the
+ * viewport, so there is nothing there to cover. One straddling an edge is
+ * CLIPPED rather than dropped: its visible part is in the frame and must be
+ * covered, while passing the whole rectangle downstream would paint outside the
+ * image.
+ */
+export function clipFindings(
+  found: readonly ScanFinding[],
+  offsetX: number,
+  offsetY: number,
+  viewWidth: number,
+  viewHeight: number,
+): ScanFinding[] {
+  const visible: ScanFinding[] = [];
+
+  for (const finding of found) {
+    const { x, y, width, height } = finding.position;
+
+    const left = Math.max(x - offsetX, 0);
+    const top = Math.max(y - offsetY, 0);
+    const right = Math.min(x - offsetX + width, viewWidth);
+    const bottom = Math.min(y - offsetY + height, viewHeight);
+
+    if (right <= left || bottom <= top) continue;
+
+    visible.push({
+      ...finding,
+      position: { x: left, y: top, width: right - left, height: bottom - top },
+    });
+  }
+
+  return visible;
+}
+
+/**
  * How much two boxes must overlap to be the same finding seen twice.
  *
  * Measured against the SMALLER box, not the union: a tight box on an ID number
@@ -322,6 +365,58 @@ export function unexaminedImages(
       reason: 'image large enough to hold a document, never fully on screen to be read',
       position: image.position,
     }));
+}
+
+/**
+ * Drop regions that say the same thing about the same place.
+ *
+ * A run detects the email field itself AND carries the same field forward from
+ * a scan, so the manifest arrives with eight entries describing five facts.
+ * Nothing is under-protected by that — everything still gets hidden — but three
+ * surfaces that are supposed to be exact are inflated by it: the manifest the
+ * model reads, the payload inspector, and the audit log's counts.
+ *
+ * ORDER IS THE RULE, NOT A DETAIL. The FIRST region wins, and the caller passes
+ * this pass's own detections first. A live detection carries the confidence and
+ * the rule that actually fired just now; a carried one is a claim as of
+ * whenever the scan ran. When both describe the same thing, the fresher is the
+ * one to keep.
+ *
+ * Manual marks are never merged away. A person pointing at a rectangle is not
+ * making the same claim as a rule matching there, and `manual` exists in
+ * `DetectionSource` precisely so the two stay distinguishable.
+ */
+export function dedupeRegions<
+  T extends {
+    category: SensitiveCategory;
+    source: DetectionSource;
+    elementId: string | null;
+    position: Rect;
+  },
+>(regions: readonly T[]): T[] {
+  const kept: T[] = [];
+
+  for (const region of regions) {
+    if (region.source === 'manual') {
+      kept.push(region);
+      continue;
+    }
+
+    const duplicate = kept.some((existing) => {
+      if (existing.source === 'manual') return false;
+      if (existing.category !== region.category) return false;
+
+      // Same element and same category is the same fact, whatever the boxes
+      // say — an element region's geometry comes from the element itself.
+      if (existing.elementId !== null && existing.elementId === region.elementId) return true;
+
+      return overlapFraction(existing.position, region.position) >= SAME_FINDING_OVERLAP;
+    });
+
+    if (!duplicate) kept.push(region);
+  }
+
+  return kept;
 }
 
 /** What a completed scan reports, as counts and never as content. */
