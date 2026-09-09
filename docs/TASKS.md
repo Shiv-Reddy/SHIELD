@@ -1,167 +1,253 @@
 # Tasks — Shield
 
-**Deadline: 2026-09-09. Today is 2026-09-09 — deadline day.**
-**Goal: push as far toward Full Product as 2 days allows.**
+**SIH26171 (ISRO): On-device Visual Perception for Light-weight Browser Agents.**
+**No deadline. Goal: full compliance with the problem statement, no compromise.**
 
-Status: core complete. Phases 1-3 closed. 186 client tests, 82 reasoner checks,
-35 prompt checks - all green. One pass ≈150ms, every stage inside budget.
-
----
-
-## Done and verified in Chrome, against the live backend
-
-| Module | State |
-|---|---|
-| A — Screen perception | Capture 39ms, DOM scan 1.5–6.5ms, 0 unresolved selectors |
-| B — PII detection | DOM rules + faces + OCR + Indian identifiers |
-| C — Redaction | Semantic placeholders, not blackout. Type seal + stage guard + zero-leak sweep |
-| D — Transport / backend | FastAPI, provider-agnostic, sealed payloads only |
-| E — Action execution | click / type / scroll, re-verified against the capture |
-| F — Trust UI | Overlay, payload inspector, latency panel, manual marking |
-| G — Testing | 5 fixture screens, 280 automated checks total |
-
-| Phase | State |
-|---|---|
-| 1 — Login autofill | CLOSED. End to end, both fields hidden, one click, clean stop |
-| 2 — Multi-field signup | CLOSED. Consent tick + submit, fold defect fixed |
-| 3 — Faces | CLOSED. 6 of 8, floor soft at 80px (0.312 against a 0.3 threshold) |
+Read this file first, every session. It is the only source of truth for what is
+next.
 
 ---
 
-## Day 1 (2026-09-08) — Detection breadth
+## The five metrics, and where we actually stand
 
-Rubric weight: PII detection + redaction = 40%. This is where the marks are.
+| # | Metric | Weight | State |
+|---|---|---|---|
+| 1 | Accuracy of visual context from screen | 25% | **Weakest.** No pixel-level screen understanding |
+| 2 | Recall & precision of PII detection | 20% | **Measured.** 81.3% / 83.0% over 38 pages |
+| 3 | Precision of redaction | 20% | **Measured.** 83.4% precision, 56.5% coverage |
+| 4 | Client-side resource utilization | 20% | **Unmeasured.** Latency only |
+| 5 | End-to-end task latency | 15% | Measured, ~150ms/pass, inside budget |
 
-- [x] **Indian PII taxonomy** — Aadhaar (Verhoeff), PAN, passport, driving
-      licence, voter ID, GSTIN, UPI VPA, IFSC, bank account, card (Luhn)
-      — `lib/pii/indian-ids.ts`, 21 tests. Wired into BOTH paths: the
-      classifier (so a value is flagged and named) and the scrubber (so the
-      same identifier in a label cannot ride out). Two paths over the same
-      text; one knowing a format and the other not is a leak, and that exact
-      defect was found on a real site before.
-      **A checksum only ever sharpens a label — never licenses a leak.** An
-      Aadhaar that fails Verhoeff is still hidden, just not named. Tested.
-      Gains outright: IFSC, UPI, voter ID and passport all carry fewer than
-      nine digits, so the old digit-run rule never saw them.
-- [x] **OCR pass** — Tesseract.js over image crops, feeding the same rules
-      — Built in TWO stages that fail in opposite directions. Candidates are
-      chosen by geometry alone (`image-candidates.ts`), so that verdict holds
-      whether the engine is present, broken or absent. Reading then improves
-      PRECISION: "hide these words, and name them" instead of "hide the whole
-      image". A failed read covers the image whole — it was already judged big
-      enough to hold a document, and we cannot claim it does not.
-      Recognised words are judged by `classifyTextContent`, the same predicate
-      that judges a form field, so an Aadhaar is caught typed *and*
-      photographed. Words are grouped into LINES first: an Aadhaar prints as
-      three groups of four digits and no group matches anything alone.
-      Engine, WASM core and language data are all served from the extension —
-      Tesseract's defaults fetch them from unpkg, which would hand crops of the
-      user's screen to a CDN. The CSP blocks it if a path is ever wrong.
-      **NOT yet verified in a browser.** 21 tests cover the geometry and the
-      rules; the engine load is untested.
-- [ ] **Configurable redaction aggressiveness** — strict / balanced, persisted
-      — Strict is the default. FR-14.
-- [x] **Persistent audit log** — what was hidden, when, per run; exportable JSON
-      — `lib/audit.ts`, 12 tests. Categories, counts, rule names, timings.
-      Records BOTH runs and scans, and states per entry whether anything was
-      transmitted rather than leaving the reader to know that a scan does not.
-      No values, no labels and **no URL** — the file exists to be exported, and
-      an export gets attached to a ticket. The cost is real: entries are told
-      apart by time and shape, not by page. A log that is unsafe to share is one
-      nobody shares. Region narrowing happens in one function so no call site
-      can widen it. **NOT yet verified in a browser.** FR-26.
-- [ ] Tests for every rule above, written before the rule
+Two facts follow from this table and drive everything below.
 
-## Day 2 (today, 2026-09-09) — Coverage, proof, demo
+**Metrics 2 and 3 now have numbers; metric 1 still does not.** The corpus that
+produced them was written entirely by this project, which the report says on
+every run — a measurement against our own description of a page is worth less
+than one against somebody else's page, and that gap is the remaining work in
+T1.1.
 
-- [x] **Whole-page coverage** — FR-04, answered differently than written
-      — Scroll-and-stitch capture was costed and rejected. It buys no privacy:
-      `dom-map.ts` filters to the viewport and capture is `captureVisibleTab`,
-      so below the fold is never captured and therefore never transmitted. It is
-      a coverage gap, not a leak. Against that it costs a ~20x latency
-      regression on a 35%-weighted criterion, tens of megabytes of bitmap, and —
-      disqualifying — a stitched frame in which sticky headers repeat at every
-      seam, shown to the user as a faithful record of what was sent.
-      Built instead, in two parts:
-      **(1) The boundary is stated.** Every run reports how much of the document
-      it examined, in the console and the popup, whether or not the page
-      scrolls. A field with no box on it must never read as "checked".
-      **(2) A separate scan.** "Scan the whole page" walks the document in
-      overlapping viewports, runs the same detectors on each, and reports
-      everything found — and transmits NOTHING. Not a redacted payload, none.
-      `scanPage` reaches no transport, so the guarantee is structural rather
-      than a flag; a test asserts it. Findings are pinned to the document, which
-      the run overlay may not do, because a scan's claim is genuinely that wide.
-      A scan that stops early — endless page, scroll-locked modal, a failed look
-      — draws the line where it stopped, on the page.
-      **Findings are carried into every later run of that page.** Without this a
-      scan only points: it finds an Aadhaar below the fold, draws a box, and the
-      next run reads one screen, cannot rediscover it, and transmits. Held in
-      document coordinates like a drawn mark, clipped to the viewport at capture.
-      Stale after a reflow — over-redacts, which is the safe direction, and said
-      out loud in SECURITY_PRIVACY.md rather than left to be found.
-      **The whole page, redacted, is produced as PROOF** — the scan redacts each
-      screen it examined and keeps them, shown as a filmstrip in its own tab.
-      Never transmitted. A full-page image is deliberately NOT sent: vision APIs
-      downscale to ~1500px, so five screens arrive ~600px wide with 16px text at
-      ~5px — the model would get a third of the detail it has now.
-      A filmstrip, not a stitch: sticky headers repeat at every seam and this is
-      the one surface that must be literally true.
-      51 tests. Scan and carry-over verified in Chrome; the record is not yet.
-- [ ] **Consent preview** — show what leaves, pause, require approval
-      — Small now: manual marking already built the surface and region plumbing.
-- [ ] **Profile-edit fixture** — face + name/email + Save, in one acting loop
-      — The strongest demo screen: visual and DOM detection, then an action.
-- [ ] **Naive-baseline comparison** — blind blur vs. semantic, with real numbers
-      — Turns "we redact" into a measured claim.
-- [ ] **Adaptive model sizing** — device capability picks backend and threshold
-- [ ] **Edge verification** — Chromium, expected to pass as-is
-- [ ] **Real-site sweep** — 8 unmodified sites, pass/fail recorded per site
-- [ ] Final measurement pass, all numbers re-taken on one machine
+**The PS is named after our weakest component.** "On-device Visual Perception."
+Our screen understanding is the DOM scanner; the vision model is a 1.1MB face
+detector plus OCR on image crops. That is defensible engineering and an
+indefensible answer to metric 1.
 
 ---
 
-## Not achievable in 2 days — stated so it is not discovered later
+## What is done, and verified in Chrome
 
-| Item | Why not |
+| Component | State |
 |---|---|
-| Chrome Web Store publishing | External review queue, days to weeks |
-| Third-party security review | Requires a third party |
-| Enterprise console (policy, SSO, log export UI) | Weeks of work |
-| Firefox support | Its MV3 has no offscreen document API, and our inference host *is* one. Architecture port, not a flag |
-| "Dozens of sites" generalisation | Test time. Doing 8 instead, labelled honestly |
-| Automatic model update pipeline | Needs hosting and versioning infrastructure |
-| Monetization / sustainability model | A business decision, not code |
+| Screen capture | `captureVisibleTab`, JPEG q90, 24–41ms |
+| DOM element map | 300-element cap, viewport-filtered, 0 unresolved selectors, 1.5–6.5ms |
+| Face detection | UltraFace RFB-320, ONNX Runtime Web, WebGPU + WASM fallback, 28–44ms |
+| OCR | Tesseract.js on image crops, all assets served from the extension |
+| Indian identifiers | Aadhaar (Verhoeff), PAN, passport, DL, voter ID, GSTIN, UPI, IFSC, bank, card (Luhn) |
+| Redaction | Semantic placeholders + opaque fill. Type seal + stage guard + zero-leak sweep |
+| Transport | FastAPI, provider-agnostic, sealed payloads only |
+| Action execution | click / type / scroll, re-verified against the capture |
+| Trust UI | Overlay, payload inspector, latency panel, manual marking, audit log |
+| Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
+| Scan record | Redacted picture of every screen examined, kept local |
+| Tests | 237 client, 82 reasoner, 35 prompt |
 
-## Deliberately cut
+Phases 1–3 (login autofill, multi-field signup, faces) are closed.
 
-| Item | Why |
-|---|---|
-| Broader action vocabulary (drag, select) | Widens the allowlist — the security boundary — with no time for review. Wrong trade at 2 days |
-| Frame diffing | Latency only. Correctness first, per working priority |
-| Red-team case as a built feature | Demo material. The refusal path already works |
-| Full-page scroll-and-stitch capture | Buys no privacy — below the fold is never captured, so never sent. Costs a 20x latency regression and a stitched frame that misrepresents the page in the one panel that must be literal. Replaced by stated coverage plus a scan that sends nothing |
+---
 
-## Needs hardware or a decision, not work
+## Tier 1 — score-critical
 
-- [ ] Rehearse on the presentation laptop
-- [ ] Zero-leak run on that laptop specifically
-- [ ] Test across 2–3 laptops
-- [ ] Free-tier model provider — signup + 3 env vars. Gates generality, not the demo
-- [ ] Redaction aggressiveness default confirmed by the team
+### T1.1 PII + redaction benchmark, with numbers
+**Metrics 2 and 3 — 40%. Do this FIRST.**
 
-## Owned outside this repo
+Not more tests. A measuring instrument.
 
-README, 2-page architecture doc, demo video, 5-slide deck, backup video.
+- [x] **Scorer** — `lib/benchmark/score.ts`, 16 tests. Recall, precision, F1
+      per category; coverage, redaction precision and area ratio for metric 3.
+      Misses named individually, over-flags counted — the two failures are not
+      equivalent and are not reported as if they were.
+- [x] **Report generated, never hand-written** — `npm run benchmark` rewrites
+      `docs/BENCHMARK.md`. A hand-copied figure is one refactor from being a lie.
+- [x] **Baseline captured**, before any detector change:
+      **recall 89.5%, precision 94.4%, F1 91.9%, category accuracy 94.1%,
+      redaction precision 94.5%, coverage 87.6%.** 19 labelled elements, 4 pages.
+      Misses: `t4` (name in prose), `t6` (ID inside an image). Both known
+      structural limits, labelled anyway because they are sensitive.
+- [x] **A way to capture real pages** — dev-only element-map export, gated on
+      `SHIELD_DEV=1` and on the operator reading every value before a file
+      exists. This, not the labelling, was the blocker on corpus growth.
+- [x] **Grow the corpus to ≥30 pages.** Now **38 pages, 150 labelled
+      elements** — Indian government, banking, telecom, health, insurance,
+      employment and commerce, plus seven pages where the correct answer is
+      nothing.
+- [x] **Pixel ground truth** for OCR — boxes on the two committed sample ID
+      cards, in the document's own pixels, scored through a new `scorePixels`
+      path that takes regions with no element.
+- [ ] **A real-page share.** Still **zero**. Every page was written here, and
+      the runner prints that on every run for as long as it is true. The
+      capture path exists; nobody has driven a browser through it yet.
+- [ ] **Face pixel truth.** Not committed and not invented: the boxes would
+      describe `face-a.jpg` and `face-b.png`, which are deliberately absent
+      from this repository. Needs a recorded Chrome run.
+
+**Baseline moved, and the movement is the point:**
+
+| Measure | 4 pages / 19 labels | 38 pages / 150 labels |
+|---|---|---|
+| Recall | 89.5% | **81.3%** |
+| Precision | 94.4% | **83.0%** |
+| F1 | 91.9% | **82.2%** |
+| Category accuracy | 94.1% | **88.5%** |
+| Redaction coverage | 87.6% | **56.5%** |
+| Redaction precision | 94.5% | **83.4%** |
+| Misses / over-flags | 2 / 1 | **28 / 25** |
+
+Nothing was tuned. The old figures described four pages, three of which were
+written to exercise this code; the new ones describe a corpus that was not.
+
+**Pixel layer, first numbers:** 2 documents, 11 labelled regions, recall 27.3%,
+precision 100%, coverage 40.9%, redaction precision 64.3%. The identifiers on a
+scanned card are found; the name, address and date of birth beside them are not.
+This measures everything *after* the recognition engine, not the engine.
+
+**Two systematic gaps the bigger corpus found:**
+
+1. **Amounts, in both directions.** A balance, premium or income rendered as
+   text passes untouched; the same quantity in a form field is hidden by the
+   default-to-hide rule. Too loose and too tight about the same data,
+   depending only on how the page renders it.
+2. **Prose.** A name, address or date of birth in a sentence is missed
+   everywhere — and that is most of what a bill, a statement or a search
+   result is made of.
+
+Neither is fixed here. T1.1 is the instrument, and fixing detectors against a
+corpus in the same session is how a benchmark becomes a target.
+
+**Done when:** a real-page share exists and faces are measured in pixels.
+
+**Why first:** it is 40% of the score, and it is the only way to prove T1.2
+helped rather than assert it.
+
+### T1.2 Local screen-understanding model
+**Metric 1 — 25%. The PS's namesake capability.**
+
+- [ ] Evaluate candidates for browser inference: UI-element detectors
+      (OmniParser icon model), small VLMs via Transformers.js (named in the PS,
+      currently unused). Record the choice and the reason in DECISIONS.md
+- [ ] Run it in the offscreen document alongside UltraFace, WebGPU + fallback
+- [ ] Produce a pixel-derived element map: regions, types, text areas
+- [ ] **Measure it against the DOM map.** Agreement rate, what each finds that
+      the other misses. This comparison *is* the metric-1 evidence
+- [ ] Keep DOM-primary for action targeting; vision becomes a second opinion
+      that can stand alone when markup is absent (canvas, iframe, image-only UI)
+
+**Done when:** Shield extracts screen structure from pixels with no DOM at all,
+and we can show the agreement rate against the DOM map on ≥10 pages.
+
+### T1.3 Open-weights server model, vision path on
+**Explicit PS requirement.**
+
+- [ ] Pin an open-weights VLM (Llama Vision / Qwen-VL class), cloud-hosted for
+      SIH, and record the choice
+- [ ] `SHIELD_MODEL_VISION` on by default — the PS is about *visual* context
+      reaching the server; today the frame is often not sent at all
+- [ ] Document the offline deployment path (vLLM or Ollama, same weights).
+      The PS says "offline deployable"; that has to be more than a claim
+- [ ] Verify the redacted frame is actually used in the model's reasoning
+
+**Done when:** the demo runs on an open-weights VLM that receives the redacted
+frame, and the offline path is documented and tried once.
+
+---
+
+## Tier 2 — explicitly required
+
+### T2.1 Firefox
+**The PS names it: "popular browsers (chrome, Firefox)".**
+
+- [ ] Verify whether Firefox MV3 event pages have DOM access — if so the
+      offscreen document is unnecessary there and this is *simpler*, not harder
+- [ ] Verify WebGPU availability and the WASM fallback path in Firefox
+- [ ] Port, then run the full fixture set on both browsers
+- [ ] Record what differs in DECISIONS.md
+
+**Done when:** the login and signup demos pass on Firefox and Chrome.
+
+### T2.2 Resource measurement
+**Metric 4 — 20%, currently unmeasured.**
+
+- [ ] Peak and steady CPU, GPU and memory during a run and during a scan
+- [ ] Model load cost, session memory, offscreen document footprint
+- [ ] Measured on ≥2 machines, one without a discrete GPU
+- [ ] Recorded as a table, not an impression
+
+**Done when:** we can answer "what does this cost the laptop?" with figures.
+
+### T2.3 Generalisation sweep
+**"Use cases for evaluation will be provided during finale" — the pages are unknown.**
+
+- [ ] ≥20 real, unmodified sites. Pass/fail and failure mode recorded per site
+- [ ] Confirm no fixture-specific code path exists anywhere
+- [ ] At least 3 task types beyond login (search, form fill, navigation)
+- [ ] Every failure either fixed or written down as a known limit
+
+**Done when:** the sweep is repeatable and its results are in the repo.
+
+---
+
+## Tier 3 — makes the case
+
+- [ ] **Latency/accuracy trade-off study.** The PS asks for the balance
+      explicitly. Threshold vs recall vs milliseconds, as a curve
+- [ ] **Naive-baseline comparison.** Blind blur vs semantic redaction, measured
+      — turns "we redact" into a number
+- [ ] **Scan speed.** OCR re-reads the same image at every stop; skip already-read
+      candidates and clipped ones. Should roughly halve scan time
+- [ ] **Scan latency instrumentation.** "Where did the time go?" is blank for
+      scans — the scan path records no stage timings
+- [ ] **Consent preview.** Show what leaves, pause, require approval
+- [ ] **Profile-edit fixture.** Face + name/email + Save, in one acting loop
+- [ ] **Configurable redaction aggressiveness.** FR-14. Strict default
+- [ ] Edge verification (Chromium, expected to pass as-is)
 
 ---
 
 ## Known limits — say these before someone else finds them
 
-- Names in prose are not detected. Only in fields.
-- Face floor is soft: reliable at 110px+, marginal at 80px, missed below.
+- Names in prose are not detected. Only in fields. The same is true of
+  addresses and dates of birth, which is most of what a bill or a statement is.
+- Amounts are missed as text and hidden as fields. A balance in a sentence
+  passes; the same figure in a box is covered by the default-to-hide rule.
+- Face floor is soft: reliable at 110px+, marginal at 80px (0.312 against a 0.3
+  threshold), missed below.
 - Prompt injection is bounded, not prevented. Page content is data and the
   allowlist is fixed at three verbs, but the model still reads attacker text.
-- Text inside images: rules and geometry done; engine load verified in Chrome.
-- A run examines one screen. It says so, every time, and the whole-page scan is
-  how the rest of the document gets looked at.
+- A scan's findings are a claim as of when it ran. A page that reflows will
+  drift; drift over-redacts, which is the safe direction, not a guarantee.
+- A run examines one screen and says so. The scan is how the rest is covered.
+
+---
+
+## Out of scope
+
+| Item | Why |
+|---|---|
+| Chrome Web Store publishing | External review queue; not needed to demonstrate |
+| Third-party security review | Requires a third party |
+| Enterprise console (policy, SSO, log export UI) | Not in the PS |
+| Mobile | Explicit non-goal |
+| Model training | PS requires inference only |
+| Broader action vocabulary (drag, select) | Widens the security boundary; only with review |
+
+---
+
+## Session protocol
+
+Start: read this file, then the last SESSION_LOG.md entry, then DECISIONS.md.
+State in one line what you are about to work on.
+
+During: one unblocked item at a time. Tick it the moment it is done, never in
+batches. Any decision not already in the docs goes to DECISIONS.md with its
+reason before moving on.
+
+End: append to SESSION_LOG.md — what was done, blockers, exactly what the next
+session starts with.

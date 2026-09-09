@@ -23,5 +23,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "*.config.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "benchmark/**/*.ts", "*.config.ts"]
 }

@@ -312,8 +312,8 @@ function controlNamesInHtml(file: string): Set<string> {
   const names = new Set<string>();
 
   for (const match of html.matchAll(/<(input|select|textarea)\b[^>]*>/gi)) {
-    const name = /\bname="([^"]+)"/i.exec(match[0]);
-    if (name) names.add(name[1]);
+    const name = /\bname="([^"]+)"/i.exec(match[0])?.[1];
+    if (name) names.add(name);
   }
 
   return names;
