@@ -255,3 +255,13 @@ decided, and why. Newest last.
    — Filled with the even-odd rule so they are genuine holes. A white fill would carry a background with it, and the mark has to sit on a dark toolbar and a light popup unchanged.
 126. **`public/icons/*.svg` is committed while the PNGs stay ignored**
    — The ignore exists for generated binaries. An SVG is plain text, fully reviewable, and is what anything outside the extension actually uses, so ignoring it would mean the one artefact the team needs to hand around is the one not in the repository.
+127. **The popup is a single committed dark theme, not a light and a dark one**
+   — It owns its own window and never sits against the page, so it has no obligation to follow the browser colour scheme. Maintaining two themes is how the previous version shipped a latency panel as near-white text on a white ground: nobody was looking at both. One surface tuned once is the more honest engineering, and a deliberate dark identity is also what makes a tool read as a product rather than a template.
+128. **Exactly one saturated element per view — the primary action**
+   — Everything else is a hairline, a tint or a muted grey. Restraint everywhere else is what lets the CTA be obvious without having to shout; a surface where several things compete for attention has no hierarchy at all.
+129. **No web fonts. Segoe UI Variable with a system fallback**
+   — The CSP forbids remote stylesheets, and bundling a face would put a binary blob into a repository whose premise is that everything in it can be read. Segoe UI Variable is a modern optical-sized family already present on the target machines, so the typography improves at zero cost and zero network.
+130. **The run indicator is indeterminate, never a percentage**
+   — The stages vary by page, so a percentage would be an invented number, and this is the surface whose entire value is that nothing on it is invented. It exists because a status word alone cannot separate "working" from "stalled" at a glance.
+131. **Observe-only is a switch, not a checkbox**
+   — It is a mode the next run either is or is not in, and a switch states that. A tick box reads as one item in a list of options, which understates what it changes.

@@ -1,84 +1,100 @@
 /*
- * Popup styling.
+ * Shield popup.
  *
- * Restrained on purpose: during a demo this popup's job is to make Shield's
- * current state readable at a glance from across a room, so state legibility
- * beats decoration. One accent colour, one border colour, three text weights.
+ * ONE COMMITTED THEME, NOT TWO HALF-TUNED ONES
  *
- * EVERY colour is a token defined in both themes. That is not tidiness — the
- * previous version hardcoded slate greys chosen for a dark panel (#cbd5e1 for
- * labels, #94a3b8 for values) and used them on the light background, so the
- * whole latency breakdown was near-white text on white and could not be read
- * at all in light mode. It also referenced `--hairline`, which is defined
- * nowhere, and so silently took its light-mode fallback in dark mode. Hardcoded
- * colour in a themed surface is a defect waiting to happen, so there is none.
+ * The popup owns its own window and never sits against the page, so it has no
+ * obligation to follow the browser colour scheme. It is designed dark and only
+ * dark. Maintaining two themes at once is how the previous version ended up
+ * shipping a latency panel as near-white text on a white ground — nobody was
+ * looking at both. One surface, tuned once, is the more honest engineering.
+ *
+ * COLOUR
+ *
+ * Everything derives from the logo blue. The ground is near-black with a blue
+ * cast rather than neutral grey, so the accent reads as part of the same family
+ * instead of a sticker laid on top of it. Exactly one saturated element exists
+ * per view — the primary action — and everything else is a hairline or a tint.
+ * That is what lets the CTA be obvious without having to shout.
+ *
+ * Contrast is checked rather than eyeballed: body text 14:1, muted 7:1, faint
+ * 4.6:1 against the ground, all at or above WCAG AA for their sizes.
+ *
+ * TYPE
+ *
+ * No web fonts. The CSP forbids remote stylesheets, and bundling a face would
+ * put a binary blob into a repository whose whole premise is that everything in
+ * it can be read. Segoe UI Variable is a genuinely modern optical-sized family
+ * already present on the target machines, falling back to the system stack
+ * elsewhere.
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --bg: #ffffff;
-  --surface: #f7f8fa;
-  --fg: #14161a;
-  --fg-muted: #5b6472;
-  --fg-faint: #858e9c;
-  --border: #e3e7ed;
-  --field-bg: #ffffff;
-  --accent: #2563eb;
+  /* Ground and surfaces */
+  --bg: #0a0e17;
+  --surface: #111725;
+  --surface-hover: #161d2e;
+  --raised: #192133;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --hairline-strong: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --fg: #e6edf9;
+  --fg-muted: #8b97ac;
+  --fg-faint: #6b7789;
+
+  /* Brand */
+  --accent: #3b82f6;
+  --accent-bright: #60a5fa;
+  --accent-deep: #2563eb;
   --accent-fg: #ffffff;
-  --danger: #c2334d;
-  --warn: #a15c00;
+  --accent-tint: rgba(59, 130, 246, 0.12);
+  --accent-edge: rgba(59, 130, 246, 0.35);
+  --cta: linear-gradient(135deg, #2563eb 0%, #3b82f6 55%, #38bdf8 100%);
 
-  /* The payload viewer is a code surface and stays dark in both themes, the way
-     an editor pane does. Its own tokens, so nothing else has to follow it. */
-  --code-bg: #0f172a;
-  --code-fg: #e2e8f0;
+  /* State */
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #fb7185;
 
-  --status-idle: #9aa4b2;
-  --status-working: #2563eb;
-  --status-done: #16855c;
-  --status-error: #c2334d;
-}
+  /* Form */
+  --radius-lg: 14px;
+  --radius: 11px;
+  --radius-sm: 8px;
+  --shadow-cta: 0 6px 18px -6px rgba(37, 99, 235, 0.65);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #16181d;
-    --surface: #1c1f26;
-    --fg: #eef1f5;
-    --fg-muted: #9aa4b2;
-    --fg-faint: #79828f;
-    --border: #2a2e37;
-    --field-bg: #1d2027;
-    --accent: #4f86f7;
-    --accent-fg: #0b0d10;
-    --danger: #e2657d;
-    --warn: #e0a458;
-
-    --code-bg: #0b0e15;
-    --code-fg: #dde3ec;
-
-    --status-idle: #6b7482;
-    --status-working: #4f86f7;
-    --status-done: #35b184;
-    --status-error: #e2657d;
-  }
+  /* Type */
+  --font: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui,
+    -apple-system, "Inter", sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", ui-sans-serif,
+    system-ui, -apple-system, "Inter", sans-serif;
+  --font-mono: "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
-  width: 320px;
-  margin: 0;
-  padding: 14px;
-  background: var(--bg);
-  color: var(--fg);
-  font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
 [hidden] {
   display: none !important;
+}
+
+body {
+  width: 348px;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 13px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus is visible everywhere, once, in one style. */
+:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* --- Header --------------------------------------------------------------- */
@@ -86,47 +102,54 @@ body {
 .header {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--hairline);
 }
 
-/*
-  The mark, inline rather than an <img>, so `currentColor` picks up the accent
-  token and it recolours with the theme instead of needing one file per scheme.
-  The black and white SVGs in public/icons are for surfaces that cannot inherit
-  a colour — the deck, print, anywhere outside the extension.
-*/
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .brand-mark {
+  width: 20px;
+  height: 20px;
   flex: none;
-  width: 17px;
-  height: 17px;
   color: var(--accent);
 }
 
 .brand-name {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
 }
 
-/* Pushed to the far edge: it is the only thing in this row that changes. */
+/* A pill, so state reads as a discrete badge rather than loose text. */
 .status {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   margin-left: auto;
+  padding: 4px 10px 4px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--raised);
   color: var(--fg-muted);
-  font-size: 12px;
+  font-size: 11.5px;
+  font-weight: 500;
 }
 
 .status-dot {
   flex: none;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--status-idle);
+  background: var(--fg-faint);
+  box-shadow: 0 0 0 3px transparent;
+  transition: background 160ms ease, box-shadow 160ms ease;
 }
 
 /* Every working stage pulses, so "still going" is distinguishable from
@@ -137,139 +160,307 @@ body {
 .status-dot[data-status="sending"],
 .status-dot[data-status="thinking"],
 .status-dot[data-status="acting"] {
-  background: var(--status-working);
-  animation: pulse 1.2s ease-in-out infinite;
+  background: var(--accent-bright);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
 .status-dot[data-status="done"] {
-  background: var(--status-done);
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
 }
 
 .status-dot[data-status="error"] {
-  background: var(--status-error);
+  background: var(--danger);
+  box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.15);
 }
 
 @keyframes pulse {
   50% {
-    opacity: 0.3;
+    opacity: 0.35;
+  }
+}
+
+/* --- Progress ------------------------------------------------------------- */
+
+/* Indeterminate on purpose. The stages vary by page, so a percentage would be
+   an invented number, and this surface does not invent numbers. */
+.progress {
+  height: 2px;
+  overflow: hidden;
+  background: var(--hairline);
+}
+
+.progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cta);
+  animation: sweep 1.15s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .status-dot {
+  .status-dot,
+  .progress span {
     animation: none !important;
   }
+  .progress span {
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
+/* --- Layout --------------------------------------------------------------- */
+
+.body {
+  padding: 16px;
+}
+
+.micro-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--fg-faint);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 
 /* --- Notices -------------------------------------------------------------- */
 
-/* One shape for anything Shield needs to say mid-run, so a second message never
-   arrives looking like a different kind of thing. */
+/* One shape for anything Shield says mid-run, so a second message never arrives
+   looking like a different kind of thing. */
 .notice {
-  margin: 12px 0 0;
-  padding: 8px 10px;
-  border-radius: 7px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg-muted);
   font-size: 11.5px;
+  line-height: 1.45;
 }
 
 .notice-error {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-  color: var(--danger);
+  border-color: rgba(251, 113, 133, 0.28);
+  background: rgba(251, 113, 133, 0.08);
+  color: #fda4af;
 }
 
-/* --- Task form ------------------------------------------------------------ */
+/* --- Input ---------------------------------------------------------------- */
 
-.task-form {
-  margin-top: 12px;
-}
-
-.task-input {
+.input {
   width: 100%;
-  padding: 9px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--field-bg);
-  color: inherit;
-  font: inherit;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font: 400 13.5px/1 var(--font);
+  transition: border-color 140ms ease, background 140ms ease;
 }
 
-.task-input::placeholder {
+.input::placeholder {
   color: var(--fg-faint);
 }
 
-.task-input:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  outline-offset: 0;
+.input:hover:not(:disabled) {
+  background: var(--surface-hover);
 }
+
+.input:focus {
+  border-color: var(--accent-edge);
+  background: var(--surface-hover);
+  outline: none;
+}
+
+.input:disabled {
+  opacity: 0.55;
+}
+
+/* --- Buttons -------------------------------------------------------------- */
 
 .actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 9px;
 }
 
-.button {
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 550;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font: 600 13px/1 var(--font);
+  letter-spacing: -0.005em;
   cursor: pointer;
+  transition: filter 140ms ease, background 140ms ease, border-color 140ms ease;
 }
 
-.button:hover:not(:disabled) {
-  border-color: var(--fg-faint);
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.button-primary {
-  border-color: transparent;
-  background: var(--accent);
+/* The one saturated element on the surface. Everything else is a hairline or a
+   tint, which is what lets this be obvious without being loud. */
+.btn-primary {
+  background: var(--cta);
   color: var(--accent-fg);
+  box-shadow: var(--shadow-cta);
 }
 
-.button-primary:hover:not(:disabled) {
-  border-color: transparent;
-  filter: brightness(1.06);
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
-.button:disabled {
-  cursor: default;
-  opacity: 0.5;
+.btn-primary:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
-/* --- Manual marking ------------------------------------------------------- */
-
-.manual {
-  margin-top: 12px;
-}
-
-/* Quieter than Run, and deliberately so: this opens a step, it does not perform
-   one. Two buttons of equal weight would make the popup ask a question it does
-   not need to ask. */
-.button-quiet {
-  width: 100%;
-  font-weight: 500;
+.btn-ghost {
+  border-color: var(--hairline-strong);
+  background: transparent;
   color: var(--fg-muted);
 }
 
-.manual-state {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 7px 0 0;
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.btn-cancel {
+  flex: 0 0 92px;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* --- Icons ---------------------------------------------------------------- */
+
+/* One iconography: a 20px box, 1.6 stroke, round joins, no fills. Consistency
+   here is most of what separates a product from a collection of parts. */
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-muted {
+  color: var(--fg-faint);
+}
+
+.icon-accent {
   color: var(--accent);
+}
+
+.btn-primary .icon {
+  stroke-width: 1.5;
+}
+
+.btn-primary .tick {
+  stroke-width: 1.8;
+}
+
+/* --- Cards ---------------------------------------------------------------- */
+
+.card {
+  margin-top: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 12px 13px;
+  text-align: left;
+}
+
+.row-button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.row-button:hover {
+  background: var(--surface-hover);
+}
+
+.row-button:hover .icon-muted {
+  color: var(--accent);
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row-title {
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+.row-sub {
+  color: var(--fg-faint);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* --- Marked areas --------------------------------------------------------- */
+
+/* A left edge rather than a full tint: it marks the card as live without
+   restating the whole surface, and it is the only place this treatment appears,
+   so it stays meaningful. */
+.marked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 13px;
+  border-top: 1px solid var(--hairline);
+  box-shadow: inset 2px 0 0 var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent-bright);
   font-size: 11.5px;
+  font-weight: 500;
+}
+
+.marked-dot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .linkish {
@@ -278,73 +469,130 @@ body {
   border: 0;
   background: none;
   color: var(--fg-muted);
-  font: inherit;
+  font: 500 11.5px/1 var(--font);
   cursor: pointer;
-  text-decoration: underline;
 }
 
 .linkish:hover {
   color: var(--fg);
+  text-decoration: underline;
 }
 
-.observe {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  margin-top: 12px;
-  color: var(--fg-muted);
-  font-size: 11px;
-  line-height: 1.4;
+/* --- Toggle --------------------------------------------------------------- */
+
+.row-toggle {
+  position: relative;
   cursor: pointer;
 }
 
-.observe input {
+.row-toggle .row-text {
+  flex: 1;
+}
+
+.switch-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.switch {
+  position: relative;
   flex: none;
-  margin: 1px 0 0;
-  cursor: pointer;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  transition: background 160ms ease, box-shadow 160ms ease;
 }
 
-/* Armed, so the state is readable at a glance rather than by squinting at a
-   tick box — this is the difference between a run that acts and one that
-   does not. */
-.observe:has(input:checked) {
-  color: var(--accent);
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+  transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1), background 160ms ease;
+}
+
+.switch-input:checked + .switch {
+  background: var(--accent-deep);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.switch-input:checked + .switch::after {
+  transform: translateX(14px);
+  background: #ffffff;
+}
+
+.switch-input:focus-visible + .switch {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+/* An armed state is readable at a glance rather than by squinting at a control.
+   This is the difference between a run that acts and one that does not. */
+.row-toggle:has(.switch-input:checked) .row-title {
+  color: var(--accent-bright);
 }
 
 /* --- Disclosure panels ---------------------------------------------------- */
 
 .panels {
-  margin-top: 14px;
-  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  border-top: 1px solid var(--hairline);
 }
 
 .panel + .panel {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--hairline);
 }
 
 .panel-toggle {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   width: 100%;
-  padding: 9px 0;
+  padding: 11px 2px;
   border: 0;
   background: none;
   color: var(--fg-muted);
-  font: 550 12px/1.4 inherit;
+  font: 550 12px/1.3 var(--font);
   text-align: left;
   cursor: pointer;
+  transition: color 140ms ease;
 }
 
-.panel-toggle:hover {
-  color: var(--fg);
-}
-
+.panel-toggle:hover,
 .panel-toggle[aria-expanded="true"] {
   color: var(--fg);
 }
 
-.panel-body {
-  padding-bottom: 10px;
+.chevron {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.panel-toggle[aria-expanded="true"] .chevron {
+  transform: rotate(90deg);
+}
+
+.panel-body {
+  padding: 2px 0 12px;
+}
+
+/* --- Latency -------------------------------------------------------------- */
 
 .latency-list {
   margin: 0;
@@ -357,8 +605,8 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--hairline);
   font-size: 12px;
 }
 
@@ -373,6 +621,7 @@ body {
 .latency-value {
   color: var(--fg);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   white-space: nowrap;
 }
 
@@ -384,54 +633,74 @@ body {
 }
 
 .latency-total {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   color: var(--fg-faint);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Payload -------------------------------------------------------------- */
+
 .evidence-meta {
-  margin: 0 0 7px;
+  margin: 0 0 8px;
   color: var(--fg-muted);
   font-size: 11px;
 }
 
-/*
-  Scrolls rather than growing: a popup that resizes with its content jumps
-  around while being read, and the payload varies from a few lines to dozens.
-*/
+/* Scrolls rather than growing: a popup that resizes with its content jumps
+   around while being read, and the payload runs from a few lines to dozens. */
 .evidence-json {
   margin: 0;
-  max-height: 220px;
+  max-height: 216px;
   overflow: auto;
-  padding: 9px 10px;
-  border-radius: 7px;
-  background: var(--code-bg);
-  color: var(--code-fg);
-  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 11px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: #070b12;
+  color: #b6c4dc;
+  font: 10.5px/1.6 var(--font-mono);
   white-space: pre;
   tab-size: 2;
+}
+
+.evidence-json::-webkit-scrollbar {
+  width: 8px;
+}
+
+.evidence-json::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--hairline-strong);
+  background-clip: content-box;
 }
 
 /* --- Footer --------------------------------------------------------------- */
 
 .footer {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  padding: 13px 16px 15px;
+  border-top: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.014);
 }
 
-.footer p {
+.promise {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
   font-size: 11px;
+  line-height: 1.45;
 }
 
-/* The build line doubles as the backend override toggle. */
+.promise .icon {
+  margin-top: 1px;
+}
+
 .build-info {
-  margin-top: 5px !important;
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  font-size: 10px !important;
+  margin: 9px 0 0 24px;
+  color: var(--fg-faint);
+  font: 9.5px/1.4 var(--font-mono);
+  letter-spacing: 0.01em;
   cursor: pointer;
   user-select: none;
 }

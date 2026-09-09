@@ -31,6 +31,10 @@ const statusDetail = required<HTMLParagraphElement>('#status-detail');
 const taskForm = required<HTMLFormElement>('#task-form');
 const taskInput = required<HTMLInputElement>('#task-input');
 const runButton = required<HTMLButtonElement>('#run-button');
+// The label is a span beside an icon, so the button's own textContent must not
+// be written — doing so would delete the icon with it.
+const runLabel = required<HTMLSpanElement>('#run-label');
+const progress = required<HTMLDivElement>('#progress');
 const cancelButton = required<HTMLButtonElement>('#cancel-button');
 const buildInfo = required<HTMLParagraphElement>('#build-info');
 const backendNotice = required<HTMLParagraphElement>('#backend-notice');
@@ -40,10 +44,12 @@ const manualClear = required<HTMLButtonElement>('#manual-clear');
 const manualState = required<HTMLParagraphElement>('#manual-state');
 const manualCount = required<HTMLSpanElement>('#manual-count');
 const evidenceToggle = required<HTMLButtonElement>('#evidence-toggle');
+const evidenceToggleLabel = required<HTMLSpanElement>('#evidence-toggle-label');
 const evidenceBody = required<HTMLDivElement>('#evidence-body');
 const evidenceMeta = required<HTMLParagraphElement>('#evidence-meta');
 const evidenceJson = required<HTMLPreElement>('#evidence-json');
 const latencyToggle = required<HTMLButtonElement>('#latency-toggle');
+const latencyToggleLabel = required<HTMLSpanElement>('#latency-toggle-label');
 const latencyBody = required<HTMLDivElement>('#latency-body');
 const latencyList = required<HTMLUListElement>('#latency-list');
 const latencyTotal = required<HTMLParagraphElement>('#latency-total');
@@ -211,7 +217,7 @@ evidenceToggle.addEventListener('click', () => {
   const opening = evidenceBody.hidden;
   evidenceBody.hidden = !opening;
   evidenceToggle.setAttribute('aria-expanded', String(opening));
-  evidenceToggle.textContent = opening ? 'Hide what was sent' : 'What was sent?';
+  evidenceToggleLabel.textContent = opening ? 'Hide what was sent' : 'What was sent?';
   if (opening) void renderEvidence();
 });
 
@@ -273,7 +279,7 @@ latencyToggle.addEventListener('click', () => {
   const opening = latencyBody.hidden;
   latencyBody.hidden = !opening;
   latencyToggle.setAttribute('aria-expanded', String(opening));
-  latencyToggle.textContent = opening ? 'Hide timings' : 'Where did the time go?';
+  latencyToggleLabel.textContent = opening ? 'Hide timings' : 'Where did the time go?';
 });
 
 /** Statuses during which a run is genuinely in flight. */
@@ -310,9 +316,11 @@ function render(state: ShieldState): void {
   }
 
   runButton.disabled = busy;
-  runButton.textContent = busy ? 'Working…' : 'Run';
+  runLabel.textContent = busy ? 'Working…' : 'Run Shield';
   cancelButton.hidden = !busy;
   taskInput.disabled = busy;
+  // The status word alone cannot separate "working" from "stalled" at a glance.
+  progress.hidden = !busy;
 
   renderLatency(state);
 
