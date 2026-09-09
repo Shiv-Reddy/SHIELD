@@ -79,6 +79,15 @@ is what makes it affordable to spend several seconds and several captures on.
 A scan that stops early, on an endless page or a scroll-locked one, draws the
 line where it stopped on the page itself.
 
+**What a scan finds is hidden on every later run of that page — as of the moment
+it ran.** Findings are kept in the content script in document coordinates and
+clipped to the viewport at capture time, so an identifier the scan found below
+the fold is redacted when a run later captures a screen containing it. The limit
+is staleness: a page that reflows underneath those coordinates will drift, the
+same limit a drawn mark has always carried. Drift over-redacts rather than
+under-redacts, which is the safe direction, but it is not a guarantee. A
+navigation destroys the content script and the findings with it.
+
 **Prompt injection is bounded, not prevented.** Page content is JSON-encoded as
 data and the allowlist is fixed at three verbs, so the blast radius is small.
 The model still reads attacker-controlled text.

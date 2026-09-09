@@ -136,8 +136,12 @@ export function auditJson(entries: readonly AuditEntry[]): string {
     {
       generatedAt: new Date().toISOString(),
       note:
+        // Plain ASCII. This file is opened by whatever the recipient has to
+        // hand, and an em dash came back as mojibake from the first real export
+        // — in the one sentence whose job is to reassure someone that the file
+        // is safe to pass on.
         'Categories, counts, rule names and timings only. No page content, no ' +
-        'field values, and no URLs — this file is meant to be shareable.',
+        'field values, and no URLs - this file is meant to be shareable.',
       entries: entries.map((entry) => ({
         ...entry,
         at: new Date(entry.at).toISOString(),

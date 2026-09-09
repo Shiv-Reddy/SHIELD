@@ -20,12 +20,19 @@ import {
   type ManualStatusResult,
   type PingResult,
   type ScrollToResult,
+  type ScanStatusResult,
 } from '../lib/messages';
 import type { ViewportInfo } from '../lib/types';
 import { documentHeight, extractDomMap } from './dom-map';
 import { executeAction } from './executor';
 import { clearOverlay, showOverlay } from './overlay';
-import { clearScanOverlay, showScanOverlay } from './scan-overlay';
+import {
+  clearScanOverlay,
+  scanFindingCount,
+  scanFindingsInViewport,
+  setScanVisible,
+  showScanOverlay,
+} from './scan-overlay';
 import {
   clearManual,
   manualRegionCount,
@@ -158,6 +165,26 @@ function register(): void {
           return false;
         }
 
+        case MSG.SET_SCAN_VISIBLE: {
+          setScanVisible(message.visible);
+          sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.GET_SCAN_REGIONS: {
+          // Converted here, not in the worker: this is the context that knows
+          // the scroll position, and a finding is stored against the document
+          // rather than the screen.
+          sendResponse({ findings: scanFindingsInViewport() });
+          return false;
+        }
+
+        case MSG.SCAN_STATUS: {
+          const result: ScanStatusResult = { count: scanFindingCount() };
+          sendResponse(result);
+          return false;
+        }
+
         case MSG.START_MANUAL: {
           startManual();
           sendResponse({ ok: true });
@@ -200,7 +227,10 @@ function register(): void {
             // whole-page claim is worse than a stale one-screen claim because
             // it looks more thorough.
             clearOverlay();
-            clearScanOverlay();
+            // The scan's BOXES go, because the page is about to move underneath
+            // them. Its findings stay: they are what stops the next capture in
+            // this run transmitting something the scan already found.
+            setScanVisible(false);
 
             const result: ExecuteActionResult = executeAction({
               action: message.action,

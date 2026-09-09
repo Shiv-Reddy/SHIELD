@@ -20,11 +20,28 @@
  * while quietly omitting the half it never reached would recreate the very
  * misreading this feature exists to correct.
  *
+ * THE FINDINGS OUTLIVE THE BOXES, AND THAT IS THE POINT
+ *
+ * Drawing them was never the whole job. A scan that found an Aadhaar number and
+ * then let the next run transmit the page having forgotten about it has done
+ * nothing but point — and the run cannot rediscover it, because the number sits
+ * below the fold and a run only ever reads one screen.
+ *
+ * So the findings are kept here, in document coordinates, exactly as
+ * `manual-redaction.ts` keeps what the user drew, and handed back converted to
+ * viewport space whenever a run captures. The boxes can be hidden without
+ * discarding them: they must not be baked into a frame, and the protection must
+ * not end when they stop being visible.
+ *
+ * The claim they carry is as of the moment the scan ran. A page that reflows
+ * underneath them will drift, which is the same limit a drawn mark has always
+ * had; a navigation destroys this script and takes them with it.
+ *
  * NOTHING HERE TRANSMITS, AND NOTHING HERE IS STORED
  *
- * These boxes carry categories and rule names, which by construction never
- * quote the content that triggered them. They live as long as the page does and
- * are written nowhere.
+ * These carry categories and rule names, which by construction never quote the
+ * content that triggered them. They live as long as the page does and are
+ * written nowhere.
  */
 
 import type { ScanFinding } from '../lib/coverage';
@@ -52,14 +69,117 @@ let surface: HTMLElement | null = null;
 let drawn: Drawn[] = [];
 let boundary: { element: HTMLElement; y: number } | null = null;
 
-/** Take the scan result down. */
-export function clearScanOverlay(): void {
+/**
+ * What the last scan found, in DOCUMENT coordinates.
+ *
+ * Module state, so it lives exactly as long as the page does. Held separately
+ * from `drawn` because the boxes come and go — hidden before every capture —
+ * while the findings must not.
+ */
+let findings: ScanFinding[] = [];
+
+/**
+ * How the last scan ended, so the boxes can be rebuilt after being hidden.
+ *
+ * Held alongside the findings rather than passed in again, because the caller
+ * that re-shows them — the popup, after a run — was not the caller that ran the
+ * scan and has no way to know whether it stopped early.
+ */
+let lastOptions: { truncated: boolean; examinedTo: number } = {
+  truncated: false,
+  examinedTo: 0,
+};
+
+/** Remove the boxes, keeping the findings themselves. */
+function teardownSurface(): void {
   surface?.remove();
   surface = null;
   drawn = [];
   boundary = null;
   window.removeEventListener('scroll', reposition, true);
   window.removeEventListener('resize', reposition);
+}
+
+/**
+ * Show or hide the boxes without discarding what was found.
+ *
+ * Called before every capture. The boxes are painted over the page, so leaving
+ * them up would bake them into the frame the model is shown and into the frame
+ * the popup presents as a faithful record — and OCR would read Shield's own
+ * labels back as findings. Hiding is not forgetting.
+ */
+export function setScanVisible(visible: boolean): void {
+  if (!visible) {
+    teardownSurface();
+    return;
+  }
+  if (findings.length > 0 && !surface) draw();
+}
+
+/** Discard the scan result entirely. */
+export function clearScanOverlay(): void {
+  teardownSurface();
+  findings = [];
+  lastOptions = { truncated: false, examinedTo: 0 };
+}
+
+/** How many findings this page is carrying. */
+export function scanFindingCount(): number {
+  return findings.length;
+}
+
+/**
+ * Findings in viewport coordinates, clipped to the frame.
+ *
+ * Pure and separately tested, and deliberately the same shape as
+ * `clipToViewport` in `manual-redaction.ts` rather than a second convention for
+ * the same arithmetic. Every coordinate defect in this project has been a
+ * plausible rectangle over the wrong pixels, and each one came from doing this
+ * conversion somewhere new.
+ *
+ * A finding scrolled out of sight is dropped — the capture only contains the
+ * viewport, so there is nothing there to cover. One straddling an edge is
+ * CLIPPED rather than dropped: its visible part is in the frame and must be
+ * covered, while passing the whole rectangle downstream would paint outside the
+ * image.
+ */
+export function clipFindings(
+  found: readonly ScanFinding[],
+  offsetX: number,
+  offsetY: number,
+  viewWidth: number,
+  viewHeight: number,
+): ScanFinding[] {
+  const visible: ScanFinding[] = [];
+
+  for (const finding of found) {
+    const { x, y, width, height } = finding.position;
+
+    const left = Math.max(x - offsetX, 0);
+    const top = Math.max(y - offsetY, 0);
+    const right = Math.min(x - offsetX + width, viewWidth);
+    const bottom = Math.min(y - offsetY + height, viewHeight);
+
+    if (right <= left || bottom <= top) continue;
+
+    visible.push({
+      ...finding,
+      position: { x: left, y: top, width: right - left, height: bottom - top },
+    });
+  }
+
+  return visible;
+}
+
+/** The findings in viewport coordinates. Reads the live scroll position. */
+export function scanFindingsInViewport(): ScanFinding[] {
+  return clipFindings(
+    findings,
+    window.scrollX,
+    window.scrollY,
+    window.innerWidth,
+    window.innerHeight,
+  );
 }
 
 /**
@@ -74,10 +194,19 @@ export function clearScanOverlay(): void {
  * exactly one place — here — rather than depending on the page's CSS.
  */
 export function showScanOverlay(
-  findings: readonly ScanFinding[],
+  found: readonly ScanFinding[],
   options: { truncated: boolean; examinedTo: number },
 ): void {
   clearScanOverlay();
+  findings = [...found];
+  lastOptions = options;
+  draw();
+}
+
+/** Build the boxes for whatever `findings` currently holds. */
+function draw(): void {
+  teardownSurface();
+  if (findings.length === 0) return;
 
   const container = document.createElement('div');
   container.id = SURFACE_ID;
@@ -131,8 +260,8 @@ export function showScanOverlay(
     drawn.push({ finding, box });
   }
 
-  if (options.truncated) {
-    container.appendChild(buildBoundary(options.examinedTo));
+  if (lastOptions.truncated) {
+    container.appendChild(buildBoundary(lastOptions.examinedTo));
   }
 
   document.documentElement.appendChild(container);

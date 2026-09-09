@@ -86,8 +86,14 @@ export const MSG = {
   SCROLL_TO: 'shield/scroll-to',
   /** Worker -> content script: draw the whole-page findings, in document space. */
   SHOW_SCAN: 'shield/show-scan',
-  /** Popup or worker -> content script: take the scan overlay down. */
+  /** Popup or worker -> content script: discard the scan result entirely. */
   CLEAR_SCAN: 'shield/clear-scan',
+  /** Worker -> content script: show or hide the scan boxes, keeping the findings. */
+  SET_SCAN_VISIBLE: 'shield/set-scan-visible',
+  /** Worker -> content script: hand back the scan's findings, in viewport space. */
+  GET_SCAN_REGIONS: 'shield/get-scan-regions',
+  /** Popup -> content script: how many findings this page is carrying. */
+  SCAN_STATUS: 'shield/scan-status',
 } as const;
 
 // --- Popup -> service worker ------------------------------------------------
@@ -306,6 +312,49 @@ export interface ClearScanMessage {
 }
 
 /**
+ * Hide the boxes without forgetting what they mean.
+ *
+ * The distinction is the whole reason a scan is worth running. The boxes must
+ * come down before any capture, or they are baked into the frame the model is
+ * shown and OCR reads Shield's own labels back as findings. The FINDINGS must
+ * not come down, or a scan that discovered an Aadhaar number below the fold has
+ * done nothing but point at it — the run that follows reads one screen and
+ * cannot rediscover it.
+ */
+export interface SetScanVisibleMessage {
+  type: typeof MSG.SET_SCAN_VISIBLE;
+  visible: boolean;
+}
+
+/**
+ * The scan's findings, converted to the current viewport.
+ *
+ * Converted on the content side because that is where the scroll position
+ * lives, exactly as manual marks are. Findings entirely outside the viewport
+ * are dropped: the capture only contains what is on screen, so a finding above
+ * or below it has no pixels to cover.
+ */
+export interface GetScanRegionsMessage {
+  type: typeof MSG.GET_SCAN_REGIONS;
+}
+
+/**
+ * How many findings this page is carrying.
+ *
+ * Sent straight to the tab and NOT through the worker, for the same reason
+ * `MANUAL_STATUS` is: asking the question must never be what injects Shield
+ * into a page the user has not pointed it at. No content script means no
+ * findings, and the failed send is that answer.
+ */
+export interface ScanStatusMessage {
+  type: typeof MSG.SCAN_STATUS;
+}
+
+export interface ScanStatusResult {
+  count: number;
+}
+
+/**
  * How many marks this page is carrying.
  *
  * Sent straight to the tab and NOT through the worker, so that a popup opening
@@ -330,6 +379,9 @@ export type ContentMessage =
   | ScrollToMessage
   | ShowScanMessage
   | ClearScanMessage
+  | SetScanVisibleMessage
+  | GetScanRegionsMessage
+  | ScanStatusMessage
   | PingMessage
   | GetViewportMessage
   | ExtractDomMessage

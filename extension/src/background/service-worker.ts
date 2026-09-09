@@ -557,6 +557,73 @@ async function manualRegions(
  * Send one action to the page, carrying what the element looked like when
  * captured so the content script can re-verify it.
  */
+/**
+ * Regions carried over from the last whole-page scan of this page.
+ *
+ * The same two halves a manual mark produces, for the same reason: the
+ * rectangle paints the screenshot, and every DOM element it overlaps has its
+ * value tokenised. Covering only the pixels would leave the text travelling
+ * intact in the DOM summary — a redaction that looks complete and is not.
+ *
+ * The category and rule name from the scan are kept rather than flattened to
+ * `other`. The scan ran the same detectors a run does; it knows this was an
+ * Aadhaar number, and the manifest and the overlay should both say so.
+ *
+ * WHAT THIS CLAIM IS WORTH
+ *
+ * It is as of the moment the scan ran. A page that reflows underneath these
+ * coordinates will drift, exactly as a drawn mark drifts, and a navigation
+ * destroys the content script and takes them with it. Drift over-redacts rather
+ * than under-redacts, which is the safe direction and the reason this is
+ * acceptable — but it is a limit, not a guarantee, and SECURITY_PRIVACY.md says
+ * so.
+ */
+async function rememberedScanRegions(
+  tabId: number,
+  elements: readonly DomElement[],
+): Promise<SensitiveRegion[]> {
+  const reply = await sendToTab<{ findings: ScanFinding[] }>(tabId, {
+    type: MSG.GET_SCAN_REGIONS,
+  });
+
+  const found = reply?.findings ?? [];
+  if (found.length === 0) return [];
+
+  const regions: SensitiveRegion[] = [];
+
+  found.forEach((finding, index) => {
+    regions.push({
+      regionId: `scan-${index}`,
+      category: finding.category,
+      source: finding.source,
+      confidence: 1,
+      elementId: null,
+      reason: `${finding.reason} (found by a whole-page scan)`,
+      position: finding.position,
+    });
+
+    for (const element of elements) {
+      if (!overlaps(finding.position, element.position)) continue;
+
+      regions.push({
+        regionId: `scan-${index}-${element.elementId}`,
+        category: finding.category,
+        source: finding.source,
+        confidence: 1,
+        elementId: element.elementId,
+        reason: 'inside something a whole-page scan found',
+        position: element.position,
+      });
+    }
+  });
+
+  console.info(
+    `[shield] carried ${found.length} finding(s) forward from the last scan`,
+  );
+
+  return regions;
+}
+
 async function executeOnPage(
   tabId: number,
   action: ShieldAction,
@@ -812,12 +879,21 @@ async function runStep(
     // "a pattern matched" are different claims about the same rectangle.
     const manual = await manualRegions(tabId, snapshot.elements);
 
+    // What a scan found earlier on this page, if one ran.
+    //
+    // Without this a scan is a pointing exercise. It walks the whole document,
+    // finds an Aadhaar number below the fold, draws a box on it — and then the
+    // next run reads one screen, cannot possibly rediscover it, and transmits
+    // the page. Detection that is not carried into the redaction is not
+    // protection.
+    const remembered = await rememberedScanRegions(tabId, snapshot.elements);
+
     // Text inside images — the gap neither the DOM rules nor the face detector
     // can reach. A photographed ID card carries an Aadhaar number that no
     // attribute declares and no face model recognises.
     const ocr = await ocrImageRegions(rawFrame, snapshot.elements, geometry);
 
-    const regions = [...domRegions, ...visualRegions, ...ocr, ...manual];
+    const regions = [...domRegions, ...visualRegions, ...ocr, ...remembered, ...manual];
     snapshot.sensitiveRegions = regions;
     logDetections(regions, snapshot.elements);
 
@@ -1188,12 +1264,14 @@ async function runTask(taskQuery: string): Promise<void> {
     // be read literally.
     void sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
 
-    // The scan result goes too, and this one is not merely tidiness. Its boxes
-    // are painted over the page, so leaving them up would bake them into the
-    // frame the model is shown and into the frame the popup presents as a
-    // faithful record — and OCR would then read Shield's own labels back as
-    // findings.
-    await sendToTab(tabId, { type: MSG.CLEAR_SCAN });
+    // The scan's BOXES come down, and this one is not merely tidiness: they are
+    // painted over the page, so leaving them up would bake them into the frame
+    // the model is shown and into the frame the popup presents as a faithful
+    // record — and OCR would then read Shield's own labels back as findings.
+    //
+    // Its FINDINGS stay. They are about to be used, and discarding them here
+    // would mean a scan protected nothing.
+    await sendToTab(tabId, { type: MSG.SET_SCAN_VISIBLE, visible: false });
 
     // Put the drawing surface away before anything is captured. The marks are
     // kept — only the cyan outlines go — because they would otherwise be baked

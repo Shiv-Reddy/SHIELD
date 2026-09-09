@@ -12,6 +12,7 @@ import {
   sendToWorker,
   type BeginManualResult,
   type ManualStatusResult,
+  type ScanStatusResult,
   type StateChangedMessage,
   type WorkerBroadcast,
 } from '../lib/messages';
@@ -44,6 +45,7 @@ const coverageNotice = required<HTMLParagraphElement>('#coverage-notice');
 const scanButton = required<HTMLButtonElement>('#scan-button');
 const scanState = required<HTMLParagraphElement>('#scan-state');
 const scanSummary = required<HTMLSpanElement>('#scan-summary');
+const scanClear = required<HTMLButtonElement>('#scan-clear');
 const manualButton = required<HTMLButtonElement>('#manual-button');
 const manualClear = required<HTMLButtonElement>('#manual-clear');
 const manualState = required<HTMLParagraphElement>('#manual-state');
@@ -439,6 +441,33 @@ function renderCoverage(state: ShieldState): void {
     : coverage.message;
 }
 
+/**
+ * How many findings the page is currently carrying.
+ *
+ * Asked of the tab DIRECTLY, never through the worker, for the same reason
+ * `renderManualCount` is: the worker would inject the content script to answer,
+ * and opening the popup must not be what puts Shield on a page.
+ *
+ * Read on open rather than taken from run state, because the state is lost when
+ * the service worker is evicted while the findings — which live in the page —
+ * are not. Without this, reopening the popup would report no protection while
+ * the protection was still in place.
+ */
+async function scanFindingCount(): Promise<number> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return 0;
+
+  try {
+    const status = (await chrome.tabs.sendMessage(tab.id, {
+      type: MSG.SCAN_STATUS,
+    })) as ScanStatusResult | undefined;
+    return status?.count ?? 0;
+  } catch {
+    // No content script means no findings.
+    return 0;
+  }
+}
+
 /** Show what a scan found, or how far one has got. */
 function renderScan(state: ShieldState): void {
   const progress = state.scanProgress;
@@ -446,6 +475,7 @@ function renderScan(state: ShieldState): void {
   if (state.status === 'scanning') {
     scanState.hidden = false;
     scanState.dataset['tone'] = 'accent';
+    scanClear.hidden = true;
     scanSummary.textContent =
       progress && progress.total > 0
         ? `Reading screen ${progress.stop} of ${progress.total}…`
@@ -455,16 +485,26 @@ function renderScan(state: ShieldState): void {
 
   const scan = state.scan;
   if (!scan) {
-    scanState.hidden = true;
+    // No run state, but the page may still be carrying findings from a scan
+    // this popup did not witness.
+    void (async () => {
+      const count = await scanFindingCount();
+      scanState.hidden = count === 0;
+      scanClear.hidden = count === 0;
+      scanState.dataset['tone'] = 'accent';
+      scanSummary.textContent = `${count} area${count === 1 ? '' : 's'} from the last scan · hidden on every run`;
+    })();
     return;
   }
 
   scanState.hidden = false;
+  scanClear.hidden = false;
   scanState.dataset['tone'] = scan.truncated ? 'warn' : 'accent';
 
   const looked = `${scan.stops} screen${scan.stops === 1 ? '' : 's'}`;
 
   if (scan.total === 0) {
+    scanClear.hidden = true;
     scanSummary.textContent = scan.truncated
       ? `Nothing found in ${looked} — the scan stopped before the end of the page`
       : `Nothing sensitive found across ${looked}`;
@@ -472,15 +512,30 @@ function renderScan(state: ShieldState): void {
   }
 
   // Named by category rather than totalled, because "6 found" says nothing
-  // about whether that is six headings or six ID numbers.
+  // about whether that is six headings or six ID numbers. And the sentence ends
+  // with what Shield will DO about them: a scan that only reported would be
+  // pointing at an Aadhaar number and leaving it there.
   const breakdown = scan.counts
     .map(({ category, count }) => `${count} ${CATEGORY_LABEL[category] ?? category}`)
     .join(', ');
 
   scanSummary.textContent = scan.truncated
-    ? `${breakdown} — stopped before the end of the page`
-    : `${breakdown}, across ${looked}`;
+    ? `${breakdown} — stopped early · hidden on every run`
+    : `${breakdown} across ${looked} · hidden on every run`;
 }
+
+scanClear.addEventListener('click', () => {
+  void (async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: MSG.CLEAR_SCAN });
+    } catch {
+      // No content script means nothing to clear.
+    }
+    scanState.hidden = true;
+  })();
+});
 
 /** Statuses during which a run is genuinely in flight. */
 const BUSY_STATUSES = new Set<ShieldState['status']>([

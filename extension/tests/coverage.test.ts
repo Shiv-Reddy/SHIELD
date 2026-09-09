@@ -29,6 +29,7 @@ import {
   type ScannedImage,
 } from '../src/lib/coverage';
 import { fullyVisible } from '../src/lib/pii/image-candidates';
+import { clipFindings } from '../src/content/scan-overlay';
 import type { Rect } from '../src/lib/types';
 
 function finding(
@@ -412,4 +413,64 @@ test('the scan puts the page back where it found it', () => {
 
   assert.match(source, /finally\s*\{/, 'the restore must be on every exit path');
   assert.ok(source.includes('restoreTo'), 'the original position must be restored');
+});
+
+// --- Carrying findings into a run --------------------------------------------
+//
+// The defect that made a scan worth nothing: it walked the whole page, found an
+// Aadhaar number below the fold, drew a box on it, and then the next run read
+// one screen, could not possibly rediscover it, and transmitted the page.
+// Detection that is not carried into the redaction is not protection.
+//
+// Same arithmetic as `clipToViewport` in manual-redaction, deliberately. Every
+// coordinate defect in this project has been a plausible rectangle over the
+// wrong pixels, and each came from doing this conversion somewhere new.
+
+function documentFinding(y: number, height = 30): ScanFinding {
+  return {
+    category: 'id_number',
+    source: 'ocr',
+    reason: 'text in image — matched Aadhaar number format',
+    position: { x: 100, y, width: 220, height },
+  };
+}
+
+test('a finding on screen is offset by the scroll position', () => {
+  const [visible] = clipFindings([documentFinding(1000)], 0, 900, 1920, 945);
+
+  assert.equal(visible?.position.y, 100);
+  assert.equal(visible?.position.x, 100);
+});
+
+test('a finding scrolled out of sight is dropped, not offered as a region', () => {
+  // The capture only contains the viewport, so there is nothing there to cover.
+  assert.deepEqual(clipFindings([documentFinding(4000)], 0, 0, 1920, 945), []);
+  assert.deepEqual(clipFindings([documentFinding(10)], 0, 3000, 1920, 945), []);
+});
+
+test('a finding straddling the bottom edge is clipped, never dropped', () => {
+  // Its visible part IS in the frame and must be covered. Dropping it would
+  // transmit the half that is on screen.
+  const [visible] = clipFindings([documentFinding(930, 100)], 0, 0, 1920, 945);
+
+  assert.equal(visible?.position.y, 930);
+  assert.equal(visible?.position.height, 15);
+});
+
+test('a clipped finding never extends past the frame', () => {
+  // Passing the whole rectangle downstream would paint outside the image.
+  const [visible] = clipFindings([documentFinding(-40, 200)], 0, 0, 1920, 945);
+
+  assert.equal(visible?.position.y, 0);
+  assert.equal(visible?.position.height, 160);
+});
+
+test('the category and rule survive the conversion', () => {
+  // The scan ran the same detectors a run does; it knows this was an Aadhaar
+  // number, and flattening that to "hidden" would lose what the manifest and
+  // the overlay are supposed to say.
+  const [visible] = clipFindings([documentFinding(100)], 0, 0, 1920, 945);
+
+  assert.equal(visible?.category, 'id_number');
+  assert.match(visible?.reason ?? '', /Aadhaar/);
 });

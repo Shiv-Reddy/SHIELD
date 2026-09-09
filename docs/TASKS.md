@@ -3,7 +3,7 @@
 **Deadline: 2026-09-09. Today is 2026-09-09 — deadline day.**
 **Goal: push as far toward Full Product as 2 days allows.**
 
-Status: core complete. Phases 1-3 closed. 163 client tests, 82 reasoner checks,
+Status: core complete. Phases 1-3 closed. 168 client tests, 82 reasoner checks,
 35 prompt checks - all green. One pass ≈150ms, every stage inside budget.
 
 ---
@@ -94,7 +94,13 @@ Rubric weight: PII detection + redaction = 40%. This is where the marks are.
       the run overlay may not do, because a scan's claim is genuinely that wide.
       A scan that stops early — endless page, scroll-locked modal, a failed look
       — draws the line where it stopped, on the page.
-      22 tests. **NOT yet verified in a browser.**
+      **Findings are carried into every later run of that page.** Without this a
+      scan only points: it finds an Aadhaar below the fold, draws a box, and the
+      next run reads one screen, cannot rediscover it, and transmits. Held in
+      document coordinates like a drawn mark, clipped to the viewport at capture.
+      Stale after a reflow — over-redacts, which is the safe direction, and said
+      out loud in SECURITY_PRIVACY.md rather than left to be found.
+      33 tests. Scan verified in Chrome; the carry-over is not yet.
 - [ ] **Consent preview** — show what leaves, pause, require approval
       — Small now: manual marking already built the surface and region plumbing.
 - [ ] **Profile-edit fixture** — face + name/email + Save, in one acting loop
