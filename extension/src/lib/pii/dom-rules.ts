@@ -31,7 +31,7 @@ import type { DomElement, SensitiveCategory, SensitiveRegion } from '../types';
  * If a future change introduces `if (confidence > x)` around a redaction, that
  * is a policy violation, not an optimisation.
  */
-import { KIND_LABEL, strongestIndianId } from './indian-ids';
+import { describeMatch, strongestIndianId } from './indian-ids';
 
 const CONFIDENCE = {
   /** `input[type=password]`. A declaration by the page author. */
@@ -389,7 +389,10 @@ export function classifyTextContent(text: string): DomRuleHit | null {
       // A confirmed checksum earns the higher confidence. A failed one does not
       // lose the detection — see indian-ids.ts — it only stays unconfirmed.
       confidence: indian.verified ? CONFIDENCE.verifiedChecksum : CONFIDENCE.textPattern,
-      reason: `visible text matched ${KIND_LABEL[indian.kind]} format`,
+      // Named through `describeMatch` rather than by kind, because the kind is
+      // whichever pattern claimed the span first. Where the shape alone cannot
+      // separate two readings the reason says both — see indian-ids.ts.
+      reason: `visible text matched ${describeMatch(indian)} format`,
     };
   }
 

@@ -51,6 +51,20 @@ export interface IndianIdMatch {
    * Never gates redaction. Only the label and the confidence.
    */
   verified: boolean;
+  /**
+   * Other kinds whose shape fits this exact span, when nothing ruled them out.
+   *
+   * Always empty for a verified match: the checksum is what separates the
+   * readings, so once it passes there is one reading left. Populated only when
+   * it did not, and the span is genuinely more than one thing.
+   *
+   * This exists because ordering the patterns most-specific-first decides which
+   * kind CLAIMS a span, and that decision was being reported to the user as if
+   * it were knowledge. A twelve-digit number that fails Verhoeff is exactly as
+   * much a bank account number as an Aadhaar number, and saying "Aadhaar" is
+   * the pattern order talking, not the evidence.
+   */
+  alternatives: IndianIdKind[];
 }
 
 // --- Checksums ---------------------------------------------------------------
@@ -227,13 +241,50 @@ function verify(kind: IndianIdKind, value: string): boolean {
       return digits.length >= 13 && luhnValid(digits);
     case 'pan':
       return PAN_HOLDER_TYPES.includes(value.toUpperCase()[3] ?? '');
+    // The PAN inside a GSTIN starts after the two-digit state code, so its
+    // holder type is character five, not character seven. Read at seven this
+    // returned false for every well-formed GSTIN ever passed to it.
     case 'gstin':
-      return PAN_HOLDER_TYPES.includes(value.toUpperCase()[7] ?? '');
+      return PAN_HOLDER_TYPES.includes(value.toUpperCase()[5] ?? '');
     // The rest have no published checksum. Shape is all there is, and shape is
     // enough to redact — it is not enough to claim certainty.
     default:
       return false;
   }
+}
+
+/**
+ * Kinds other than `kind` whose pattern also fits the whole of `value`.
+ *
+ * Whole-span only. A card number contains a run of digits a bank account rule
+ * would match, but matching PART of a span is not a competing reading of it —
+ * it is the overlap the claiming order already exists to resolve. Only a
+ * pattern that accounts for every character is offering a different answer to
+ * the same question.
+ */
+function competingKinds(kind: IndianIdKind, value: string): IndianIdKind[] {
+  const competing: IndianIdKind[] = [];
+
+  for (const [other, pattern] of PATTERNS) {
+    if (other === kind) continue;
+
+    const whole = new RegExp(`^(?:${pattern.source})$`, pattern.flags.replace('g', ''));
+    if (!whole.test(value)) continue;
+
+    // A checksum that rules a kind out rules it out of the alternatives too.
+    // The point is to report what the evidence leaves open, not everything the
+    // regular expressions happen to accept.
+    if (hasChecksum(other) && !verify(other, value)) continue;
+
+    competing.push(other);
+  }
+
+  return competing;
+}
+
+/** Whether a kind has something to check beyond its shape. */
+function hasChecksum(kind: IndianIdKind): boolean {
+  return kind === 'aadhaar' || kind === 'card' || kind === 'pan' || kind === 'gstin';
 }
 
 /**
@@ -261,7 +312,13 @@ export function findIndianIds(text: string): IndianIdMatch[] {
       if (overlaps) continue;
 
       claimed.push({ start, end });
-      found.push({ kind, value: match[0], verified: verify(kind, match[0]) });
+      const verified = verify(kind, match[0]);
+      found.push({
+        kind,
+        value: match[0],
+        verified,
+        alternatives: verified ? [] : competingKinds(kind, match[0]),
+      });
     }
   }
 
@@ -298,6 +355,21 @@ export function strongestIndianId(text: string): IndianIdMatch | null {
     const score = KIND_SEVERITY[candidate.kind] * 2 + (candidate.verified ? 1 : 0);
     return score > bestScore ? candidate : best;
   });
+}
+
+/**
+ * What to call a match, out loud, including when it is more than one thing.
+ *
+ * The overlay and the console both read this. Naming the alternatives is not
+ * hedging — an unqualified "Aadhaar number" over a bank account number is a
+ * wrong statement about the user's own screen, and the surface whose whole job
+ * is being believed cannot afford one.
+ */
+export function describeMatch(match: IndianIdMatch): string {
+  const names = [match.kind, ...match.alternatives].map((kind) => KIND_LABEL[kind]);
+  if (names.length === 1) return names[0] as string;
+
+  return `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
 }
 
 /** Human wording for the trust overlay. Never quotes the value. */

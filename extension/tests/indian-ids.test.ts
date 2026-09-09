@@ -11,11 +11,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  describeMatch,
   findIndianIds,
   luhnValid,
   strongestIndianId,
   verhoeffValid,
 } from '../src/lib/pii/indian-ids';
+import { classifyTextContent } from '../src/lib/pii/dom-rules';
 
 // --- Checksums ---------------------------------------------------------------
 
@@ -175,4 +177,67 @@ test('the words around an identifier survive, because the model needs them', asy
 test('ordinary label text is left exactly as it was', async () => {
   const { scrubTextContent } = await import('../src/lib/redaction/placeholders');
   assert.equal(scrubTextContent('Remember me on this device'), 'Remember me on this device');
+});
+
+// --- Naming what was found ---------------------------------------------------
+//
+// Found on screen 5. `PAN ABCDE1234F · Account 402711558903` was correctly
+// hidden as an id_number, and the line shown to the user read "matched Aadhaar
+// number format" over a bank account number. The redaction was right and the
+// explanation was wrong, which on the one surface whose value is being believed
+// is its own kind of failure.
+//
+// The cause is that pattern order decides which kind claims a span, and that
+// ordering was being reported as though it were evidence. Verhoeff is what
+// separates the two readings; when it fails, both are still open.
+
+test('a twelve-digit number that fails Verhoeff is not called an Aadhaar outright', () => {
+  const hit = classifyTextContent('PAN ABCDE1234F · Account 402711558903');
+
+  assert.equal(hit?.category, 'id_number');
+  assert.match(hit?.reason ?? '', /bank account number/);
+});
+
+test('the number is still redacted, at unverified confidence', () => {
+  // The whole point. A failed checksum narrows what we claim and never what we
+  // hide — SECURITY_PRIVACY.md Section 4.
+  const hit = classifyTextContent('Account 402711558903');
+
+  assert.equal(hit?.category, 'id_number');
+  assert.ok((hit?.confidence ?? 0) > 0);
+});
+
+test('a valid Aadhaar is named as one, with nothing else offered', () => {
+  const [hit] = findIndianIds('Aadhaar 2345 6789 0124');
+
+  assert.equal(hit?.verified, true);
+  assert.deepEqual(hit?.alternatives, []);
+  assert.equal(describeMatch(hit!), 'Aadhaar number');
+});
+
+test('a grouped twelve-digit number is Aadhaar alone, because an account is not written in fours', () => {
+  // 4-4-4 spacing is Aadhaar's own layout, and the bank account pattern needs
+  // an unbroken run. The formatting is doing real discriminating work here.
+  const [hit] = findIndianIds('Aadhaar: 2345 6789 0125');
+
+  assert.equal(hit?.verified, false);
+  assert.deepEqual(hit?.alternatives, []);
+});
+
+test('a sixteen-digit run that fails Luhn is a card or an account, not a card', () => {
+  const [hit] = findIndianIds('Ref 4539578763621487');
+
+  assert.equal(hit?.kind, 'card');
+  assert.deepEqual(hit?.alternatives, ['bank_account']);
+  assert.equal(describeMatch(hit!), 'payment card number or bank account number');
+});
+
+test('a well-formed GSTIN verifies — its PAN follows the state code', () => {
+  // The holder type was read at index 7 and sits at index 5, so every valid
+  // GSTIN came back unverified. Redaction was never affected; the confidence
+  // and the wording were.
+  const [hit] = findIndianIds('GSTIN 27ABCPE1234F1Z5');
+
+  assert.equal(hit?.kind, 'gstin');
+  assert.equal(hit?.verified, true);
 });
