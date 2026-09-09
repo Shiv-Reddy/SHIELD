@@ -14,6 +14,7 @@ import {
   MSG,
   type OffscreenMessage,
   type AnalyseFrameResult,
+  type ReadImagesReply,
 } from '../lib/messages';
 import type { ExecutionBackend } from '../lib/settings';
 import {
@@ -23,6 +24,7 @@ import {
   modelDescriptor,
 } from './face-detector';
 import { redactFrame } from './redact';
+import { readCrop, type CropRequest, type OcrReadResult } from './ocr';
 import { runSelfTest } from './self-test';
 
 /**
@@ -113,7 +115,57 @@ async function analyseFrame(
   }
 }
 
+/**
+ * Read every requested crop, one at a time.
+ *
+ * Sequential rather than parallel: there is one Tesseract worker and one WASM
+ * heap behind it, so concurrent calls queue anyway while multiplying peak
+ * memory. A page with eight large images would otherwise hold eight upscaled
+ * canvases at once for no gain.
+ *
+ * Each crop's outcome is independent. One unreadable image must not discard the
+ * words read from the others, and its failure must stay attached to it so that
+ * image alone is covered.
+ */
+async function readImages(
+  dataUrl: string,
+  crops: readonly CropRequest[],
+): Promise<ReadImagesReply> {
+  let bitmap: ImageBitmap | undefined;
+  try {
+    bitmap = await createImageBitmap(dataUrlToBlob(dataUrl));
+
+    const results: OcrReadResult[] = [];
+    for (const crop of crops) results.push(await readCrop(bitmap, crop));
+    return { results };
+  } finally {
+    // The frame is a full-viewport screenshot and the most sensitive object in
+    // the extension. Released on every path, as everywhere else here.
+    bitmap?.close();
+  }
+}
+
 chrome.runtime.onMessage.addListener((message: OffscreenMessage, _sender, sendResponse) => {
+  if (message.type === MSG.READ_IMAGES) {
+    resetIdleTimer();
+    readImages(message.dataUrl, message.crops)
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        // Every crop is reported failed rather than absent. An empty reply
+        // would read as "no text in any of these", and the caller treats that
+        // as clean — transmitting documents nothing ever examined.
+        console.error('[shield] image reading failed outright', error);
+        sendResponse({
+          results: message.crops.map((crop) => ({
+            ok: false as const,
+            elementId: crop.elementId,
+            message: error instanceof Error ? error.message : String(error),
+          })),
+        });
+      });
+    return true;
+  }
+
   if (message.type === MSG.REDACT_FRAME) {
     resetIdleTimer();
     redactFrame(message.dataUrl, message.regions, message.scaleX, message.scaleY)

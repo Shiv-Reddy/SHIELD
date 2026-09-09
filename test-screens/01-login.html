@@ -18,6 +18,11 @@
 
       No external resources: no CDN fonts, no remote images. The screen must
       render identically offline and years from now, or it is not a fixture.
+
+      The Aadhaar/PAN previews below are entirely fictional sample graphics
+      (fake name, fake numbers, fake address, generic silhouette avatar) added
+      purely to practice embedding document-style images in a page. They are
+      NOT real government documents and must never be swapped for real ones.
     -->
     <style>
       :root {
@@ -35,11 +40,14 @@
         margin: 0;
         min-height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 28px;
         background: var(--bg);
         color: var(--ink);
         font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+        padding: 32px 16px;
       }
 
       .card {
@@ -135,6 +143,49 @@
         font-size: 12px;
         text-align: center;
       }
+
+      /* --- Document preview section --- */
+      .docs {
+        width: 380px;
+        padding: 24px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+
+      .docs h2 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .docs .docs-sub {
+        margin: 0 0 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .doc-block {
+        margin-bottom: 18px;
+      }
+
+      .doc-block:last-child {
+        margin-bottom: 0;
+      }
+
+      .doc-block img {
+        width: 100%;
+        display: block;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+      }
+
+      .doc-label {
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0 0 6px;
+        color: var(--muted);
+      }
     </style>
   </head>
   <body>
@@ -189,6 +240,21 @@
         Synthetic test fixture. Not a real service, not real credentials.
       </p>
     </main>
+
+    <section class="docs">
+      <h2>Sample document previews</h2>
+      <p class="docs-sub">Fictional data only — for layout/embedding practice.</p>
+
+      <div class="doc-block">
+        <p class="doc-label">Aadhaar (sample)</p>
+        <img src="aadhaar_sample.svg" alt="Fictional sample Aadhaar card, not a real document" />
+      </div>
+
+      <div class="doc-block">
+        <p class="doc-label">PAN (sample)</p>
+        <img src="pan_sample.svg" alt="Fictional sample PAN card, not a real document" />
+      </div>
+    </section>
 
     <script>
       // Submitting would navigate away and cancel the run mid-verification,

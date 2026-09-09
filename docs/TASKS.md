@@ -43,8 +43,22 @@ Rubric weight: PII detection + redaction = 40%. This is where the marks are.
       Aadhaar that fails Verhoeff is still hidden, just not named. Tested.
       Gains outright: IFSC, UPI, voter ID and passport all carry fewer than
       nine digits, so the old digit-run rule never saw them.
-- [ ] **OCR pass** — Tesseract.js over image crops, feeding the same rules
-      — Closes the largest known gap: text inside images is invisible today.
+- [x] **OCR pass** — Tesseract.js over image crops, feeding the same rules
+      — Built in TWO stages that fail in opposite directions. Candidates are
+      chosen by geometry alone (`image-candidates.ts`), so that verdict holds
+      whether the engine is present, broken or absent. Reading then improves
+      PRECISION: "hide these words, and name them" instead of "hide the whole
+      image". A failed read covers the image whole — it was already judged big
+      enough to hold a document, and we cannot claim it does not.
+      Recognised words are judged by `classifyTextContent`, the same predicate
+      that judges a form field, so an Aadhaar is caught typed *and*
+      photographed. Words are grouped into LINES first: an Aadhaar prints as
+      three groups of four digits and no group matches anything alone.
+      Engine, WASM core and language data are all served from the extension —
+      Tesseract's defaults fetch them from unpkg, which would hand crops of the
+      user's screen to a CDN. The CSP blocks it if a path is ever wrong.
+      **NOT yet verified in a browser.** 21 tests cover the geometry and the
+      rules; the engine load is untested.
 - [ ] **Configurable redaction aggressiveness** — strict / balanced, persisted
       — Strict is the default. FR-14.
 - [ ] **Persistent audit log** — what was hidden, when, per run; exportable JSON

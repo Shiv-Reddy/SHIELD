@@ -265,3 +265,15 @@ decided, and why. Newest last.
    — The stages vary by page, so a percentage would be an invented number, and this is the surface whose entire value is that nothing on it is invented. It exists because a status word alone cannot separate "working" from "stalled" at a glance.
 131. **Observe-only is a switch, not a checkbox**
    — It is a mode the next run either is or is not in, and a switch states that. A tick box reads as one item in a list of options, which understates what it changes.
+132. **OCR is never the only thing between the user and a leak**
+   — The obvious build is "run OCR on every image and redact what it finds", which makes the whole protection contingent on an engine loading, a language model being present and a photograph being legible — and when any of those fails it fails silently, transmitting a photographed ID card while the console reports a clean run. Detection is therefore two stages: candidates chosen by geometry alone, which cannot fail, then reading, which improves precision. A failed read covers the candidate whole.
+133. **`ok: false` and `ok: true, words: []` must never be conflated**
+   — The first means the image was never examined and must be hidden; the second means it was read and is clean. Treating a failure as an empty read is the one bug in this path that would be a privacy failure rather than a broken feature, so per-crop results carry the distinction all the way from the engine to the region builder, and a reply that loses a crop counts as unread.
+134. **Recognised text is judged by the same predicate as a form field**
+   — `classifyTextContent`, already consulting the Indian identifier rules and the generic patterns. A second rule set for text that arrived as pixels would mean an Aadhaar is caught when typed and missed when photographed, purely because two lists drifted apart.
+135. **Words are grouped into lines before they are judged**
+   — An Aadhaar number prints as three groups of four digits and the engine reports them as three words; judged individually none of them matches anything. Without grouping, the most common document layout in the country produces no detection at all.
+136. **A size floor is what makes the aggressive fallback affordable**
+   — Redacting every image would work and would be useless: it leaves the reasoning model a page it cannot describe, and the product becomes a thorough way of breaking websites. An avatar cannot hold a readable Aadhaar number, so it is never a candidate and never blacked out.
+137. **The OCR engine, core and language data are served from the extension**
+   — Tesseract's defaults fetch all three from unpkg and jsdelivr at run time. Left alone this module would hand crops of a user's screen to an engine downloaded from a third party — the precise thing Shield exists to prevent, arrived at through a library default. The CSP blocks the remote fetch if a path is ever wrong, which is the backstop working as intended rather than a formality.

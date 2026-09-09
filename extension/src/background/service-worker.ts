@@ -24,12 +24,16 @@ import {
   type ExtractDomResult,
   sendToOffscreen,
   redactOffscreenFrame,
+  readOffscreenImages,
+  type OcrReadResult,
   warmOffscreen,
   reloadOffscreenModel,
   runOffscreenSelfTest,
 } from '../lib/messages';
 import { detectDomPii } from '../lib/pii/dom-rules';
 import { faceRegions } from '../lib/pii/face-regions';
+import { imageCandidates, unreadableImageRegions } from '../lib/pii/image-candidates';
+import { ocrRegions } from '../lib/pii/ocr-regions';
 import { buildManifest, redactDomElements } from '../lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../lib/redaction/payload';
 import { recordTransmission } from '../lib/redaction/evidence';
@@ -777,7 +781,12 @@ async function runStep(
     // "a pattern matched" are different claims about the same rectangle.
     const manual = await manualRegions(tabId, snapshot.elements);
 
-    const regions = [...domRegions, ...visualRegions, ...manual];
+    // Text inside images — the gap neither the DOM rules nor the face detector
+    // can reach. A photographed ID card carries an Aadhaar number that no
+    // attribute declares and no face model recognises.
+    const ocr = await ocrImageRegions(rawFrame, snapshot.elements, geometry);
+
+    const regions = [...domRegions, ...visualRegions, ...ocr, ...manual];
     snapshot.sensitiveRegions = regions;
     logDetections(regions, snapshot.elements);
 
@@ -1016,6 +1025,88 @@ const SETTLE_MS = 600;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Read identifying text out of the page's images, and cover what cannot be read.
+ *
+ * TWO STAGES THAT FAIL IN OPPOSITE DIRECTIONS
+ *
+ * Candidates are chosen by geometry alone, so that verdict holds whether the
+ * OCR engine is present, broken or absent. Reading then improves precision: it
+ * replaces "hide this whole image" with "hide these words". When a read fails,
+ * that image is covered whole — it was already judged large enough to hold a
+ * document, and without the ability to read it we cannot claim it does not.
+ *
+ * This is why `ok: false` and `ok: true, words: []` must never be conflated
+ * anywhere in this path. The first hides the image; the second lets it through.
+ * Treating a failure as an empty read is the one bug here that would be a
+ * privacy failure rather than a broken feature.
+ */
+async function ocrImageRegions(
+  frame: RawFrame,
+  elements: readonly DomElement[],
+  geometry: { scaleX: number; scaleY: number },
+): Promise<SensitiveRegion[]> {
+  const candidates = imageCandidates(elements);
+  if (candidates.length === 0) return [];
+
+  // Element boxes are CSS pixels; the frame is device pixels. Converted here
+  // once, using the scale the capture MEASURED rather than devicePixelRatio —
+  // trusting the latter is what produced confidently wrong face boxes before.
+  const crops = candidates.map((candidate) => ({
+    elementId: candidate.elementId,
+    x: candidate.x * geometry.scaleX,
+    y: candidate.y * geometry.scaleY,
+    width: candidate.width * geometry.scaleX,
+    height: candidate.height * geometry.scaleY,
+  }));
+
+  let results: OcrReadResult[];
+  try {
+    ({ results } = await readOffscreenImages({ dataUrl: frame.dataUrl, crops }));
+  } catch (error) {
+    // The whole call failed, so nothing was examined. Every candidate is
+    // covered rather than the run continuing as though the images were clean.
+    console.warn('[shield] OCR unavailable — covering every candidate image', error);
+    return unreadableImageRegions(candidates);
+  }
+
+  const regions: SensitiveRegion[] = [];
+  const unread: typeof candidates = [];
+
+  for (const candidate of candidates) {
+    const result = results.find((entry) => entry.elementId === candidate.elementId);
+
+    // A missing entry counts as unread, not as clean. A reply that lost a crop
+    // must not silently become permission to transmit that image.
+    if (!result || !result.ok) {
+      unread.push(candidate);
+      continue;
+    }
+
+    regions.push(
+      ...ocrRegions(
+        { elementId: result.elementId, words: result.words },
+        candidate,
+        result.cropWidth,
+        result.cropHeight,
+      ),
+    );
+  }
+
+  if (unread.length > 0) {
+    console.warn(`[shield] ${unread.length} image(s) could not be read — covering them whole`);
+    regions.push(...unreadableImageRegions(unread));
+  }
+
+  const readCount = candidates.length - unread.length;
+  console.info(
+    `[shield] OCR: ${readCount}/${candidates.length} image(s) read, ` +
+      `${regions.length} region(s) from images`,
+  );
+
+  return regions;
 }
 
 /**

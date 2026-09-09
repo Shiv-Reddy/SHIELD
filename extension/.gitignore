@@ -8,3 +8,8 @@ public/icons/*.png
 *.local
 .DS_Store
 public/ort/
+# Copied out of node_modules by `npm run ocr-assets`, so reproducible from the
+# lockfile. public/tessdata is NOT ignored: the language data is downloaded, and
+# a build that reaches the network is a build that fails the day the network
+# does — so it is committed alongside the face model.
+public/tesseract/

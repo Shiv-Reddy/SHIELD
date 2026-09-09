@@ -6,14 +6,15 @@
   "type": "module",
   "scripts": {
     "icons": "node tools/make-icons.mjs",
-    "build": "npm run verify-models && npm run ort-assets && npm run icons && vite build && vite build --config vite.content.config.ts",
+    "build": "npm run verify-models && npm run ort-assets && npm run ocr-assets && npm run icons && vite build && vite build --config vite.content.config.ts",
     "watch": "npm run icons && vite build --watch",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"import('node:fs').then(f=>f.rmSync('dist',{recursive:true,force:true}))\"",
     "verify-models": "node tools/verify-models.mjs",
     "ort-assets": "node tools/copy-ort-assets.mjs",
     "test": "node --import ./tools/test-setup.mjs --test \"tests/*.test.ts\"",
-    "check": "npm run test && tsc --noEmit && npm run build"
+    "check": "npm run test && tsc --noEmit && npm run build",
+    "ocr-assets": "node tools/copy-ocr-assets.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.2.9",
@@ -22,6 +23,7 @@
     "vite": "^8.2.2"
   },
   "dependencies": {
-    "onnxruntime-web": "^1.29.0"
+    "onnxruntime-web": "^1.29.0",
+    "tesseract.js": "^7.0.0"
   }
 }

@@ -7,6 +7,7 @@
  * are the only sanctioned way to send one.
  */
 
+import type { CropRequest, OcrReadResult } from '../offscreen/ocr';
 import type {
   DomElement,
   SensitiveCategory,
@@ -68,6 +69,8 @@ export const MSG = {
   RUN_SELF_TEST: 'shield/run-self-test',
   /** Worker -> offscreen document: paint sensitive regions out of the frame. */
   REDACT_FRAME: 'shield/redact-frame',
+  /** Worker -> offscreen document: read text out of image crops of the frame. */
+  READ_IMAGES: 'shield/read-images',
 } as const;
 
 // --- Popup -> service worker ------------------------------------------------
@@ -272,6 +275,9 @@ export interface ExtractDomResult {
 }
 
 export type { ViewportInfo };
+// Re-exported so the service worker can name an OCR outcome without importing
+// from the offscreen document, which it never otherwise reaches into.
+export type { CropRequest, OcrReadResult };
 
 // --- Service worker -> offscreen document -----------------------------------
 
@@ -343,6 +349,31 @@ export interface RedactFrameMessage {
   scaleY: number;
 }
 
+/**
+ * Read text out of the given crops of a frame.
+ *
+ * Crops are in FRAME (device) pixels, because that is the space the offscreen
+ * document's bitmap is in. Only rectangles travel — the image itself never
+ * leaves the offscreen document, and only words come back.
+ */
+export interface ReadImagesMessage {
+  type: typeof MSG.READ_IMAGES;
+  /** Raw and unredacted. Never leaves the extension. */
+  dataUrl: string;
+  crops: CropRequest[];
+}
+
+export interface ReadImagesReply {
+  /**
+   * One entry per crop, each independently ok or not.
+   *
+   * Per-crop rather than per-request on purpose: one unreadable image must not
+   * discard the words read from the others, and each failure has to stay
+   * attached to the image it belongs to so that image alone is covered.
+   */
+  results: OcrReadResult[];
+}
+
 export type RedactFrameReply =
   | {
       ok: true;
@@ -355,6 +386,7 @@ export type RedactFrameReply =
   | { ok: false; message: string };
 
 export type OffscreenMessage =
+  | ReadImagesMessage
   | AnalyseFrameMessage
   | WarmUpMessage
   | ReloadModelMessage
@@ -478,6 +510,22 @@ export async function redactOffscreenFrame(
     type: MSG.REDACT_FRAME,
     ...message,
   })) as RedactFrameReply;
+}
+
+/**
+ * Ask the offscreen document to read the given image crops.
+ *
+ * Failures are NOT swallowed here, unlike the tab and popup helpers. A thrown
+ * message would otherwise surface as "no text found", and the caller treats
+ * that as a clean image — transmitting a document nothing ever read.
+ */
+export async function readOffscreenImages(
+  message: Omit<ReadImagesMessage, 'type'>,
+): Promise<ReadImagesReply> {
+  return (await chrome.runtime.sendMessage({
+    type: MSG.READ_IMAGES,
+    ...message,
+  })) as ReadImagesReply;
 }
 
 /** Ask the offscreen document to prove the CPU fallback and report back. */
