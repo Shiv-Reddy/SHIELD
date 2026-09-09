@@ -2,164 +2,111 @@
 
 ## What This Is
 
-Shield (Screen-level Hiding of Identifiable Elements using Local Detection) is a
-Chrome browser extension that lets an AI agent read and act on a user's screen
-without ever exposing sensitive data to a server. A local vision model detects
-and redacts private information (passwords, PII, faces) on-device before any
-data is transmitted. Only sanitized context is sent to a cloud AI model, which
-returns an action for the extension to execute.
+Chrome MV3 extension. An AI agent reads and acts on the user's screen without
+sensitive data ever reaching a server. A local vision model redacts on-device;
+only sanitized context is sent; the cloud model returns one allowlisted action.
 
-Built for Smart India Hackathon 2026, Problem Statement SIH26171 (ISRO,
-Smart Automation theme). Deadline: 20 September 2026.
+Smart India Hackathon 2026, SIH26171 (ISRO, Smart Automation).
+**Deadline: 2026-09-09.**
+
+## Hard Constraints — never violate
+
+1. No raw sensitive screen data leaves the client under any code path. Not
+   best-effort. An invariant.
+2. DOM signals are primary. The visual model is supplementary, for what markup
+   cannot describe (faces, text in images).
+3. When uncertain whether something is sensitive — hide it.
+4. The server may return only `click`, `type`, `scroll` (API_SPEC.md §5). Never
+   arbitrary or dynamic instructions.
+5. Shield stores no credentials. It names a field; the client supplies the value.
 
 ## Locked Decisions
 
-- Target browser: Chrome only (Manifest V3)
-- Server-side AI model: exploring free-tier options first, no paid API committed yet
-- Primary demo task: login/form autofill (must be fully reliable)
-- Stretch demo tasks (only if time allows, in this order):
-  1. Multi-field signup form (reuses DOM-detection logic)
-  2. Video call / profile photo face detection (new code path, higher risk)
-- Full production-grade documentation exists (see below), but the hackathon
-  BUILD stays scoped to Phase 1 core first — see docs/TASKS.md and docs/DECISIONS.md
+- Chrome only (MV3). Edge works as a Chromium target; Firefox is a port, not a flag.
+- Server model: free-tier, provider-agnostic. Nothing paid committed.
+- Primary demo: login autofill. Must be perfect.
+- Full scope is documented; the BUILD follows docs/TASKS.md, which is the only
+  source of truth for what is next.
 
-## Hard Constraints (never violate these)
+## Stack
 
-- No raw, unredacted sensitive screen data may ever leave the client under any
-  code path. This is a non-negotiable privacy invariant, not a best-effort goal.
-- DOM-based detection (input type=password, autocomplete attributes) is the
-  primary, most reliable signal for form-based PII. The visual model is a
-  supplementary layer for what DOM signals can't catch (e.g. faces).
-- When uncertain whether something is sensitive, always default to hiding it.
-- Server may only return actions from the fixed allowlist in docs/API_SPEC.md
-  Section 5 (click, type, scroll) — never execute arbitrary/dynamic instructions.
-
-## Tech Stack (see docs/TECH_STACK.md for full detail)
-
-- Client: Chrome Extension (Manifest V3), ONNX Runtime Web / Transformers.js,
-  WebGPU with WASM fallback, Canvas API for redaction rendering
-- Server: FastAPI backend, free-tier hosted VLM API (or self-hosted open-weight
-  model), structured JSON action-response schema (see docs/API_SPEC.md)
-
-## Full Documentation Set (read relevant docs before starting related work)
-
-- **docs/PRD.md** — full requirements, hackathon scope AND full product scope,
-  clearly separated throughout
-- **docs/ARCHITECTURE.md** — system design, component specs, sequence diagrams,
-  production scaling notes
-- **docs/SECURITY_PRIVACY.md** — formal threat model (STRIDE), redaction policy
-  specification, compliance considerations, incident response plan
-- **docs/API_SPEC.md** — full client-server API contract, request/response
-  schemas, error codes, action allowlist
-- **docs/TECH_STACK.md** — hackathon stack (build now) vs. full product stack
-  (architected for, not built yet)
-- **docs/TESTING.md** — full test strategy: unit, integration, e2e, performance,
-  security, accessibility, plus the 5 required test screens
-- **docs/RISKS.md** — full risk register across technical, security, business,
-  operational, and team categories
-- **docs/ROADMAP.md** — complete timeline from pre-hackathon prep through
-  post-hackathon production hardening and public launch
-- **docs/TASKS.md** — current build status, module by module
-- **docs/DECISIONS.md** — why every settled choice was made
-- **docs/DEMO_SCRIPT.md** — demo reference: the technical conditions a demo must
-  be run under to show true numbers, and prepared answers to judge questions. Not
-  a narration script; the presentation wording is owned by whoever presents
-- **docs/EVALUATION_CRITERIA.md** — standalone quick-reference version of the
-  official weighted rubric (also embedded in docs/PRD.md Section 7)
-- **docs/SESSION_LOG.md** — append-only log of what happened each session, read
-  this first every time to know exactly where things left off
-
-## Team and Ownership
-
-| # | Name | Year / Branch | Role | Primary ownership |
-|---|------|---------------|------|-------------------|
-| 1 | Shivkumar Reddy | 3rd yr, ECE | Team Lead + Core ML/Vision Pipeline | Local vision model (ONNX Runtime Web, WebGPU/WASM), overall integration, final demo ownership |
-| 2 | Shashank Kumar | 3rd yr, CSE | PII Detection & Redaction | DOM rule engine, UltraFace RFB-320 + OCR, ensemble cross-check, semantic placeholder system |
-| 3 | Ayush Verma | 3rd yr, CSE | Backend | FastAPI server, API gateway, redaction-aware prompt builder, reasoning-model integration, Action Response Builder |
-| 4 | Satyanand Gupta | 3rd yr, CSE | Extension & UI | Extension shell (MV3), Action Executor, consent preview UI, live network inspector, status indicators |
-| 5 | Vanshika Chamoli | 2nd yr, CSE (Data Science) | Testing, Latency & Data | The 5 test screens, Zero-Leak Verification runs, latency instrumentation, naive-baseline comparison |
-| 6 | Isha Kumari | 1st yr, CSE (AI/ML) | Documentation & Demo Support | TASKS.md / SESSION_LOG.md / DECISIONS.md upkeep, README, pitch deck content, notes during test runs |
-
-These are ownership areas, i.e. who a question about that module goes to — not
-a record of who wrote which commit.
-
-Write all project documentation in the team's voice ("we", or neutral/passive),
-never in the first person singular. Do not attribute a specific task, commit or
-test run to a named individual unless that attribution is directly verifiable —
-docs/SESSION_LOG.md records what happened, not who did it.
-
-## Code Style
-
-- Clear, natural comments explaining _why_, not just _what_
-- No comments, headers, or commit messages referencing any AI coding assistant,
-  tool, or company
-- Commit messages are ONE LINE. A subject line and nothing else — no body, no
-  bullet list, no trailers. Written plainly, describing the change itself, as a
-  human developer would write them. If a change genuinely cannot be summarised
-  in one line, that is a sign it should have been more than one commit.
+Client — MV3, ONNX Runtime Web, WebGPU with WASM fallback, Canvas redaction.
+Server — FastAPI, structured JSON action schema.
+Tests — Node 24 native TypeScript + built-in runner. No extra deps.
 
 ## Working Priority
 
-When implementing anything, check docs/EVALUATION_CRITERIA.md first — accuracy
-(25%) and PII detection + redaction (40% combined) should get the most
-engineering attention, not just the most initial build time. Latency and
-resource usage (35% combined) matter too but should be optimized after
-correctness, not instead of it.
+Check docs/EVALUATION_CRITERIA.md first. PII detection + redaction is 40%,
+accuracy 25%, latency + resource 35%. Optimize latency **after** correctness,
+never instead of it.
 
-## Session Protocol (Follow This Every Session, No Exceptions)
+## Session Protocol
 
-**At the start of every session:**
+**Start:** read docs/TASKS.md, then the last docs/SESSION_LOG.md entry, then
+docs/DECISIONS.md. State in one line what you are about to work on.
 
-1. Read docs/TASKS.md fully before doing anything else.
-2. Read docs/SESSION_LOG.md's most recent entry to know exactly where the last
-   session left off.
-3. Read docs/DECISIONS.md to check nothing you're about to do contradicts an
-   already-settled choice.
-4. State back, in one or two lines, what phase/module you are about to work
-   on and why — before writing any code.
+**During:**
+- Work only on the current unblocked item in docs/TASKS.md.
+- Tick each item the moment it is done. Never batch.
+- Any decision not already in the docs → one line in docs/DECISIONS.md, with
+  the reason, before moving on.
+- A decision that contradicts docs/DECISIONS.md → stop and ask.
 
-**Phase gating (strict, no exceptions):**
+**End:** append to docs/SESSION_LOG.md — date, what was done, blockers, exactly
+what the next session starts with.
 
-- Work only on the current unblocked module/phase per docs/TASKS.md.
-- Do NOT start Phase 2 (stretch goals) items until every Phase 1 (core) item
-  in docs/TASKS.md is checked complete.
-- Do NOT start Phase 3 items until Phase 2 is checked complete.
-- If asked to jump ahead, point out the phase-gating rule and confirm before proceeding.
+## Git
 
-**During the session:**
+**Do not commit or push unless explicitly told to.** Leave the tree dirty and
+say what is uncommitted.
 
-- After completing each task, immediately check it off in docs/TASKS.md — don't
-  batch updates to the end of the session.
-- If you make any implementation decision not already specified in the docs
-  (a library version, a naming convention, a fallback behavior), add it to
-  docs/DECISIONS.md with a one-line reason before moving on.
-- If a decision conflicts with something already in docs/DECISIONS.md, stop and
-  ask rather than silently overriding it.
+When told to commit:
+- ONE LINE. Subject only. No body, no bullets, no trailers.
+- Plain description of the change, as a human developer would write it.
+- No reference to any AI assistant, tool, or company — in commits, comments,
+  or file headers.
+- Check what is actually staged. `test-screens/face-a.jpg` and `face-b.png`
+  must never be committed. `extension/public/models/ultraface-rfb-320.onnx`
+  must stay committed.
+- Remote: https://github.com/Shiv-Reddy/SHIELD.git, `main`.
 
-**At the end of every session:**
-Append a new entry to docs/SESSION_LOG.md with: date, what was completed this
-session, current blockers (if any), and exactly what the next session should
-start with. This is the single most important habit for continuity — never
-skip it, even for a short session.
+## Code Style
 
-**At the end of every phase — push to GitHub:**
+- Comments explain *why*, not *what*.
+- Match the surrounding code's naming and idiom.
+- Docs are written in the team's voice ("we", or neutral). Never first-person
+  singular. Never attribute a task to a named individual unless verifiable.
 
-When a phase in docs/TASKS.md is closed, commit and push to
-https://github.com/Shiv-Reddy/SHIELD.git on `main`, so the whole team is
-working from the same code rather than from a description of it. Before every
-push:
+## Documentation
 
-- Check what is actually staged, not what you expect to be. `test-screens/face-a.jpg`
-  and `face-b.png` must never be committed — they are photographs of real
-  people, kept local by decision (see test-screens/README.md).
-- `extension/public/models/ultraface-rfb-320.onnx` must stay committed:
-  tools/verify-models.mjs checks its hash but does not download it, so a fresh
-  clone cannot build without it.
-- Confirm the suites are green first. A pushed phase is one the rest of the team
-  will build on.
+Read the relevant one before starting related work.
 
-**Code hygiene (non-negotiable):**
+| File | Holds |
+|---|---|
+| docs/TASKS.md | What is next. The driver. Read first, always |
+| docs/SESSION_LOG.md | Where the last session stopped |
+| docs/DECISIONS.md | Why every settled choice was made |
+| docs/PRD.md | Requirements, hackathon vs full scope |
+| docs/ARCHITECTURE.md | System design, component specs |
+| docs/SECURITY_PRIVACY.md | Threat model, redaction policy, known limits |
+| docs/API_SPEC.md | Client-server contract, action allowlist |
+| docs/TECH_STACK.md | What is built now vs architected for |
+| docs/TESTING.md | Test strategy and the 5 required screens |
+| docs/RISKS.md | Risk register |
+| docs/ROADMAP.md | Timeline |
+| docs/EVALUATION_CRITERIA.md | The weighted rubric |
+| docs/DEMO_SCRIPT.md | Conditions a demo must run under; judge Q&A |
 
-- No comments, commit messages, or file headers referencing Claude Code or
-  any AI assistant.
-- Commit messages written plainly, describing the change itself, on ONE LINE.
+## Team
+
+| Name | Role | Owns |
+|---|---|---|
+| Shivkumar Reddy | Lead, ML/Vision | Local model, integration, demo |
+| Shashank Kumar | PII Detection | DOM rules, UltraFace + OCR, placeholders |
+| Ayush Verma | Backend | FastAPI, prompt builder, action builder |
+| Satyanand Gupta | Extension & UI | MV3 shell, executor, consent UI, inspector |
+| Vanshika Chamoli | Testing & Data | Test screens, zero-leak runs, latency |
+| Isha Kumari | Docs & Demo | TASKS/SESSION_LOG upkeep, README, deck |
+
+Ownership areas — who a question about that module goes to. Not a record of who
+wrote which commit.
