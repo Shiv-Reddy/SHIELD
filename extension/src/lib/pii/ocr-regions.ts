@@ -98,6 +98,63 @@ export function boundingBox(words: readonly OcrWord[]): Rect | null {
   return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
+
+/**
+ * Letters an OCR engine routinely returns where a digit was printed.
+ *
+ * Not a theory. On the sample Aadhaar card, twelve printed zeros came back as
+ * capital O and the number went undetected — the line was judged as text
+ * because, to the rules, that is what it was.
+ *
+ * ID cards make this worse than ordinary prose does: they set identifiers in
+ * wide-tracked capitals, which is exactly the condition under which O and 0, I
+ * and 1, S and 5 are hardest to tell apart.
+ */
+const DIGIT_LOOKALIKES: Readonly<Record<string, string>> = {
+  O: '0',
+  o: '0',
+  D: '0',
+  I: '1',
+  l: '1',
+  i: '1',
+  S: '5',
+  s: '5',
+  B: '8',
+  Z: '2',
+  z: '2',
+  G: '6',
+};
+
+/** A token long enough, and confusable enough, to be a misread number group. */
+const MIN_LOOKALIKE_TOKEN = 4;
+
+/**
+ * The same line, read as though every confusable letter were the digit it
+ * resembles — but only in tokens that could plausibly be a number group.
+ *
+ * Scoped tightly on purpose. Rewriting letters everywhere would turn ordinary
+ * words into digit strings and invent identifiers that were never on the page,
+ * and an over-redaction that black-boxes a heading is a different kind of
+ * failure, not an acceptable one. A token qualifies only if it is made ENTIRELY
+ * of digits and lookalikes, and is at least as long as a number group — which
+ * "SAMPLE" and "Government" are not, and "OOOO" is.
+ */
+export function digitVariant(text: string): string {
+  return text
+    .split(' ')
+    .map((token) => {
+      if (token.length < MIN_LOOKALIKE_TOKEN) return token;
+
+      const convertible = [...token].every(
+        (character) => /[0-9]/.test(character) || character in DIGIT_LOOKALIKES,
+      );
+      if (!convertible) return token;
+
+      return [...token].map((character) => DIGIT_LOOKALIKES[character] ?? character).join('');
+    })
+    .join(' ');
+}
+
 /**
  * Padding around a matched line, as a fraction of its height.
  *
@@ -132,7 +189,11 @@ export function ocrRegions(
 
   groupIntoLines(result.words).forEach((line, index) => {
     const text = line.map((word) => word.text).join(' ');
-    const hit = classifyTextContent(text);
+
+    // Judged as read, and then as though the confusable letters were digits.
+    // The raw reading goes first so a line that genuinely is text keeps its own
+    // classification rather than being reinterpreted as a number.
+    const hit = classifyTextContent(text) ?? classifyTextContent(digitVariant(text));
     if (!hit) return;
 
     const box = boundingBox(line);

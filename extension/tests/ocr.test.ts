@@ -22,7 +22,7 @@ import {
   imageCandidates,
   unreadableImageRegions,
 } from '../src/lib/pii/image-candidates';
-import { boundingBox, groupIntoLines, ocrRegions } from '../src/lib/pii/ocr-regions';
+import { boundingBox, digitVariant, groupIntoLines, ocrRegions } from '../src/lib/pii/ocr-regions';
 import type { OcrWord } from '../src/lib/pii/ocr-regions';
 import type { DomElement } from '../src/lib/types';
 
@@ -223,4 +223,76 @@ test('the reason never quotes the text it matched', () => {
 
   assert.equal(region?.reason.includes('2345'), false);
   assert.equal(region?.reason.includes('0124'), false);
+});
+
+// --- Misread digits ----------------------------------------------------------
+//
+// Found on the sample Aadhaar card: twelve printed zeros came back from the
+// engine as capital O, and the number went undetected because to the rules that
+// is exactly what it was — text. ID cards set identifiers in wide-tracked
+// capitals, which is the condition under which O/0, I/1 and S/5 are hardest to
+// tell apart, so this is the normal case rather than the unlucky one.
+
+test('a number misread as letters is still detected', () => {
+  const candidate = { elementId: 'e1', x: 0, y: 0, width: 400, height: 250 };
+  const regions = ocrRegions(
+    {
+      elementId: 'e1',
+      words: [word('OOOO', 10, 100), word('OOOO', 60, 100), word('OOOO', 110, 100)],
+    },
+    candidate,
+    400,
+    250,
+  );
+
+  assert.equal(regions.length, 1);
+});
+
+test('an Aadhaar whose zeros were misread is still detected', () => {
+  const candidate = { elementId: 'e1', x: 0, y: 0, width: 400, height: 250 };
+  const regions = ocrRegions(
+    {
+      elementId: 'e1',
+      words: [word('2345', 10, 100), word('G789', 60, 100), word('Ol24', 110, 100)],
+    },
+    candidate,
+    400,
+    250,
+  );
+
+  assert.equal(regions.length, 1);
+  assert.equal(regions[0]?.category, 'id_number');
+});
+
+test('ordinary words are NOT rewritten into numbers', () => {
+  // The failure mode on the other side. Rewriting letters everywhere would
+  // invent identifiers that were never on the page and black out headings.
+  assert.equal(digitVariant('SAMPLE Government of India'), 'SAMPLE Government of India');
+  assert.equal(digitVariant('Address Signature'), 'Address Signature');
+});
+
+test('only tokens made entirely of digits and lookalikes are rewritten', () => {
+  assert.equal(digitVariant('OOOO'), '0000');
+  assert.equal(digitVariant('IBZS'), '1825');
+  // One letter outside the lookalike set is enough to leave a token alone, which
+  // is why real words survive: 'SOIL' has an L, 'BOSS' has none but is caught by
+  // nothing downstream, and anything with a vowel other than O or I is safe.
+  assert.equal(digitVariant('SOIL'), 'SOIL');
+  assert.equal(digitVariant('OOOX'), 'OOOX');
+  // Too short to be a number group.
+  assert.equal(digitVariant('OO'), 'OO');
+});
+
+test('a genuine word keeps its own reading before the digit variant is tried', () => {
+  // The raw text is classified first, so a line that really is text is never
+  // reinterpreted as a number.
+  const candidate = { elementId: 'e1', x: 0, y: 0, width: 400, height: 250 };
+  const regions = ocrRegions(
+    { elementId: 'e1', words: [word('Signature', 10, 100), word('sample', 90, 100)] },
+    candidate,
+    400,
+    250,
+  );
+
+  assert.deepEqual(regions, []);
 });

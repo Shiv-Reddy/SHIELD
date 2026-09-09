@@ -33,8 +33,8 @@
   <text x="164" y="220" font-family="system-ui, sans-serif" font-size="12" fill="#333">Anytown, Demo State - 000000</text>
 
   <!-- Aadhaar number -->
-  <text x="24" y="270" font-family="system-ui, sans-serif" font-size="26" fill="#111" font-weight="700" letter-spacing="3">0000 0000 0000</text>
-  <text x="24" y="292" font-family="system-ui, sans-serif" font-size="11" fill="#777">VID: 0000 0000 0000 0000 (sample, not valid)</text>
+  <text x="24" y="270" font-family="system-ui, sans-serif" font-size="26" fill="#111" font-weight="700" letter-spacing="3">2345 6789 0124</text>
+  <text x="24" y="292" font-family="system-ui, sans-serif" font-size="11" fill="#777">VID: 9012 3456 7890 1234 (sample, not valid)</text>
 
   <!-- fake QR block -->
   <rect x="500" y="150" width="110" height="110" fill="#f2f4f7" stroke="#d9dee7"/>
