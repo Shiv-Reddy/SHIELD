@@ -200,6 +200,37 @@
               </div>
             </div>
           </div>
+
+          <!--
+            CORPUS CAPTURE (dev builds only)
+            Hidden unless SHIELD_DEV=1 built this bundle. It writes real field
+            values to a file, which is why it is compiled out of anything a
+            user could install and why saving takes a second, deliberate click
+            after the values have been shown - DECISIONS.md 171-172.
+          -->
+          <div class="panel" id="devtools-panel" hidden>
+            <button id="devtools-toggle" class="panel-toggle" type="button" aria-expanded="false">
+              <span id="devtools-toggle-label">Capture this page for the corpus</span>
+              <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m7.5 4.5 6 5.5-6 5.5"/>
+              </svg>
+            </button>
+            <div id="devtools-body" class="panel-body" hidden>
+              <p class="evidence-meta">
+                Development build. Field values are exported verbatim - capture
+                only from logged-out or synthetic-data pages.
+              </p>
+              <label class="dev-label" for="devtools-about">What is this page?</label>
+              <input id="devtools-about" class="dev-input" type="text"
+                     placeholder="e.g. state transport booking, logged out" />
+              <button id="devtools-read" class="linkish" type="button">Read the page</button>
+              <p id="devtools-meta" class="evidence-meta"></p>
+              <ul id="devtools-values" class="audit-list"></ul>
+              <button id="devtools-save" class="linkish" type="button" hidden>
+                Save these values to a file
+              </button>
+            </div>
+          </div>
         </div>
       </form>
     </main>

@@ -12,6 +12,7 @@ import {
   sendToWorker,
   type BeginManualResult,
   type ManualStatusResult,
+  type ExtractDomResult,
   type ScanStatusResult,
   type StateChangedMessage,
   type WorkerBroadcast,
@@ -21,6 +22,12 @@ import { readSettings, setForceBackend, setObserveOnly } from '../lib/settings';
 import { readLastTransmission } from '../lib/redaction/evidence';
 import { auditJson, clearAudit, readAudit } from '../lib/audit';
 import { clearScanProof } from '../lib/scan-proof';
+import {
+  mapExportFilename,
+  mapExportJson,
+  reviewableValues,
+  type ReviewableValue,
+} from '../lib/benchmark/export-map';
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -64,6 +71,15 @@ const auditMeta = required<HTMLParagraphElement>('#audit-meta');
 const auditList = required<HTMLUListElement>('#audit-list');
 const auditExport = required<HTMLButtonElement>('#audit-export');
 const auditClear = required<HTMLButtonElement>('#audit-clear');
+const devPanel = required<HTMLDivElement>('#devtools-panel');
+const devToggle = required<HTMLButtonElement>('#devtools-toggle');
+const devToggleLabel = required<HTMLSpanElement>('#devtools-toggle-label');
+const devBody = required<HTMLDivElement>('#devtools-body');
+const devAbout = required<HTMLInputElement>('#devtools-about');
+const devRead = required<HTMLButtonElement>('#devtools-read');
+const devMeta = required<HTMLParagraphElement>('#devtools-meta');
+const devValues = required<HTMLUListElement>('#devtools-values');
+const devSave = required<HTMLButtonElement>('#devtools-save');
 const latencyToggle = required<HTMLButtonElement>('#latency-toggle');
 const latencyToggleLabel = required<HTMLSpanElement>('#latency-toggle-label');
 const latencyBody = required<HTMLDivElement>('#latency-body');
@@ -74,6 +90,11 @@ const latencyTotal = required<HTMLParagraphElement>('#latency-total');
 // time it is shown, so this is the one place that cannot report a build other
 // than the one actually installed.
 const BUILD_LABEL = `v${chrome.runtime.getManifest().version} · build ${__SHIELD_BUILD__}`;
+
+// The corpus capture panel appears only in a build started with SHIELD_DEV=1.
+// The markup ships hidden, so a build that forgets this line stays safe rather
+// than exposing the panel by default.
+devPanel.hidden = !__SHIELD_DEV__;
 
 /**
  * Render the build line, noting a pinned backend when one is set.
@@ -386,6 +407,116 @@ auditClear.addEventListener('click', () => {
     await clearAudit();
     await renderAudit();
   })();
+});
+
+/**
+ * Capturing a real page for the benchmark corpus — dev builds only.
+ *
+ * WHY THIS IS TWO CLICKS AND NOT ONE
+ *
+ * The file it writes carries field values verbatim, because a benchmark fed
+ * sanitised input measures a detector on a page that does not exist — Verhoeff
+ * runs on the actual digits (DECISIONS.md 171). That is the right call for the
+ * corpus and it puts real values on disk, so nothing is written until the
+ * values have been listed and looked at. "Only capture when logged out" is
+ * unenforceable; being shown the contents is not.
+ *
+ * Read once, into a variable, so the file that gets saved is the page that was
+ * reviewed rather than whatever the page has become since.
+ */
+let reviewed: { elements: ExtractDomResult['elements']; values: ReviewableValue[] } | null = null;
+
+function clearReview(): void {
+  reviewed = null;
+  devSave.hidden = true;
+  devValues.replaceChildren();
+}
+
+async function readPageForCorpus(): Promise<void> {
+  clearReview();
+  devMeta.textContent = 'Reading...';
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) {
+    devMeta.textContent = 'No active tab.';
+    return;
+  }
+
+  let result: ExtractDomResult | null = null;
+  try {
+    result = (await chrome.tabs.sendMessage(tab.id, {
+      type: MSG.EXTRACT_DOM,
+    })) as ExtractDomResult | null;
+  } catch {
+    devMeta.textContent = 'No content script on this page. Reload it and try again.';
+    return;
+  }
+
+  if (!result) {
+    devMeta.textContent = 'The page could not be read.';
+    return;
+  }
+
+  const values = reviewableValues(result.elements);
+  reviewed = { elements: result.elements, values };
+
+  devMeta.textContent =
+    `${result.elements.length} elements. ` +
+    (values.length === 0
+      ? 'No field values at all - nothing here to leak.'
+      : `${values.length} value${values.length === 1 ? '' : 's'} would be written. ` +
+        'Read them before saving.');
+
+  devValues.replaceChildren(
+    ...values.map((entry) => {
+      const row = document.createElement('li');
+      row.className = 'audit-row';
+
+      const field = document.createElement('span');
+      field.className = 'audit-when';
+      field.textContent = `${entry.elementId} · ${entry.field}`;
+
+      // textContent, never innerHTML. This is page-authored content being shown
+      // inside an extension page, which is the one place markup must not run.
+      const value = document.createElement('span');
+      value.className = 'audit-what';
+      value.textContent = entry.value;
+
+      row.append(field, value);
+      return row;
+    }),
+  );
+
+  devSave.hidden = false;
+}
+
+devToggle.addEventListener('click', () => {
+  const opening = devBody.hidden;
+  devBody.hidden = !opening;
+  devToggle.setAttribute('aria-expanded', String(opening));
+  devToggleLabel.textContent = opening ? 'Hide capture' : 'Capture this page for the corpus';
+  // A review belongs to the moment it was made. Closing the panel ends it.
+  if (!opening) clearReview();
+});
+
+devRead.addEventListener('click', () => {
+  void readPageForCorpus();
+});
+
+devSave.addEventListener('click', () => {
+  if (!reviewed) return;
+
+  const json = mapExportJson({ elements: reviewed.elements }, devAbout.value.trim());
+  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = mapExportFilename();
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+
+  devMeta.textContent = 'Saved. Label it from the PAGE, never from the detector output.';
+  clearReview();
 });
 
 latencyToggle.addEventListener('click', () => {

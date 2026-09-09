@@ -25,7 +25,12 @@ const buildStamp = new Date().toLocaleString('sv-SE'); // local time, ISO-like
 
 export default defineConfig({
   root: src,
-  define: { __SHIELD_BUILD__: JSON.stringify(buildStamp) },
+  define: {
+    __SHIELD_BUILD__: JSON.stringify(buildStamp),
+    // Off unless asked for, so the element-map export is absent from any
+    // build a user could install rather than merely switched off in one.
+    __SHIELD_DEV__: JSON.stringify(process.env.SHIELD_DEV === '1'),
+  },
   resolve: {
     /**
      * Opt into ONNX Runtime's "external wasm" entry point.
