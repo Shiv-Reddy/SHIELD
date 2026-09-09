@@ -397,6 +397,13 @@ export function extractDomMap(): ExtractDomResult {
   const passive: Candidate[] = [];
   let scanned = 0;
 
+  // Counted, never collected. These are elements we would have described had
+  // they been on screen, and the count is the only honest way to say how much
+  // of the page this reading does not speak for — see lib/coverage.ts. Reading
+  // them instead would widen what a run examines, which is a decision the scan
+  // makes deliberately and a run must not make by accident.
+  let offscreenElements = 0;
+
   for (const element of Array.from(document.body?.querySelectorAll('*') ?? [])) {
     if (SKIPPED_TAGS.has(element.localName)) continue;
     scanned += 1;
@@ -405,7 +412,16 @@ export function extractDomMap(): ExtractDomResult {
     if (!elementType) continue;
 
     const rect = toRect(element.getBoundingClientRect());
-    if (!intersectsViewport(rect, viewport)) continue;
+    if (!intersectsViewport(rect, viewport)) {
+      // A zero-sized box is laid out nowhere and is not something we failed to
+      // look at. `isRendered` is not consulted, because it is the expensive half
+      // of this loop and running it on every off-screen node would make the scan
+      // cost scale with the page rather than the screen — so a `visibility:
+      // hidden` element does get counted. That is the safe direction: this
+      // number may overstate what was missed and must never understate it.
+      if (rect.width > 0 && rect.height > 0) offscreenElements += 1;
+      continue;
+    }
     if (!isRendered(element)) continue;
 
     (isInteractive(elementType) ? interactive : passive).push({
@@ -493,8 +509,37 @@ export function extractDomMap(): ExtractDomResult {
     // URL alone can identify a person or an internal system.
     pageUrl: window.location.href,
     viewport,
+    coverage: {
+      documentHeight: documentHeight(),
+      viewportHeight: viewport.height,
+      scrollY: Math.round(window.scrollY),
+      offscreenElements,
+    },
     scanned,
     truncated: remainingPassive.length > budget,
     unresolvedSelectors,
   };
+}
+
+/**
+ * The full scrollable height of the document.
+ *
+ * Four sources, maximum taken, because no single one is right everywhere: which
+ * of `documentElement` and `body` actually scrolls depends on the page's own CSS
+ * — a `height: 100%` on either moves the overflow to the other — and a page
+ * that sizes itself with transforms reports a larger `offsetHeight` than
+ * `scrollHeight`. Reading the wrong one understates the page, and understating
+ * it is what would make Shield claim it examined more than it did.
+ */
+export function documentHeight(): number {
+  const root = document.documentElement;
+  const body = document.body;
+
+  return Math.max(
+    root?.scrollHeight ?? 0,
+    root?.offsetHeight ?? 0,
+    body?.scrollHeight ?? 0,
+    body?.offsetHeight ?? 0,
+    window.innerHeight,
+  );
 }

@@ -8,6 +8,7 @@
  */
 
 import type { CropRequest, OcrReadResult } from '../offscreen/ocr';
+import type { PageCoverage, ScanFinding } from './coverage';
 import type {
   DomElement,
   SensitiveCategory,
@@ -71,6 +72,22 @@ export const MSG = {
   REDACT_FRAME: 'shield/redact-frame',
   /** Worker -> offscreen document: read text out of image crops of the frame. */
   READ_IMAGES: 'shield/read-images',
+  /**
+   * Popup -> worker: examine the whole page, top to bottom, and send nothing.
+   *
+   * Deliberately not a mode on RUN_TASK. A run acts on the page and transmits a
+   * sanitized payload to do it; a scan does neither, and the two sharing an
+   * entry point would mean one flag stood between "nothing leaves this machine"
+   * and "something does". They are separate paths so that the scan path simply
+   * has no transport in it to reach.
+   */
+  SCAN_PAGE: 'shield/scan-page',
+  /** Worker -> content script: scroll to a document offset and report where it landed. */
+  SCROLL_TO: 'shield/scroll-to',
+  /** Worker -> content script: draw the whole-page findings, in document space. */
+  SHOW_SCAN: 'shield/show-scan',
+  /** Popup or worker -> content script: take the scan overlay down. */
+  CLEAR_SCAN: 'shield/clear-scan',
 } as const;
 
 // --- Popup -> service worker ------------------------------------------------
@@ -129,12 +146,24 @@ export interface BeginManualResult {
   message: string;
 }
 
+/**
+ * Examine the whole document rather than the screen, and transmit nothing.
+ *
+ * Fire-and-forget like RUN_TASK: a scan takes seconds and the popup is closed
+ * for most of them, so progress arrives through STATE_CHANGED and the result
+ * is left on the page.
+ */
+export interface ScanPageMessage {
+  type: typeof MSG.SCAN_PAGE;
+}
+
 export type PopupMessage =
   | RunTaskMessage
   | CancelTaskMessage
   | GetStateMessage
   | PrepareMessage
   | BeginManualMessage
+  | ScanPageMessage
   | RestartBackendMessage;
 
 // --- Service worker -> content script ---------------------------------------
@@ -220,6 +249,63 @@ export interface ClearManualMessage {
 }
 
 /**
+ * Move the page to a document offset, and say where it actually ended up.
+ *
+ * The reply is not a formality. A page can refuse to scroll where it was asked
+ * — a scroll-locked modal, a container that owns the overflow, a document that
+ * grew or shrank since it was measured — and a scan that assumed it arrived
+ * would attribute every finding from that stop to coordinates hundreds of
+ * pixels from where they really are. The caller compares what it asked for with
+ * what it got, and stops when the page stops moving.
+ */
+export interface ScrollToMessage {
+  type: typeof MSG.SCROLL_TO;
+  y: number;
+}
+
+export interface ScrollToResult {
+  scrollY: number;
+  scrollX: number;
+  /**
+   * Where the page was before this call.
+   *
+   * Carried so the first stop of a scan captures the user's own position in the
+   * same round trip that starts the walk. A scan moves someone's page out from
+   * under them and owes them the exact position back — asking for it separately
+   * would be a second message that can fail on its own, leaving them stranded
+   * somewhere they never scrolled to.
+   */
+  previousScrollY: number;
+  previousScrollX: number;
+  documentHeight: number;
+  viewportHeight: number;
+}
+
+/**
+ * Draw the scan's findings, pinned to the document rather than the screen.
+ *
+ * The opposite of `SHOW_OVERLAY`, and for a reason that is worth stating rather
+ * than looking like an inconsistency. A run's overlay MUST clear on scroll,
+ * because it describes one viewport and boxes that followed the page would keep
+ * looking authoritative over content nothing ever examined. A scan examined the
+ * whole document, so its boxes stay exactly as wide as its evidence — pinning
+ * them to the content is what makes them true rather than what makes them a
+ * lie.
+ */
+export interface ShowScanMessage {
+  type: typeof MSG.SHOW_SCAN;
+  findings: ScanFinding[];
+  /** True when the stop cap was hit, so the page below was never examined. */
+  truncated: boolean;
+  /** How far down the document the scan actually reached. */
+  examinedTo: number;
+}
+
+export interface ClearScanMessage {
+  type: typeof MSG.CLEAR_SCAN;
+}
+
+/**
  * How many marks this page is carrying.
  *
  * Sent straight to the tab and NOT through the worker, so that a popup opening
@@ -241,6 +327,9 @@ export type ContentMessage =
   | GetManualRegionsMessage
   | SetManualVisibleMessage
   | ClearManualMessage
+  | ScrollToMessage
+  | ShowScanMessage
+  | ClearScanMessage
   | PingMessage
   | GetViewportMessage
   | ExtractDomMessage
@@ -266,6 +355,13 @@ export interface ExtractDomResult {
    */
   pageUrl: string;
   viewport: ViewportInfo;
+  /**
+   * How much of the document this reading speaks for.
+   *
+   * Present on every scan, not only on tall pages, because a boundary reported
+   * only when it is bad is a boundary nobody learns to look for.
+   */
+  coverage: PageCoverage;
   /** How many elements were considered, for diagnostics. */
   scanned: number;
   /** True when the element cap was hit and some text/image context was dropped. */

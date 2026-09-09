@@ -19,11 +19,13 @@ import {
   type ExecuteActionResult,
   type ManualStatusResult,
   type PingResult,
+  type ScrollToResult,
 } from '../lib/messages';
 import type { ViewportInfo } from '../lib/types';
-import { extractDomMap } from './dom-map';
+import { documentHeight, extractDomMap } from './dom-map';
 import { executeAction } from './executor';
 import { clearOverlay, showOverlay } from './overlay';
+import { clearScanOverlay, showScanOverlay } from './scan-overlay';
 import {
   clearManual,
   manualRegionCount,
@@ -104,6 +106,58 @@ function register(): void {
           return false;
         }
 
+        case MSG.SCROLL_TO: {
+          const previousScrollY = Math.round(window.scrollY);
+          const previousScrollX = Math.round(window.scrollX);
+
+          // `instant` rather than the page's own scroll behaviour. A page that
+          // sets `scroll-behavior: smooth` would animate for hundreds of
+          // milliseconds after this returns, and the capture that follows would
+          // land mid-flight — a frame of a position the coordinates do not
+          // describe.
+          //
+          // Horizontal position is preserved rather than zeroed. Moving it
+          // would change which elements are on screen for reasons the caller
+          // never asked for, and leave the user somewhere sideways of where
+          // they were.
+          window.scrollTo({ top: message.y, left: window.scrollX, behavior: 'instant' });
+
+          // Measured after the move, never assumed from it. A scroll-locked
+          // page, a modal that owns the overflow, or a document that changed
+          // size all end somewhere other than where they were asked to go.
+          const result: ScrollToResult = {
+            scrollY: Math.round(window.scrollY),
+            scrollX: Math.round(window.scrollX),
+            previousScrollY,
+            previousScrollX,
+            documentHeight: documentHeight(),
+            viewportHeight: window.innerHeight,
+          };
+          sendResponse(result);
+          return false;
+        }
+
+        case MSG.SHOW_SCAN: {
+          try {
+            showScanOverlay(message.findings, {
+              truncated: message.truncated,
+              examinedTo: message.examinedTo,
+            });
+          } catch (error) {
+            // The scan already happened and transmitted nothing. A drawing
+            // failure loses the explanation, not a protection.
+            console.warn('[shield] could not draw the scan result', error);
+          }
+          sendResponse({ ok: true });
+          return false;
+        }
+
+        case MSG.CLEAR_SCAN: {
+          clearScanOverlay();
+          sendResponse({ ok: true });
+          return false;
+        }
+
         case MSG.START_MANUAL: {
           startManual();
           sendResponse({ ok: true });
@@ -138,11 +192,15 @@ function register(): void {
 
         case MSG.EXECUTE_ACTION: {
           try {
-            // The overlay is removed before acting. It sits over the page with
-            // pointer-events off so it cannot intercept the click, but leaving
-            // it up would also leave a claim about a screen that is about to
-            // change.
+            // The overlays are removed before acting. They sit over the page
+            // with pointer-events off so they cannot intercept the click, but
+            // leaving them up would also leave a claim about a screen that is
+            // about to change. The scan result goes too: it describes a
+            // document that is about to become a different one, and a stale
+            // whole-page claim is worse than a stale one-screen claim because
+            // it looks more thorough.
             clearOverlay();
+            clearScanOverlay();
 
             const result: ExecuteActionResult = executeAction({
               action: message.action,

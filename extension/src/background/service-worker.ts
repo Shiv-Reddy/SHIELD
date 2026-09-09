@@ -22,6 +22,7 @@ import {
   type BeginManualResult,
   type PingResult,
   type ExtractDomResult,
+  type ScrollToResult,
   sendToOffscreen,
   redactOffscreenFrame,
   readOffscreenImages,
@@ -30,6 +31,14 @@ import {
   reloadOffscreenModel,
   runOffscreenSelfTest,
 } from '../lib/messages';
+import {
+  countByCategory,
+  dedupeFindings,
+  describeCoverage,
+  planScanStops,
+  type ScanFinding,
+  type ScanSummary,
+} from '../lib/coverage';
 import { detectDomPii } from '../lib/pii/dom-rules';
 import { faceRegions } from '../lib/pii/face-regions';
 import { imageCandidates, unreadableImageRegions } from '../lib/pii/image-candidates';
@@ -144,6 +153,13 @@ function beginRun(taskQuery: string, tabId: number): void {
     taskQuery,
     tabId,
     step: 1,
+    // A run's claim is one screen wide, and it is about to make it. Carrying a
+    // previous scan's whole-page summary alongside would put the widest claim
+    // Shield can make next to the narrowest, with nothing saying which one the
+    // numbers on screen belong to.
+    scan: null,
+    scanProgress: null,
+    coverage: null,
   });
 }
 
@@ -695,6 +711,14 @@ async function runStep(
         `${domMap.truncated ? ', truncated' : ''})`,
     );
 
+    // Stated on every run, not only on tall pages. This reading describes one
+    // viewport, and a user who scrolls afterwards reads a field with no box on
+    // it as "checked and safe" rather than "never looked at" — so the boundary
+    // is announced rather than left to be inferred from an absence.
+    const coverage = describeCoverage(domMap.coverage);
+    setState({ coverage });
+    console.info(`[shield] coverage — ${coverage.message}`);
+
     logElementMap(snapshot);
 
     // Screen Perception is complete: both the frame and the element map are in
@@ -1143,6 +1167,13 @@ async function runTask(taskQuery: string): Promise<void> {
     // be read literally.
     void sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
 
+    // The scan result goes too, and this one is not merely tidiness. Its boxes
+    // are painted over the page, so leaving them up would bake them into the
+    // frame the model is shown and into the frame the popup presents as a
+    // faithful record — and OCR would then read Shield's own labels back as
+    // findings.
+    await sendToTab(tabId, { type: MSG.CLEAR_SCAN });
+
     // Put the drawing surface away before anything is captured. The marks are
     // kept — only the cyan outlines go — because they would otherwise be baked
     // into the frame the model is shown AND into the frame the popup presents
@@ -1249,7 +1280,232 @@ async function ensureCpuFallbackProved(): Promise<void> {
 
 function cancelTask(): void {
   completedStages = new Set();
+  // Any scan in flight belongs to a token that is now stale, so its loop stops
+  // at the next stop boundary and puts the page back where it found it.
+  scanToken += 1;
   setState({ ...INITIAL_STATE });
+}
+
+// --- Whole-page scan --------------------------------------------------------
+
+/**
+ * How long to let the page settle after scrolling, before capturing.
+ *
+ * Two costs it has to cover. Images below the fold are routinely lazy-loaded
+ * and arrive blank for a beat, and capturing one blank is worse than not
+ * capturing it — a blank image reads as "nothing identifying here" rather than
+ * "not loaded yet". Chrome also throttles captureVisibleTab to roughly two
+ * calls per second, so anything much shorter is spent in `capture.ts`'s retry
+ * regardless.
+ */
+const SCAN_SETTLE_MS = 450;
+
+/**
+ * Identifies the scan in flight.
+ *
+ * A scan holds someone's page for several seconds while scrolling it, so
+ * abandoning one has to actually stop it rather than let it finish invisibly
+ * and scroll the page again under whatever they are now doing.
+ */
+let scanToken = 0;
+
+/**
+ * Examine the whole document, top to bottom, and transmit nothing.
+ *
+ * WHAT THIS IS FOR
+ *
+ * A run reads one viewport, which is the honest boundary of what it transmits —
+ * below the fold is never captured, so it is never sent. But the boundary is
+ * easy to misread: a field with no box over it looks checked rather than
+ * unexamined. This answers the question a run cannot: what is on this page,
+ * all of it, sensitive?
+ *
+ * WHY IT IS A SEPARATE PATH AND NOT A FLAG ON `runStep`
+ *
+ * Nothing in this function builds a payload, seals one, or reaches the
+ * transport — `buildSanitizedPayload` and `send` are not called here, directly
+ * or otherwise. That is the whole safety argument, and it is structural rather
+ * than conditional: there is no branch to get wrong, because there is nothing
+ * to branch to. Making this a mode on the run would have put one boolean
+ * between "nothing leaves this machine" and "something does."
+ *
+ * The frame is captured, decoded locally, read locally, and dropped. The same
+ * detectors the run uses do the work, so a scan cannot find things a run would
+ * miss for lack of a rule — only for lack of a look.
+ */
+async function scanPage(): Promise<void> {
+  scanToken += 1;
+  const token = scanToken;
+  const abandoned = (): boolean => scanToken !== token;
+
+  let tabId: number | null = null;
+  let restoreTo: { x: number; y: number } | null = null;
+
+  try {
+    const tab = await getActiveTab();
+    tabId = tab.id as number;
+
+    setState({
+      ...INITIAL_STATE,
+      status: 'scanning',
+      tabId,
+      scanProgress: { stop: 0, total: 0 },
+    });
+
+    await ensureContentScript(tabId);
+    await ensureOffscreenDocument();
+    const { forceBackend } = await readSettings();
+
+    // Shield's own UI must not appear in the frames Shield examines. A previous
+    // scan's boxes would be captured, read by OCR, and reported as findings of
+    // their own — the tool detecting itself.
+    await sendToTab(tabId, { type: MSG.CLEAR_SCAN });
+    await sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
+    await sendToTab(tabId, { type: MSG.SET_MANUAL_VISIBLE, visible: false });
+
+    const viewport = await sendToTab<ViewportInfo>(tabId, { type: MSG.GET_VIEWPORT });
+    if (!viewport) {
+      throw new Error("Couldn't read this page's layout. Try reloading the page.");
+    }
+
+    // The first move doubles as the measurement: it reports the document's
+    // height and, in the same reply, where the user was sitting before we
+    // touched their page.
+    const origin = await sendToTab<ScrollToResult>(tabId, { type: MSG.SCROLL_TO, y: 0 });
+    if (!origin) {
+      throw new Error("Couldn't scroll this page, so it can't be scanned.");
+    }
+    restoreTo = { x: origin.previousScrollX, y: origin.previousScrollY };
+
+    const plan = planScanStops(origin.documentHeight, origin.viewportHeight);
+    console.info(
+      `[shield] scanning ${origin.documentHeight}px of page in ${plan.stops.length} ` +
+        `look(s) of ${origin.viewportHeight}px` +
+        `${plan.truncated ? ' — capped, the page continues past the last one' : ''}`,
+    );
+
+    const findings: ScanFinding[] = [];
+    let examinedTo = 0;
+    let stoppedEarly = plan.truncated;
+    let previousLanding: number | null = null;
+
+    for (const [index, stop] of plan.stops.entries()) {
+      if (abandoned()) return;
+
+      const landed = await sendToTab<ScrollToResult>(tabId, { type: MSG.SCROLL_TO, y: stop });
+      if (!landed) {
+        stoppedEarly = true;
+        console.warn('[shield] scan stopped: the page stopped answering');
+        break;
+      }
+
+      // A page that will not move is one we cannot walk. Scroll-locked modals
+      // and hijacked scrolling both land here, and continuing would re-examine
+      // the same screen while attributing each pass to coordinates further down
+      // a document nothing ever reached.
+      if (previousLanding !== null && landed.scrollY === previousLanding) {
+        stoppedEarly = true;
+        console.warn(`[shield] scan stopped at ${landed.scrollY}px: the page would not scroll`);
+        break;
+      }
+      previousLanding = landed.scrollY;
+
+      await sleep(SCAN_SETTLE_MS);
+      if (abandoned()) return;
+      setState({ scanProgress: { stop: index + 1, total: plan.stops.length } });
+
+      try {
+        const frame = await captureViewport(tab.windowId, viewport);
+        const domMap = await sendToTab<ExtractDomResult>(tabId, { type: MSG.EXTRACT_DOM });
+        if (!domMap) throw new Error('the page could not be read at this position');
+
+        const analysis = await sendToOffscreen({
+          type: MSG.ANALYSE_FRAME,
+          dataUrl: frame.dataUrl,
+          viewportWidth: viewport.width,
+          viewportHeight: viewport.height,
+          forceBackend,
+        });
+        if (!analysis.ok) throw new Error(analysis.message);
+
+        const regions: SensitiveRegion[] = [
+          ...detectDomPii(domMap.elements),
+          ...faceRegions(analysis.detection.faces, analysis.frame),
+          ...(await ocrImageRegions(frame, domMap.elements, analysis.frame)),
+        ];
+
+        // Viewport to document, in one place. Every coordinate bug in this
+        // project has been a plausible rectangle over the wrong pixels, and
+        // every one came from doing a conversion like this in two places.
+        for (const region of regions) {
+          findings.push({
+            category: region.category,
+            source: region.source,
+            reason: region.reason,
+            position: {
+              x: region.position.x + landed.scrollX,
+              y: region.position.y + landed.scrollY,
+              width: region.position.width,
+              height: region.position.height,
+            },
+          });
+        }
+
+        examinedTo = landed.scrollY + landed.viewportHeight;
+      } catch (error) {
+        // One failed look does not discard the looks that succeeded, but it
+        // absolutely does end the claim. The scan reports what it examined and
+        // marks the boundary there — silently carrying on would produce a
+        // whole-page verdict with a hole in it, which is the "checked and safe"
+        // misreading this feature exists to correct, at greater scale.
+        stoppedEarly = true;
+        const why = error instanceof Error ? error.message : String(error);
+        console.warn(`[shield] scan stopped at ${landed.scrollY}px: ${why}`);
+        break;
+      }
+    }
+
+    if (abandoned()) return;
+
+    const unique = dedupeFindings(findings);
+    const summary: ScanSummary = {
+      at: Date.now(),
+      stops: plan.stops.length,
+      documentHeight: origin.documentHeight,
+      viewportHeight: origin.viewportHeight,
+      truncated: stoppedEarly,
+      counts: countByCategory(unique),
+      total: unique.length,
+    };
+
+    console.info(
+      `[shield] scan complete — ${unique.length} finding(s) across ` +
+        `${examinedTo}px of ${origin.documentHeight}px` +
+        `${stoppedEarly ? ' (stopped early)' : ''}; nothing was transmitted`,
+    );
+
+    await sendToTab(tabId, {
+      type: MSG.SHOW_SCAN,
+      findings: unique,
+      truncated: stoppedEarly,
+      examinedTo,
+    });
+
+    setState({ status: 'done', scan: summary, scanProgress: null });
+  } catch (error) {
+    if (abandoned()) return;
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[shield] scan failed', error);
+    setState({ status: 'error', errorMessage: message, scanProgress: null });
+  } finally {
+    // The user's position back, on every exit path including a cancelled one.
+    // Leaving somebody halfway down a page they never scrolled is a small
+    // rudeness with a large tell: it says the tool does not consider the page
+    // to be theirs.
+    if (tabId !== null && restoreTo) {
+      await sendToTab(tabId, { type: MSG.SCROLL_TO, y: restoreTo.y });
+    }
+  }
 }
 
 // --- Message routing --------------------------------------------------------
@@ -1299,6 +1555,14 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
       })();
       // Async reply, so the channel must be held open.
       return true;
+
+    case MSG.SCAN_PAGE:
+      // Fire-and-forget, like RUN_TASK. A scan takes several seconds and the
+      // popup is closed for most of them; progress arrives through
+      // STATE_CHANGED and the result is left drawn on the page itself.
+      void scanPage();
+      sendResponse({ accepted: true });
+      return false;
 
     case MSG.PREPARE:
       // The popup is open, so a run is likely moments away. Start the inference

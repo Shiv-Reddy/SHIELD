@@ -1,10 +1,10 @@
 # Tasks — Shield
 
-**Deadline: 2026-09-09. Today is 2026-09-08 — one day left.**
+**Deadline: 2026-09-09. Today is 2026-09-09 — deadline day.**
 **Goal: push as far toward Full Product as 2 days allows.**
 
-Status: core complete. Phases 1–3 closed. 73 client tests, 82 reasoner checks,
-35 prompt checks — all green. One pass ≈150ms, every stage inside budget.
+Status: core complete. Phases 1-3 closed. 140 client tests, 82 reasoner checks,
+35 prompt checks - all green. One pass ≈150ms, every stage inside budget.
 
 ---
 
@@ -13,12 +13,12 @@ Status: core complete. Phases 1–3 closed. 73 client tests, 82 reasoner checks,
 | Module | State |
 |---|---|
 | A — Screen perception | Capture 39ms, DOM scan 1.5–6.5ms, 0 unresolved selectors |
-| B — PII detection | DOM rules + faces. OCR is the one gap |
+| B — PII detection | DOM rules + faces + OCR + Indian identifiers |
 | C — Redaction | Semantic placeholders, not blackout. Type seal + stage guard + zero-leak sweep |
 | D — Transport / backend | FastAPI, provider-agnostic, sealed payloads only |
 | E — Action execution | click / type / scroll, re-verified against the capture |
 | F — Trust UI | Overlay, payload inspector, latency panel, manual marking |
-| G — Testing | 5 fixture screens, 190 automated checks total |
+| G — Testing | 5 fixture screens, 257 automated checks total |
 
 | Phase | State |
 |---|---|
@@ -28,7 +28,7 @@ Status: core complete. Phases 1–3 closed. 73 client tests, 82 reasoner checks,
 
 ---
 
-## Day 1 (today, 2026-09-08) — Detection breadth
+## Day 1 (2026-09-08) — Detection breadth
 
 Rubric weight: PII detection + redaction = 40%. This is where the marks are.
 
@@ -65,10 +65,29 @@ Rubric weight: PII detection + redaction = 40%. This is where the marks are.
       — Never values. Categories, counts, timestamps, rule names only. FR-26.
 - [ ] Tests for every rule above, written before the rule
 
-## Day 2 (2026-09-09) — Coverage, proof, demo
+## Day 2 (today, 2026-09-09) — Coverage, proof, demo
 
-- [ ] **Off-screen capture** — scroll, capture, stitch; redact the whole page
-      — FR-04. Highest-risk item here. Cut it first if Day 1 slips.
+- [x] **Whole-page coverage** — FR-04, answered differently than written
+      — Scroll-and-stitch capture was costed and rejected. It buys no privacy:
+      `dom-map.ts` filters to the viewport and capture is `captureVisibleTab`,
+      so below the fold is never captured and therefore never transmitted. It is
+      a coverage gap, not a leak. Against that it costs a ~20x latency
+      regression on a 35%-weighted criterion, tens of megabytes of bitmap, and —
+      disqualifying — a stitched frame in which sticky headers repeat at every
+      seam, shown to the user as a faithful record of what was sent.
+      Built instead, in two parts:
+      **(1) The boundary is stated.** Every run reports how much of the document
+      it examined, in the console and the popup, whether or not the page
+      scrolls. A field with no box on it must never read as "checked".
+      **(2) A separate scan.** "Scan the whole page" walks the document in
+      overlapping viewports, runs the same detectors on each, and reports
+      everything found — and transmits NOTHING. Not a redacted payload, none.
+      `scanPage` reaches no transport, so the guarantee is structural rather
+      than a flag; a test asserts it. Findings are pinned to the document, which
+      the run overlay may not do, because a scan's claim is genuinely that wide.
+      A scan that stops early — endless page, scroll-locked modal, a failed look
+      — draws the line where it stopped, on the page.
+      22 tests. **NOT yet verified in a browser.**
 - [ ] **Consent preview** — show what leaves, pause, require approval
       — Small now: manual marking already built the surface and region plumbing.
 - [ ] **Profile-edit fixture** — face + name/email + Save, in one acting loop
@@ -101,6 +120,7 @@ Rubric weight: PII detection + redaction = 40%. This is where the marks are.
 | Broader action vocabulary (drag, select) | Widens the allowlist — the security boundary — with no time for review. Wrong trade at 2 days |
 | Frame diffing | Latency only. Correctness first, per working priority |
 | Red-team case as a built feature | Demo material. The refusal path already works |
+| Full-page scroll-and-stitch capture | Buys no privacy — below the fold is never captured, so never sent. Costs a 20x latency regression and a stitched frame that misrepresents the page in the one panel that must be literal. Replaced by stated coverage plus a scan that sends nothing |
 
 ## Needs hardware or a decision, not work
 
@@ -122,4 +142,6 @@ README, 2-page architecture doc, demo video, 5-slide deck, backup video.
 - Face floor is soft: reliable at 110px+, marginal at 80px, missed below.
 - Prompt injection is bounded, not prevented. Page content is data and the
   allowlist is fixed at three verbs, but the model still reads attacker text.
-- Text inside images: closing on Day 1, not closed yet.
+- Text inside images: rules and geometry done; engine load verified in Chrome.
+- A run examines one screen. It says so, every time, and the whole-page scan is
+  how the rest of the document gets looked at.

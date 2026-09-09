@@ -58,7 +58,26 @@ making this a **resolution limit, not a threshold one** — lowering the thresho
 gains nothing and costs false positives. A face needs roughly 4–6% of viewport
 width to be detected reliably.
 
-**Text inside images is not detected.** OCR is planned (FR-08).
+**Text inside images is read, but only as well as the engine reads it.** OCR
+runs over image crops and feeds the same rules a form field goes through. Where
+a read fails the image is covered whole rather than let through — a candidate
+was already judged large enough to hold a document, and without reading it we
+cannot claim it does not.
+
+**A run examines one screen, and says so.** `dom-map.ts` filters the element
+scan to the viewport and capture is `captureVisibleTab`, so content below the
+fold is never detected — and, being never captured, never transmitted. This is a
+COVERAGE boundary, not a leak, and the two must not be conflated when weighing
+what a fix is worth.
+
+The risk it does carry is one of reading: a field with no box over it looks
+checked rather than unexamined. So every run reports how much of the document it
+read, whether or not the page scrolls, and "Scan the whole page" walks the whole
+document in overlapping viewports and reports everything it finds. That scan
+transmits nothing at all — it builds no payload and reaches no transport — which
+is what makes it affordable to spend several seconds and several captures on.
+A scan that stops early, on an endless page or a scroll-locked one, draws the
+line where it stopped on the page itself.
 
 **Prompt injection is bounded, not prevented.** Page content is JSON-encoded as
 data and the allowlist is fixed at three verbs, so the blast radius is small.

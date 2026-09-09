@@ -1,3 +1,4 @@
+import type { CoverageReport, ScanSummary } from './coverage';
 import type { ExecutionBackend } from './settings';
 import type { StageTiming } from './timing';
 
@@ -20,6 +21,16 @@ export const SHIELD_STATUSES = [
   'acting',
   'done',
   'error',
+  /**
+   * Walking the whole document, transmitting nothing.
+   *
+   * Listed here so the popup can show it, and deliberately absent from
+   * `STAGE_ORDER` below — a scan is not a stage of a run and never reaches the
+   * transport. Adding it to the pipeline sequence would be claiming it is on
+   * the path the stage guard protects, which is exactly backwards: it is safe
+   * because it is not on that path at all.
+   */
+  'scanning',
 ] as const;
 
 export type ShieldStatus = (typeof SHIELD_STATUSES)[number];
@@ -35,6 +46,7 @@ export const STATUS_LABEL: Record<ShieldStatus, string> = {
   acting: 'Acting on the page',
   done: 'Done',
   error: 'Error',
+  scanning: 'Scanning the page',
 };
 
 /**
@@ -91,6 +103,19 @@ export interface ShieldState {
    * Durations only. Nothing here is derived from page content.
    */
   timings: StageTiming[];
+  /**
+   * How much of the page the last run actually examined.
+   *
+   * Reported whether or not anything was found, and whether or not the page
+   * scrolls. A boundary that only appears when it is bad is one nobody learns
+   * to look for, and the failure this guards against is a user reading a
+   * missing box as "checked and safe" (lib/coverage.ts).
+   */
+  coverage: CoverageReport | null;
+  /** Result of the last whole-page scan. Counts and geometry, never content. */
+  scan: ScanSummary | null;
+  /** How far a scan in flight has got, so a ten-second wait is not a blank one. */
+  scanProgress: { stop: number; total: number } | null;
 }
 
 export const INITIAL_STATE: ShieldState = {
@@ -102,4 +127,7 @@ export const INITIAL_STATE: ShieldState = {
   tabId: null,
   step: 0,
   timings: [],
+  coverage: null,
+  scan: null,
+  scanProgress: null,
 };

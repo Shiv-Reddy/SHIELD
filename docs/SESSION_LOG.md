@@ -7,14 +7,14 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-07
+## Current state — 2026-09-09
 
 **Core is complete.** Phases 1–3 closed. Every module A–G built and verified in
 Chrome against the live backend.
 
 | Measure | Value |
 |---|---|
-| Client tests | 73 |
+| Client tests | 140 |
 | Reasoner checks | 82 |
 | Prompt checks | 35 |
 | One full pass | ≈150ms, every stage inside budget |
@@ -23,18 +23,26 @@ Chrome against the live backend.
 
 **Working, end to end:** login autofill, multi-field signup, face redaction,
 manual marking, payload inspector, latency panel, observe-only mode, CPU
-fallback (self-proved), zero-leak sweep, type seal, stage-order guard.
+fallback (self-proved), zero-leak sweep, type seal, stage-order guard, Indian
+identifier taxonomy, OCR over image crops.
 
-**Open gaps:** OCR (text in images undetected), names in prose, broad PII
-taxonomy, off-screen capture, consent preview, audit log.
+**Built, not yet verified in Chrome:** whole-page coverage — every run states
+how much of the document it read, and "Scan the whole page" walks the document
+in overlapping viewports and transmits nothing.
+
+**Open gaps:** names in prose, consent preview, audit log, configurable
+aggressiveness, adaptive model sizing, the 8-site sweep.
 
 ---
 
 ## Next session starts with
 
-**Day 1 of the 2-day plan in docs/TASKS.md — Indian PII taxonomy first**, then
-OCR. Both sit on the heaviest-weighted rubric criterion (PII detection +
-redaction, 40%).
+**Verifying the whole-page scan in Chrome**, on the login fixture and then on
+one real page: does it walk, does it find the Aadhaar and PAN without anyone
+scrolling first, does it put the page back, does the coverage line appear.
+
+Then the remaining Day 2 items in docs/TASKS.md — consent preview and the
+profile-edit fixture are the two that add most to the demo.
 
 Nothing is uncommitted. Do not commit until explicitly told to.
 
@@ -67,6 +75,8 @@ Nothing is uncommitted. Do not commit until explicitly told to.
 | 20 | Real sites: two defects no fixture could have found — labels transmitted verbatim, and a login page classified as a signup |
 | 21 | Manual redaction built — marks hide pixels *and* tokenise overlapping elements |
 | 22 | Manual marking fixed: reachable before a run, drag preview corrected, popup reworked |
+| 23 | Indian identifier taxonomy; OCR over image crops, engine load fixed under MV3 CSP |
+| 24 | Whole-page coverage: the run boundary is stated, and a scan that sends nothing |
 
 ---
 
@@ -80,3 +90,8 @@ Nothing is uncommitted. Do not commit until explicitly told to.
    login page misread as a signup were both invisible to every test we had.
 3. **Verify against the running build, not the source.** Six sessions were spent
    on a problem that was a cached bundle.
+4. **Separate a coverage gap from a leak before costing the fix.** Off-screen
+   content was never captured and so never transmitted; treating that as a leak
+   would have justified a far riskier change than the facts supported.
+5. **An absence is read as a verdict.** A field with no box on it looks checked.
+   Every boundary Shield has is now said out loud rather than left to inference.

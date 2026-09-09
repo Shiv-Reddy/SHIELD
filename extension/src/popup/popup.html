@@ -40,6 +40,15 @@
       <p id="status-detail" class="notice notice-error" hidden></p>
       <!-- FR-27: a fallback to CPU must be visible, not a silent slowdown. -->
       <p id="backend-notice" class="notice" hidden></p>
+      <!--
+        WHAT WAS EXAMINED
+        A run reads one screen, which is exactly what it transmits. Shown after
+        every run and not only on tall pages: a boundary that appears only when
+        it is inconvenient is one nobody learns to look for, and the failure it
+        guards against is someone scrolling down, seeing no box on a field, and
+        reading that as "checked" rather than "not looked at".
+      -->
+      <p id="coverage-notice" class="notice" hidden></p>
 
       <form id="task-form" class="task-form">
         <label class="micro-label" for="task-input">Task</label>
@@ -86,6 +95,31 @@
             <span class="marked-dot" aria-hidden="true"></span>
             <span id="manual-count"></span>
             <button id="manual-clear" class="linkish" type="button">Clear</button>
+          </p>
+        </div>
+
+        <!--
+          WHOLE-PAGE SCAN
+          The answer to the question a run cannot give: what is on ALL of this
+          page? It scrolls, looks at every screen with the same detectors, and
+          transmits nothing whatsoever — which is what makes spending several
+          seconds on it a fair trade rather than an expensive one.
+        -->
+        <div class="card card-action">
+          <button id="scan-button" class="row row-button" type="button">
+            <svg class="icon icon-muted" viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="8.75" cy="8.75" r="5.25" />
+              <path d="m12.6 12.6 4 4" />
+            </svg>
+            <span class="row-text">
+              <span class="row-title">Scan the whole page</span>
+              <span class="row-sub">Every screen, top to bottom. Nothing is sent</span>
+            </span>
+          </button>
+
+          <p class="marked" hidden id="scan-state">
+            <span class="marked-dot" aria-hidden="true"></span>
+            <span id="scan-summary"></span>
           </p>
         </div>
 

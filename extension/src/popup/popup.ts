@@ -39,6 +39,10 @@ const cancelButton = required<HTMLButtonElement>('#cancel-button');
 const buildInfo = required<HTMLParagraphElement>('#build-info');
 const backendNotice = required<HTMLParagraphElement>('#backend-notice');
 const observeOnly = required<HTMLInputElement>('#observe-only');
+const coverageNotice = required<HTMLParagraphElement>('#coverage-notice');
+const scanButton = required<HTMLButtonElement>('#scan-button');
+const scanState = required<HTMLParagraphElement>('#scan-state');
+const scanSummary = required<HTMLSpanElement>('#scan-summary');
 const manualButton = required<HTMLButtonElement>('#manual-button');
 const manualClear = required<HTMLButtonElement>('#manual-clear');
 const manualState = required<HTMLParagraphElement>('#manual-state');
@@ -282,6 +286,97 @@ latencyToggle.addEventListener('click', () => {
   latencyToggleLabel.textContent = opening ? 'Hide timings' : 'Where did the time go?';
 });
 
+/**
+ * Start a whole-page scan.
+ *
+ * The popup deliberately stays open, unlike marking. A scan takes several
+ * seconds and moves the page while it works, and something that scrolls
+ * somebody's screen unprompted needs a visible reason on screen the whole time
+ * it is happening — plus a Cancel button, which is right here.
+ */
+scanButton.addEventListener('click', () => {
+  void sendToWorker({ type: MSG.SCAN_PAGE });
+  render({ ...INITIAL_STATE, status: 'scanning' });
+});
+
+const CATEGORY_LABEL: Readonly<Record<string, string>> = {
+  password: 'password',
+  name: 'name',
+  email: 'email',
+  phone: 'phone',
+  address: 'address',
+  id_number: 'ID number',
+  face: 'face',
+  other: 'unidentified',
+};
+
+/**
+ * Say how much of the page the last run actually read.
+ *
+ * Two different sentences rather than one warning that appears only sometimes.
+ * A page that fit on screen gets a quiet confirmation; a page that did not gets
+ * the same line the console printed, weighted so it reads as a limit rather
+ * than a status.
+ */
+function renderCoverage(state: ShieldState): void {
+  const coverage = state.coverage;
+  // Suppressed during a scan, which is examining the whole document and is
+  // about to replace this claim with a wider one.
+  if (!coverage || state.status === 'scanning') {
+    coverageNotice.hidden = true;
+    return;
+  }
+
+  coverageNotice.hidden = false;
+  coverageNotice.dataset['partial'] = String(coverage.partial);
+  coverageNotice.textContent = coverage.partial
+    ? `${coverage.message} Scan the whole page to check the rest.`
+    : coverage.message;
+}
+
+/** Show what a scan found, or how far one has got. */
+function renderScan(state: ShieldState): void {
+  const progress = state.scanProgress;
+
+  if (state.status === 'scanning') {
+    scanState.hidden = false;
+    scanState.dataset['tone'] = 'accent';
+    scanSummary.textContent =
+      progress && progress.total > 0
+        ? `Reading screen ${progress.stop} of ${progress.total}…`
+        : 'Measuring the page…';
+    return;
+  }
+
+  const scan = state.scan;
+  if (!scan) {
+    scanState.hidden = true;
+    return;
+  }
+
+  scanState.hidden = false;
+  scanState.dataset['tone'] = scan.truncated ? 'warn' : 'accent';
+
+  const looked = `${scan.stops} screen${scan.stops === 1 ? '' : 's'}`;
+
+  if (scan.total === 0) {
+    scanSummary.textContent = scan.truncated
+      ? `Nothing found in ${looked} — the scan stopped before the end of the page`
+      : `Nothing sensitive found across ${looked}`;
+    return;
+  }
+
+  // Named by category rather than totalled, because "6 found" says nothing
+  // about whether that is six headings or six ID numbers.
+  const breakdown = scan.counts
+    .map(({ category, count }) => `${count} ${CATEGORY_LABEL[category] ?? category}`)
+    .join(', ');
+
+  scanSummary.textContent = scan.truncated
+    ? `${breakdown} — stopped before the end of the page`
+    : `${breakdown}, across ${looked}`;
+}
+
 /** Statuses during which a run is genuinely in flight. */
 const BUSY_STATUSES = new Set<ShieldState['status']>([
   'reading',
@@ -290,6 +385,9 @@ const BUSY_STATUSES = new Set<ShieldState['status']>([
   'sending',
   'thinking',
   'acting',
+  // A scan is not a run, but it holds the page for several seconds and must not
+  // have a run started underneath it.
+  'scanning',
 ]);
 
 function render(state: ShieldState): void {
@@ -319,10 +417,14 @@ function render(state: ShieldState): void {
   runLabel.textContent = busy ? 'Working…' : 'Run Shield';
   cancelButton.hidden = !busy;
   taskInput.disabled = busy;
+  scanButton.disabled = busy;
+  manualButton.disabled = busy;
   // The status word alone cannot separate "working" from "stalled" at a glance.
   progress.hidden = !busy;
 
   renderLatency(state);
+  renderCoverage(state);
+  renderScan(state);
 
   // Restore the in-flight task text, since the popup may have been closed and
   // reopened partway through a run.
