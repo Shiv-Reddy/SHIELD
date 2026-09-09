@@ -1,6 +1,10 @@
 node_modules/
 dist/
-public/icons/
+public/icons/*.png
+# The SVGs are committed. They are plain text, fully reviewable, and they are
+# what the deck, the README and anything outside the extension actually use —
+# the ignore above exists for generated binaries, which an SVG is not.
+!public/icons/*.svg
 *.local
 .DS_Store
 public/ort/

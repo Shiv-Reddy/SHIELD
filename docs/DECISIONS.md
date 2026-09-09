@@ -247,3 +247,11 @@ decided, and why. Newest last.
    — They are two separate paths over the same text: the classifier flags a field so its value is tokenised, the scrubber handles free text including labels. A format one path knows and the other does not is hidden in the value and transmitted in the label — the exact defect found on a real site, where an account address rode out inside a label no field rule could see.
 122. **Card is matched before Aadhaar, and Aadhaar carries a trailing lookahead**
    — Caught by a test: the Aadhaar pattern matched the first twelve digits of a sixteen-digit card and claimed the span, so cards were labelled Aadhaar and never Luhn-checked. A card is the longer and therefore more specific claim on a run of digits, and needs thirteen digits minimum, so it can never swallow a bare Aadhaar.
+123. **The logo is geometry in one module, and every surface is generated from it**
+   — The mark appears in the toolbar icon (four PNG sizes), the popup header, and anything outside the extension. Drawing it three times means three things that drift, and a mark subtly different in the toolbar than in the popup looks like a defect in a product whose whole pitch is care. `tools/logo.mjs` holds the shapes once; the PNGs are rasterised from them and the SVGs emitted from them. It also preserves what the icon generator was written for — no opaque image blob in the repository that a reviewer has to take on trust.
+124. **The popup inlines the mark with `currentColor`; the black and white SVGs are for everything else**
+   — Inline SVG inherits the accent token and recolours with the theme, so the popup needs no second file and cannot show the wrong colourway. The two fixed-colour files exist for surfaces that cannot inherit a colour: the deck, print, the README.
+125. **The eye and pupil are knockouts, not white fills**
+   — Filled with the even-odd rule so they are genuine holes. A white fill would carry a background with it, and the mark has to sit on a dark toolbar and a light popup unchanged.
+126. **`public/icons/*.svg` is committed while the PNGs stay ignored**
+   — The ignore exists for generated binaries. An SVG is plain text, fully reviewable, and is what anything outside the extension actually uses, so ignoring it would mean the one artefact the team needs to hand around is the one not in the repository.

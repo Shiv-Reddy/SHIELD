@@ -91,13 +91,17 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/*
+  The mark, inline rather than an <img>, so `currentColor` picks up the accent
+  token and it recolours with the theme instead of needing one file per scheme.
+  The black and white SVGs in public/icons are for surfaces that cannot inherit
+  a colour — the deck, print, anywhere outside the extension.
+*/
 .brand-mark {
   flex: none;
-  width: 14px;
-  height: 16px;
-  background: var(--accent);
-  /* Shield silhouette: square shoulders tapering to a point. */
-  clip-path: polygon(50% 0%, 100% 14%, 100% 58%, 50% 100%, 0% 58%, 0% 14%);
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
 }
 
 .brand-name {

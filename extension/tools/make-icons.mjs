@@ -13,15 +13,14 @@ import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SIZE as LOGO_SIZE, covers, toSvg } from './logo.mjs';
 
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
 const SIZES = [16, 32, 48, 128];
 
 // Matches --accent in popup.css, so the toolbar icon and the popup read as one
 // piece of design.
-const SHIELD = [0x25, 0x63, 0xeb];
-// The bar across the shield is the redaction itself — the product in one glyph.
-const BAR = [0xff, 0xff, 0xff];
+const INK = [0x25, 0x63, 0xeb];
 
 // --- PNG encoding -----------------------------------------------------------
 
@@ -76,97 +75,39 @@ function encodePng(width, height, rgba) {
   ]);
 }
 
-// --- Shield geometry --------------------------------------------------------
-
-/** Radius of the rounded top shoulders, in normalised units. */
-const SHOULDER_X = 0.28;
-const SHOULDER_Y = 0.16;
-
-/** Where the straight sides give way to the taper. */
-const TAPER_START = 0.44;
+// --- Rendering --------------------------------------------------------------
 
 /**
- * Half-width of the shield at vertical position `t` (0 at the top edge, 1 at
- * the bottom point).
+ * Render one icon, supersampling 4x4 per pixel to keep the edges smooth.
  *
- * Straight sides down to TAPER_START, then a taper that reaches zero with a
- * steep slope so the bottom closes to a point rather than a rounded bowl.
+ * The geometry itself lives in logo.mjs and is shared with the SVG files, so
+ * the toolbar icon and every other appearance of the mark cannot drift apart.
  */
-function halfWidthAt(t) {
-  if (t < 0 || t > 1) return 0;
-  if (t <= TAPER_START) return 1;
-  const k = (t - TAPER_START) / (1 - TAPER_START);
-  return Math.max(0, 1 - Math.pow(k, 3));
-}
-
-/** Is (nx, ny) inside the shield outline, shoulders included? */
-function insideShield(nx, ny) {
-  const ax = Math.abs(nx);
-  const halfWidth = halfWidthAt(ny);
-  if (ax > halfWidth) return false;
-
-  // Round off the two top corners so the silhouette reads as a shield rather
-  // than a rectangle with a pointed bottom.
-  if (ny < SHOULDER_Y && ax > 1 - SHOULDER_X) {
-    const dx = (ax - (1 - SHOULDER_X)) / SHOULDER_X;
-    const dy = (SHOULDER_Y - ny) / SHOULDER_Y;
-    return dx * dx + dy * dy <= 1;
-  }
-  return true;
-}
-
-/** Which layer covers the point (nx, ny), in normalised -1..1 / 0..1 space. */
-function sample(nx, ny) {
-  if (!insideShield(nx, ny)) return null;
-
-  // The redaction bar sits on the shield with a clear margin on both sides, so
-  // it reads as something laid over the shield rather than a gap slicing it in
-  // two. The margin is proportional to the shield's width at that height, which
-  // keeps it centred as the sides taper.
-  const inBarBand = ny > 0.42 && ny < 0.58;
-  if (inBarBand && Math.abs(nx) < halfWidthAt(ny) - 0.28) return BAR;
-
-  return SHIELD;
-}
-
-/** Render one icon, supersampling 4x4 per pixel to keep the edges smooth. */
 function renderIcon(size) {
   const rgba = Buffer.alloc(size * size * 4);
   const samples = 4;
-  const inset = 0.08 * size; // breathing room so the glyph isn't flush to the edge
+  const inset = 0.06 * size; // breathing room so the glyph isn't flush to the edge
+  const scale = LOGO_SIZE / (size - 2 * inset);
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
-      let r = 0;
-      let g = 0;
-      let b = 0;
       let hits = 0;
 
       for (let sy = 0; sy < samples; sy += 1) {
         for (let sx = 0; sx < samples; sx += 1) {
-          const px = x + (sx + 0.5) / samples;
-          const py = y + (sy + 0.5) / samples;
-          const nx = ((px - size / 2) / (size / 2 - inset));
-          const ny = (py - inset) / (size - 2 * inset);
-
-          const colour = sample(nx, ny);
-          if (colour) {
-            r += colour[0];
-            g += colour[1];
-            b += colour[2];
-            hits += 1;
-          }
+          const lx = (x + (sx + 0.5) / samples - inset) * scale;
+          const ly = (y + (sy + 0.5) / samples - inset) * scale;
+          if (covers(lx, ly)) hits += 1;
         }
       }
 
+      if (hits === 0) continue; // stays fully transparent
+
       const offset = (y * size + x) * 4;
-      if (hits > 0) {
-        rgba[offset] = Math.round(r / hits);
-        rgba[offset + 1] = Math.round(g / hits);
-        rgba[offset + 2] = Math.round(b / hits);
-        rgba[offset + 3] = Math.round((hits / (samples * samples)) * 255);
-      }
-      // Untouched pixels stay fully transparent (Buffer.alloc zeroes them).
+      rgba[offset] = INK[0];
+      rgba[offset + 1] = INK[1];
+      rgba[offset + 2] = INK[2];
+      rgba[offset + 3] = Math.round((hits / (samples * samples)) * 255);
     }
   }
 
@@ -174,8 +115,17 @@ function renderIcon(size) {
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
+
 for (const size of SIZES) {
   const file = join(OUT_DIR, `icon${size}.png`);
   writeFileSync(file, renderIcon(size));
+  console.log(`wrote ${file}`);
+}
+
+// Both colourways, from the same geometry. Which one a surface uses is its own
+// decision — the popup switches on the colour scheme, print picks by paper.
+for (const [name, colour] of [['black', '#000000'], ['white', '#ffffff']]) {
+  const file = join(OUT_DIR, `shield-${name}.svg`);
+  writeFileSync(file, toSvg(colour));
   console.log(`wrote ${file}`);
 }
