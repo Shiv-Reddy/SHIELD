@@ -9,13 +9,46 @@ the remaining half of TASKS.md T1.1.
 
 ## Capturing
 
-1. Build with the export enabled: `SHIELD_DEV=1 npm run build`. Without it the
-   panel does not exist in the bundle at all.
-2. Open the page, open the popup, expand **Capture this page for the corpus**.
-3. Type one line saying what the page is.
-4. **Read the page** lists every value the file would contain. Read it.
-5. **Save these values to a file** writes the export. There is no one-click
+Build with the export enabled. This project is developed on Windows, so the
+PowerShell form comes first:
+
+```powershell
+$env:SHIELD_DEV = '1'
+npm run build
+```
+
+```bash
+SHIELD_DEV=1 npm run build     # bash / zsh
+```
+
+`$env:` persists for the whole PowerShell window, so clear it afterwards or
+every later build in that terminal still carries the export:
+
+```powershell
+Remove-Item Env:\SHIELD_DEV
+npm run build
+```
+
+Confirm which kind of build you have by reading the bundle rather than trusting
+the terminal:
+
+```powershell
+Select-String -Path dist\popup.js -Pattern 'wireCorpusCapture'
+```
+
+A shipping build gives no match at all — the panel is absent, not hidden.
+
+Then:
+
+1. Reload the extension, open the page, open the popup, expand **Capture this
+   page for the corpus**.
+2. Type one line saying what the page is.
+3. **Read the page** lists every value the file would contain. Read it.
+4. **Save these values to a file** writes the export. There is no one-click
    path, deliberately — the file carries field values verbatim.
+
+To capture a `file://` test screen, turn on **Allow access to file URLs** for
+Shield in `chrome://extensions`.
 
 Capture from **logged-out or synthetic-data pages only**. Values are exported
 as they are, because a benchmark fed sanitised input measures a detector on a

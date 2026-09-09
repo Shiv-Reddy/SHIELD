@@ -15,7 +15,7 @@ that was not written to flatter them.
 
 | Measure | Value |
 |---|---|
-| Client tests | 237 |
+| Client tests | 241 |
 | Reasoner checks | 82 |
 | Prompt checks | 35 |
 | One full pass | ≈150ms, every stage inside budget |
@@ -63,6 +63,19 @@ perfect readings of the committed sample SVGs, and the report says so.
 - `scorePixels`, IoU-matched, one detection to one region, with boxes on the
   two committed sample ID cards.
 - `npm run check` now typechecks `tests/` and `benchmark/` as well as `src/`.
+
+**Two defects in the export, found by testing it in Chrome and fixed:**
+
+- The gate only *hid* the panel. `__SHIELD_DEV__` set `panel.hidden`, so a
+  default build still carried `readPageForCorpus` in `popup.js` and the panel's
+  markup in `popup.html` — anybody with devtools could unhide it and write a
+  file of real field values. The panel now builds its own DOM inside
+  `if (__SHIELD_DEV__)`, and a default build contains no trace of it. Verified
+  by grepping `dist/`, not by reading the source.
+- The panel could not read a freshly opened tab. Shield injects its content
+  script only when a run, scan or mark starts, and the panel is none of those;
+  it failed and advised reloading the page, which cannot help because there is
+  no declared script to bring back. It now pings, injects and confirms.
 
 **Two systematic gaps the bigger corpus found**, recorded rather than fixed —
 fixing detectors against a corpus in the same session is how a benchmark

@@ -48,7 +48,7 @@ indefensible answer to metric 1.
 | Trust UI | Overlay, payload inspector, latency panel, manual marking, audit log |
 | Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
 | Scan record | Redacted picture of every screen examined, kept local |
-| Tests | 237 client, 82 reasoner, 35 prompt |
+| Tests | 241 client, 82 reasoner, 35 prompt |
 
 Phases 1–3 (login autofill, multi-field signup, faces) are closed.
 

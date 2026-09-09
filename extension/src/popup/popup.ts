@@ -71,15 +71,6 @@ const auditMeta = required<HTMLParagraphElement>('#audit-meta');
 const auditList = required<HTMLUListElement>('#audit-list');
 const auditExport = required<HTMLButtonElement>('#audit-export');
 const auditClear = required<HTMLButtonElement>('#audit-clear');
-const devPanel = required<HTMLDivElement>('#devtools-panel');
-const devToggle = required<HTMLButtonElement>('#devtools-toggle');
-const devToggleLabel = required<HTMLSpanElement>('#devtools-toggle-label');
-const devBody = required<HTMLDivElement>('#devtools-body');
-const devAbout = required<HTMLInputElement>('#devtools-about');
-const devRead = required<HTMLButtonElement>('#devtools-read');
-const devMeta = required<HTMLParagraphElement>('#devtools-meta');
-const devValues = required<HTMLUListElement>('#devtools-values');
-const devSave = required<HTMLButtonElement>('#devtools-save');
 const latencyToggle = required<HTMLButtonElement>('#latency-toggle');
 const latencyToggleLabel = required<HTMLSpanElement>('#latency-toggle-label');
 const latencyBody = required<HTMLDivElement>('#latency-body');
@@ -90,11 +81,6 @@ const latencyTotal = required<HTMLParagraphElement>('#latency-total');
 // time it is shown, so this is the one place that cannot report a build other
 // than the one actually installed.
 const BUILD_LABEL = `v${chrome.runtime.getManifest().version} · build ${__SHIELD_BUILD__}`;
-
-// The corpus capture panel appears only in a build started with SHIELD_DEV=1.
-// The markup ships hidden, so a build that forgets this line stays safe rather
-// than exposing the panel by default.
-devPanel.hidden = !__SHIELD_DEV__;
 
 /**
  * Render the build line, noting a pinned backend when one is set.
@@ -410,114 +396,201 @@ auditClear.addEventListener('click', () => {
 });
 
 /**
- * Capturing a real page for the benchmark corpus — dev builds only.
+ * Capturing a real page for the benchmark corpus - dev builds only.
  *
- * WHY THIS IS TWO CLICKS AND NOT ONE
+ * WHY THE PANEL IS BUILT HERE RATHER THAN WRITTEN IN popup.html
  *
- * The file it writes carries field values verbatim, because a benchmark fed
- * sanitised input measures a detector on a page that does not exist — Verhoeff
- * runs on the actual digits (DECISIONS.md 171). That is the right call for the
- * corpus and it puts real values on disk, so nothing is written until the
- * values have been listed and looked at. "Only capture when logged out" is
- * unenforceable; being shown the contents is not.
+ * Because the first version was not actually gated. `__SHIELD_DEV__` set
+ * `panel.hidden`, which hides a panel that is still entirely present: the
+ * markup shipped in popup.html and every listener was still attached, so
+ * anybody with devtools could unhide it and use it. A capability that writes
+ * real field values to a file has to be ABSENT from a build somebody
+ * installed, not merely out of sight. Wrapped in `if (__SHIELD_DEV__)` the
+ * define makes this `if (false)`, and the whole thing - markup included -
+ * leaves the bundle.
  *
- * Read once, into a variable, so the file that gets saved is the page that was
- * reviewed rather than whatever the page has become since.
+ * WHY SAVING TAKES A SECOND CLICK
+ *
+ * The file carries field values verbatim, because a benchmark fed sanitised
+ * input measures a detector on a page that does not exist: Verhoeff runs on the
+ * actual digits (DECISIONS.md 171). So nothing is written until the values have
+ * been listed and looked at. "Only capture when logged out" is unenforceable;
+ * being shown the contents is not.
  */
-let reviewed: { elements: ExtractDomResult['elements']; values: ReviewableValue[] } | null = null;
+function wireCorpusCapture(): void {
+  // Read once, into a variable, so the file that gets saved is the page that
+  // was reviewed rather than whatever the page has become since.
+  let reviewed: { elements: ExtractDomResult['elements']; values: ReviewableValue[] } | null = null;
 
-function clearReview(): void {
-  reviewed = null;
-  devSave.hidden = true;
-  devValues.replaceChildren();
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.innerHTML = [
+    '<button class="panel-toggle" type="button" aria-expanded="false">',
+    '  <span>Capture this page for the corpus</span>',
+    '  <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">',
+    '    <path d="m7.5 4.5 6 5.5-6 5.5"/>',
+    '  </svg>',
+    '</button>',
+    '<div class="panel-body" hidden>',
+    '  <p class="evidence-meta">Development build. Field values are exported',
+    '    verbatim - capture only from logged-out or synthetic-data pages.</p>',
+    '  <label class="dev-label" for="devtools-about">What is this page?</label>',
+    '  <input id="devtools-about" class="dev-input" type="text"',
+    '         placeholder="e.g. state transport booking, logged out" />',
+    '  <button class="linkish" type="button">Read the page</button>',
+    '  <p class="evidence-meta"></p>',
+    '  <ul class="audit-list"></ul>',
+    '  <button class="linkish" type="button" hidden>Save these values to a file</button>',
+    '</div>',
+  ].join('\n');
+
+  const find = <T extends Element>(selector: string, index = 0): T => {
+    const element = panel.querySelectorAll<T>(selector)[index];
+    if (!element) throw new Error(`Capture panel is missing ${selector}`);
+    return element;
+  };
+
+  const toggle = find<HTMLButtonElement>('.panel-toggle');
+  const toggleLabel = find<HTMLSpanElement>('.panel-toggle span');
+  const body = find<HTMLDivElement>('.panel-body');
+  const about = find<HTMLInputElement>('.dev-input');
+  const read = find<HTMLButtonElement>('.linkish', 0);
+  const meta = find<HTMLParagraphElement>('.evidence-meta', 1);
+  const values = find<HTMLUListElement>('.audit-list');
+  const save = find<HTMLButtonElement>('.linkish', 1);
+
+  // Appended after the history panel, which is where it belongs on screen and
+  // is also the only anchor available now that the markup is not in the HTML.
+  (auditToggle.closest('.panel') ?? auditToggle.parentElement)?.after(panel);
+
+  function clearReview(): void {
+    reviewed = null;
+    save.hidden = true;
+    values.replaceChildren();
+  }
+
+  /**
+   * Get the content script onto the tab, the way a run does.
+   *
+   * Shield declares no static content script - it is injected under
+   * `activeTab` only when the user points Shield at a page, which is a real
+   * privacy property rather than a smaller permission warning. The consequence
+   * is that a freshly opened tab has nothing to talk to, and the first version
+   * of this panel simply failed there and told the user to reload the page.
+   * That advice could never work: there is no declared script for a reload to
+   * bring back.
+   */
+  async function ensureReadable(tabId: number): Promise<boolean> {
+    const alive = (await chrome.tabs
+      .sendMessage(tabId, { type: MSG.PING })
+      .catch(() => null)) as { ok?: boolean } | null;
+    if (alive?.ok) return true;
+
+    try {
+      await chrome.scripting.executeScript({ target: { tabId }, files: ['content-script.js'] });
+    } catch {
+      // Chrome refuses injection on its own pages outright, and the raw message
+      // is internal wording no user should be shown.
+      return false;
+    }
+
+    const confirmed = (await chrome.tabs
+      .sendMessage(tabId, { type: MSG.PING })
+      .catch(() => null)) as { ok?: boolean } | null;
+    return confirmed?.ok === true;
+  }
+
+  async function readPageForCorpus(): Promise<void> {
+    clearReview();
+    meta.textContent = 'Reading...';
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) {
+      meta.textContent = 'No active tab.';
+      return;
+    }
+
+    if (!(await ensureReadable(tab.id))) {
+      meta.textContent = 'Shield cannot read this page. Chrome blocks its own pages.';
+      return;
+    }
+
+    const result = (await chrome.tabs
+      .sendMessage(tab.id, { type: MSG.EXTRACT_DOM })
+      .catch(() => null)) as ExtractDomResult | null;
+
+    if (!result) {
+      meta.textContent = 'The page could not be read.';
+      return;
+    }
+
+    const reviewable = reviewableValues(result.elements);
+    reviewed = { elements: result.elements, values: reviewable };
+
+    meta.textContent =
+      `${result.elements.length} elements. ` +
+      (reviewable.length === 0
+        ? 'No field values at all - nothing here to leak.'
+        : `${reviewable.length} value${reviewable.length === 1 ? '' : 's'} would be written. ` +
+          'Read them before saving.');
+
+    values.replaceChildren(
+      ...reviewable.map((entry) => {
+        const row = document.createElement('li');
+        row.className = 'audit-row';
+
+        const field = document.createElement('span');
+        field.className = 'audit-when';
+        field.textContent = `${entry.elementId} · ${entry.field}`;
+
+        // textContent, never innerHTML. This is page-authored content being
+        // shown inside an extension page, which is the one place on this
+        // surface where markup must never be allowed to run.
+        const value = document.createElement('span');
+        value.className = 'audit-what';
+        value.textContent = entry.value;
+
+        row.append(field, value);
+        return row;
+      }),
+    );
+
+    save.hidden = false;
+  }
+
+  toggle.addEventListener('click', () => {
+    const opening = body.hidden;
+    body.hidden = !opening;
+    toggle.setAttribute('aria-expanded', String(opening));
+    toggleLabel.textContent = opening ? 'Hide capture' : 'Capture this page for the corpus';
+    // A review belongs to the moment it was made. Closing the panel ends it.
+    if (!opening) clearReview();
+  });
+
+  read.addEventListener('click', () => {
+    void readPageForCorpus();
+  });
+
+  save.addEventListener('click', () => {
+    if (!reviewed) return;
+
+    const json = mapExportJson({ elements: reviewed.elements }, about.value.trim());
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = mapExportFilename();
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+
+    meta.textContent = 'Saved. Label it from the PAGE, never from the detector output.';
+    clearReview();
+  });
 }
 
-async function readPageForCorpus(): Promise<void> {
-  clearReview();
-  devMeta.textContent = 'Reading...';
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) {
-    devMeta.textContent = 'No active tab.';
-    return;
-  }
-
-  let result: ExtractDomResult | null = null;
-  try {
-    result = (await chrome.tabs.sendMessage(tab.id, {
-      type: MSG.EXTRACT_DOM,
-    })) as ExtractDomResult | null;
-  } catch {
-    devMeta.textContent = 'No content script on this page. Reload it and try again.';
-    return;
-  }
-
-  if (!result) {
-    devMeta.textContent = 'The page could not be read.';
-    return;
-  }
-
-  const values = reviewableValues(result.elements);
-  reviewed = { elements: result.elements, values };
-
-  devMeta.textContent =
-    `${result.elements.length} elements. ` +
-    (values.length === 0
-      ? 'No field values at all - nothing here to leak.'
-      : `${values.length} value${values.length === 1 ? '' : 's'} would be written. ` +
-        'Read them before saving.');
-
-  devValues.replaceChildren(
-    ...values.map((entry) => {
-      const row = document.createElement('li');
-      row.className = 'audit-row';
-
-      const field = document.createElement('span');
-      field.className = 'audit-when';
-      field.textContent = `${entry.elementId} · ${entry.field}`;
-
-      // textContent, never innerHTML. This is page-authored content being shown
-      // inside an extension page, which is the one place markup must not run.
-      const value = document.createElement('span');
-      value.className = 'audit-what';
-      value.textContent = entry.value;
-
-      row.append(field, value);
-      return row;
-    }),
-  );
-
-  devSave.hidden = false;
-}
-
-devToggle.addEventListener('click', () => {
-  const opening = devBody.hidden;
-  devBody.hidden = !opening;
-  devToggle.setAttribute('aria-expanded', String(opening));
-  devToggleLabel.textContent = opening ? 'Hide capture' : 'Capture this page for the corpus';
-  // A review belongs to the moment it was made. Closing the panel ends it.
-  if (!opening) clearReview();
-});
-
-devRead.addEventListener('click', () => {
-  void readPageForCorpus();
-});
-
-devSave.addEventListener('click', () => {
-  if (!reviewed) return;
-
-  const json = mapExportJson({ elements: reviewed.elements }, devAbout.value.trim());
-  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-  const link = document.createElement('a');
-
-  link.href = url;
-  link.download = mapExportFilename();
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-
-  devMeta.textContent = 'Saved. Label it from the PAGE, never from the detector output.';
-  clearReview();
-});
+// Resolved to `if (false)` by the define, so nothing above survives a build
+// that did not ask for it.
+if (__SHIELD_DEV__) wireCorpusCapture();
 
 latencyToggle.addEventListener('click', () => {
   const opening = latencyBody.hidden;
