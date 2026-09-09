@@ -18,6 +18,7 @@ import {
 import { INITIAL_STATE, STATUS_LABEL, type ShieldState } from '../lib/status';
 import { readSettings, setForceBackend, setObserveOnly } from '../lib/settings';
 import { readLastTransmission } from '../lib/redaction/evidence';
+import { auditJson, clearAudit, readAudit } from '../lib/audit';
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -52,6 +53,13 @@ const evidenceToggleLabel = required<HTMLSpanElement>('#evidence-toggle-label');
 const evidenceBody = required<HTMLDivElement>('#evidence-body');
 const evidenceMeta = required<HTMLParagraphElement>('#evidence-meta');
 const evidenceJson = required<HTMLPreElement>('#evidence-json');
+const auditToggle = required<HTMLButtonElement>('#audit-toggle');
+const auditToggleLabel = required<HTMLSpanElement>('#audit-toggle-label');
+const auditBody = required<HTMLDivElement>('#audit-body');
+const auditMeta = required<HTMLParagraphElement>('#audit-meta');
+const auditList = required<HTMLUListElement>('#audit-list');
+const auditExport = required<HTMLButtonElement>('#audit-export');
+const auditClear = required<HTMLButtonElement>('#audit-clear');
 const latencyToggle = required<HTMLButtonElement>('#latency-toggle');
 const latencyToggleLabel = required<HTMLSpanElement>('#latency-toggle-label');
 const latencyBody = required<HTMLDivElement>('#latency-body');
@@ -278,6 +286,103 @@ function renderLatency(state: ShieldState): void {
     `${total.toFixed(0)}ms measured across ${timings.length} stages` +
     (state.step > 1 ? ` · step ${state.step}` : '');
 }
+
+/**
+ * How many passes the panel lists.
+ *
+ * The log keeps two hundred; a popup that rendered all of them would be a
+ * scroll nobody reaches the bottom of. The export is the complete record — this
+ * is the recent history, which is what the panel is actually read for.
+ */
+const AUDIT_ROWS = 12;
+
+/**
+ * Every pass Shield has made, as counts.
+ *
+ * Read fresh each time the panel opens, for the same reason the payload panel
+ * is: a stale history shown as the current one would be worse than showing
+ * none, and the value of both panels is that they can be read literally.
+ */
+async function renderAudit(): Promise<void> {
+  const entries = await readAudit();
+
+  auditMeta.textContent =
+    entries.length === 0
+      ? 'Nothing recorded yet.'
+      : `${entries.length} pass${entries.length === 1 ? '' : 'es'} recorded. ` +
+        'Categories, counts and rule names only — no page content.';
+
+  auditList.replaceChildren(
+    ...entries.slice(0, AUDIT_ROWS).map((entry) => {
+      const row = document.createElement('li');
+      row.className = 'audit-row';
+
+      const when = document.createElement('span');
+      when.className = 'audit-when';
+      when.textContent = new Date(entry.at).toLocaleString();
+
+      const what = document.createElement('span');
+      what.className = 'audit-what';
+      // The scope is spelled out on every row. A scan and a run report numbers
+      // in the same shape while making claims of very different widths, and a
+      // list that showed only the numbers would invite comparing them.
+      const scope =
+        entry.examined === 'viewport'
+          ? 'this screen'
+          : entry.examined === 'document'
+            ? 'whole page'
+            : 'part of the page';
+      const found =
+        entry.total === 0
+          ? 'nothing found'
+          : entry.counts
+              .map(({ category, count }) => `${count} ${CATEGORY_LABEL[category] ?? category}`)
+              .join(', ');
+      what.textContent = `${found} · ${scope} · ${entry.transmitted ? 'sent' : 'not sent'}`;
+
+      row.append(when, what);
+      return row;
+    }),
+  );
+}
+
+auditToggle.addEventListener('click', () => {
+  const opening = auditBody.hidden;
+  auditBody.hidden = !opening;
+  auditToggle.setAttribute('aria-expanded', String(opening));
+  auditToggleLabel.textContent = opening ? 'Hide history' : 'What has been hidden?';
+  if (opening) void renderAudit();
+});
+
+/**
+ * Hand the log over as a file.
+ *
+ * A blob URL and an anchor rather than the `downloads` permission: this is one
+ * file the user asked for, and asking Chrome for download access across every
+ * site in order to save it would be a permission far wider than the feature.
+ */
+auditExport.addEventListener('click', () => {
+  void (async () => {
+    const json = auditJson(await readAudit());
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `shield-audit-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+
+    // Revoked once the click has been handled, or the blob is held for the life
+    // of the document.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  })();
+});
+
+auditClear.addEventListener('click', () => {
+  void (async () => {
+    await clearAudit();
+    await renderAudit();
+  })();
+});
 
 latencyToggle.addEventListener('click', () => {
   const opening = latencyBody.hidden;

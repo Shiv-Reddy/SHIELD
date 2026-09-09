@@ -3,7 +3,7 @@
 **Deadline: 2026-09-09. Today is 2026-09-09 — deadline day.**
 **Goal: push as far toward Full Product as 2 days allows.**
 
-Status: core complete. Phases 1-3 closed. 140 client tests, 82 reasoner checks,
+Status: core complete. Phases 1-3 closed. 163 client tests, 82 reasoner checks,
 35 prompt checks - all green. One pass ≈150ms, every stage inside budget.
 
 ---
@@ -18,7 +18,7 @@ Status: core complete. Phases 1-3 closed. 140 client tests, 82 reasoner checks,
 | D — Transport / backend | FastAPI, provider-agnostic, sealed payloads only |
 | E — Action execution | click / type / scroll, re-verified against the capture |
 | F — Trust UI | Overlay, payload inspector, latency panel, manual marking |
-| G — Testing | 5 fixture screens, 257 automated checks total |
+| G — Testing | 5 fixture screens, 280 automated checks total |
 
 | Phase | State |
 |---|---|
@@ -61,8 +61,15 @@ Rubric weight: PII detection + redaction = 40%. This is where the marks are.
       rules; the engine load is untested.
 - [ ] **Configurable redaction aggressiveness** — strict / balanced, persisted
       — Strict is the default. FR-14.
-- [ ] **Persistent audit log** — what was hidden, when, per run; exportable JSON
-      — Never values. Categories, counts, timestamps, rule names only. FR-26.
+- [x] **Persistent audit log** — what was hidden, when, per run; exportable JSON
+      — `lib/audit.ts`, 12 tests. Categories, counts, rule names, timings.
+      Records BOTH runs and scans, and states per entry whether anything was
+      transmitted rather than leaving the reader to know that a scan does not.
+      No values, no labels and **no URL** — the file exists to be exported, and
+      an export gets attached to a ticket. The cost is real: entries are told
+      apart by time and shape, not by page. A log that is unsafe to share is one
+      nobody shares. Region narrowing happens in one function so no call site
+      can widen it. **NOT yet verified in a browser.** FR-26.
 - [ ] Tests for every rule above, written before the rule
 
 ## Day 2 (today, 2026-09-09) — Coverage, proof, demo

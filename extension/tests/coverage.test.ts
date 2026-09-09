@@ -24,8 +24,11 @@ import {
   dedupeFindings,
   describeCoverage,
   planScanStops,
+  unexaminedImages,
   type ScanFinding,
+  type ScannedImage,
 } from '../src/lib/coverage';
+import { fullyVisible } from '../src/lib/pii/image-candidates';
 import type { Rect } from '../src/lib/types';
 
 function finding(
@@ -73,6 +76,7 @@ test('a page taller than the screen says so, and how much taller', () => {
   assert.equal(report.partial, true);
   assert.equal(report.screens.toFixed(1), '3.4');
   assert.match(report.message, /3\.4 screens/);
+  assert.match(report.message, /not captured/);
   assert.match(report.message, /12 elements/);
 });
 
@@ -84,7 +88,25 @@ test('one skipped element is described in the singular', () => {
     offscreenElements: 1,
   });
 
-  assert.match(report.message, /1 element outside it was not looked at/);
+  assert.match(report.message, /including 1 element\./);
+});
+
+test('a tall page with no skipped elements still says the rest was not captured', () => {
+  // The case that exposed the original wording. Both ID cards STARTED inside
+  // the viewport, so nothing counted as an off-screen element — while the
+  // numbers printed on them were below the fold and never in a frame. Leading
+  // with the element count reported "nothing missed" on the one page where
+  // something was.
+  const report = describeCoverage({
+    documentHeight: 1174,
+    viewportHeight: 945,
+    scrollY: 0,
+    offscreenElements: 0,
+  });
+
+  assert.equal(report.partial, true);
+  assert.match(report.message, /the rest was not captured/);
+  assert.equal(report.message.includes('0 element'), false);
 });
 
 test('the message never carries page content, only counts', () => {
@@ -122,10 +144,21 @@ test('a page that fits on screen is one stop at the top', () => {
 test('stops overlap, so nothing straddles a boundary uncovered', () => {
   const plan = planScanStops(2000, 800);
 
-  // Stride is 720, not 800: a line cut in half by a boundary matches nothing,
-  // which is the same failure line grouping exists to prevent.
-  assert.deepEqual(plan.stops, [0, 720, 1200]);
+  // Stride is 600, not 800. The overlap is sized for an ID CARD rather than a
+  // line of text: an image is read as one crop, so a 250px card straddling a
+  // boundary is clipped above and clipped below and read whole by neither.
+  assert.deepEqual(plan.stops, [0, 600, 1200]);
   assert.equal(plan.truncated, false);
+});
+
+test('the overlap is wide enough to hold a rendered ID card', () => {
+  // The binding constraint, stated as a test so shrinking the overlap for speed
+  // fails here rather than quietly on a page with a card on it.
+  const viewport = 945;
+  const plan = planScanStops(4000, viewport);
+  const stride = (plan.stops[1] as number) - (plan.stops[0] as number);
+
+  assert.ok(viewport - stride >= 220, 'overlap must fit a document-sized image');
 });
 
 test('the last stop is the true bottom of the document', () => {
@@ -232,6 +265,98 @@ test('findings are tallied by category, commonest first', () => {
 
 test('nothing found is an empty tally, not a zero row', () => {
   assert.deepEqual(countByCategory([]), []);
+});
+
+// --- Images clipped by the viewport edge --------------------------------------
+//
+// The defect two consecutive scans of the same page exposed: one found two
+// identifiers in the cards, the next found one. A crop comes from a frame and a
+// frame holds one viewport, so a card cut by the edge is read as its visible
+// half — and OCR then truthfully reports no identifier in the half it was
+// given, which the caller cannot tell apart from a clean image.
+
+function scanned(seenWhole: boolean, position: Rect): ScannedImage {
+  return { elementId: 'e1', seenWhole, position };
+}
+
+function ocrFinding(position: Rect): ScanFinding {
+  return { category: 'id_number', source: 'ocr', reason: 'test', position };
+}
+
+test('an image inside the viewport is fully visible', () => {
+  assert.equal(fullyVisible({ elementId: 'e1', x: 20, y: 100, width: 400, height: 250 }, 1920, 945), true);
+});
+
+test('an image running past the bottom edge is not', () => {
+  assert.equal(fullyVisible({ elementId: 'e1', x: 20, y: 800, width: 400, height: 250 }, 1920, 945), false);
+});
+
+test('an image starting above the top edge is not', () => {
+  // The other half of the same card, one stop later.
+  assert.equal(fullyVisible({ elementId: 'e1', x: 20, y: -60, width: 400, height: 250 }, 1920, 945), false);
+});
+
+test('an image clipped at every stop is reported as never read', () => {
+  const box = { x: 100, y: 900, width: 400, height: 250 };
+  const unread = unexaminedImages([scanned(false, box), scanned(false, box)], []);
+
+  assert.equal(unread.length, 1);
+  assert.equal(unread[0]?.category, 'other');
+  assert.match(unread[0]?.reason ?? '', /never fully on screen/);
+});
+
+test('seeing an image whole at one stop is enough, whatever the others saw', () => {
+  // Why this is tracked across the walk instead of judged where it is noticed.
+  const box = { x: 100, y: 900, width: 400, height: 250 };
+  assert.deepEqual(unexaminedImages([scanned(false, box), scanned(true, box)], []), []);
+});
+
+test('an image something was read out of is not also reported as unread', () => {
+  // We already told the user what is in it. Silence about an unread image is
+  // the danger; extra detail about a read one is only noise.
+  const box = { x: 100, y: 900, width: 400, height: 250 };
+  const unread = unexaminedImages(
+    [scanned(false, box)],
+    [ocrFinding({ x: 140, y: 1000, width: 220, height: 30 })],
+  );
+
+  assert.deepEqual(unread, []);
+});
+
+test('a reading somewhere else on the page does not excuse a clipped image', () => {
+  const box = { x: 100, y: 900, width: 400, height: 250 };
+  const unread = unexaminedImages(
+    [scanned(false, box)],
+    [ocrFinding({ x: 140, y: 200, width: 220, height: 30 })],
+  );
+
+  assert.equal(unread.length, 1);
+});
+
+test('a DOM detection over an image does not count as having read it', () => {
+  // Only OCR reads pixels. A field rule firing near the same coordinates says
+  // nothing about what is printed inside the picture.
+  const box = { x: 100, y: 900, width: 400, height: 250 };
+  const unread = unexaminedImages(
+    [scanned(false, box)],
+    [{ category: 'name', source: 'dom', reason: 'test', position: box }],
+  );
+
+  assert.equal(unread.length, 1);
+});
+
+test('the same image at several stops is reported once, not once per look', () => {
+  // `elementId` is only unique within one snapshot and is reassigned at every
+  // stop, so these are collapsed on geometry.
+  const unread = unexaminedImages(
+    [
+      { elementId: 'e3', seenWhole: false, position: { x: 100, y: 900, width: 400, height: 250 } },
+      { elementId: 'e7', seenWhole: false, position: { x: 102, y: 901, width: 398, height: 249 } },
+    ],
+    [],
+  );
+
+  assert.equal(unread.length, 1);
 });
 
 // --- The claim that makes a scan safe ----------------------------------------

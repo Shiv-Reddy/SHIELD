@@ -94,37 +94,65 @@ export function describeCoverage(coverage: PageCoverage): CoverageReport {
     };
   }
 
+  // The boundary is PIXELS, not elements, and leading with the element count
+  // got this exactly backwards on the page it mattered most.
+  //
+  // A photographed ID card that starts inside the viewport and continues below
+  // it counts as an on-screen element — so the count read "0 elements outside
+  // it were not looked at" on a page whose Aadhaar number was, in fact, never
+  // captured. The count says nothing was missed at the moment something was.
+  // What was actually not examined is the part of the page that was never in a
+  // frame, so that is what this leads with; the element count is a detail, and
+  // only worth printing when there is one.
+  const rest =
+    offscreenElements > 0
+      ? `the rest was not captured, including ${plural(offscreenElements, 'element')}`
+      : 'the rest was not captured';
+
   return {
     partial: true,
     screens,
     offscreenElements,
     message:
-      `This page is about ${screens.toFixed(1)} screens tall. Shield examined the ` +
-      `one on screen; ${plural(offscreenElements, 'element')} outside it ` +
-      `${offscreenElements === 1 ? 'was' : 'were'} not looked at.`,
+      `This page is about ${screens.toFixed(1)} screens tall. Shield examined ` +
+      `the one on screen — ${rest}.`,
   };
 }
 
 /**
  * How far each look moves down the page, as a fraction of the viewport.
  *
- * Stops overlap rather than abutting. A line of text that straddles a boundary
- * is cut in half by both looks either side of it, and half an Aadhaar number
- * matches nothing — the same failure that made line grouping necessary in
- * `ocr-regions.ts`, arrived at from the opposite direction. Ten percent of an
- * ordinary viewport is roughly eighty pixels, which is taller than a line of
- * text and taller than the row an ID number is printed on.
+ * Stops overlap rather than abutting, and the size of the overlap is set by the
+ * largest thing that must fit inside one look.
+ *
+ * The first version sized it for a LINE of text — ten percent, about eighty
+ * pixels, on the reasoning that half an Aadhaar number matches nothing. That is
+ * true and it is not the binding constraint. An image is read as a whole crop,
+ * so a 250px ID card straddling a boundary is clipped in the look above it and
+ * clipped again in the look below, and neither crop contains the card. Sizing
+ * for a line of text leaves the most important single thing this product looks
+ * for able to fall between two stops.
+ *
+ * A quarter of an ordinary viewport is around 240px, which holds an ID card at
+ * the size one is usually rendered. Anything still clipped at every stop is
+ * reported as unread rather than assumed clean — the overlap reduces how often
+ * that happens, it is not what makes the result honest.
  */
-export const SCAN_OVERLAP = 0.1;
+export const SCAN_OVERLAP = 0.25;
 
 /**
  * The most looks one scan will take.
  *
  * A ceiling is required, not prudent: an infinite-scroll page grows as it is
  * scrolled, so a scan that simply walked to the bottom would never reach one.
- * Twelve stops covers roughly eight thousand pixels — far past any ordinary
- * page — and takes about ten seconds, which is a defensible wait for something
- * the user explicitly asked for and nothing like a budget a run could carry.
+ *
+ * Twelve stops covers roughly eight thousand pixels, far past any ordinary
+ * page. The cost was first estimated at about ten seconds and then measured at
+ * rather more: a look costs ~2.2s on a page carrying two document-sized images,
+ * almost all of it OCR, so the cap is nearer 25 seconds in the worst case. That
+ * is a defensible wait for something the user explicitly asked for, holds the
+ * Cancel button open throughout, and is nothing like a budget a run could
+ * carry — which is exactly why this is not one.
  *
  * Hitting it is reported rather than hidden. A scan that stopped early and said
  * so is honest; one that stopped early and showed a tidy summary is the exact
@@ -225,6 +253,75 @@ export function dedupeFindings(findings: readonly ScanFinding[]): ScanFinding[] 
   }
 
   return kept;
+}
+
+/**
+ * One document-sized image, and whether any single look saw the whole of it.
+ *
+ * Tracked across the walk rather than judged per stop: an image clipped at the
+ * bottom of one look is often whole in the next, and only an image clipped at
+ * EVERY look was genuinely never read in full.
+ */
+export interface ScannedImage {
+  elementId: string;
+  /** DOCUMENT-space box. */
+  position: Rect;
+  /** True when this particular look contained the image entirely. */
+  seenWhole: boolean;
+}
+
+/**
+ * Images the scan never saw whole, and read nothing out of.
+ *
+ * The honest end of the clipping problem. An image cut by the viewport edge is
+ * cropped to its visible part, and OCR truthfully reports no identifier in the
+ * half it was handed — which the caller cannot distinguish from a clean image.
+ * Over a whole-page scan that turns into a verdict about a card nobody ever
+ * saw the number on.
+ *
+ * An image that produced a reading is left alone: we already told the user what
+ * is in it, and adding "and it could not be fully read" alongside would be
+ * noise on top of a finding that is already correct. It is silence about an
+ * unread image that is dangerous, not detail about a read one.
+ */
+export function unexaminedImages(
+  images: readonly ScannedImage[],
+  findings: readonly ScanFinding[],
+): ScanFinding[] {
+  // The same image appears once per look. Collapsed on geometry rather than on
+  // `elementId`, which is only unique within a single snapshot and is reassigned
+  // at every stop.
+  const merged: ScannedImage[] = [];
+  for (const image of images) {
+    const existing = merged.find(
+      (candidate) => overlapFraction(candidate.position, image.position) >= SAME_FINDING_OVERLAP,
+    );
+
+    // Seen whole ONCE is enough, and is why this is tracked across the walk at
+    // all rather than decided where it is first noticed.
+    if (existing) existing.seenWhole ||= image.seenWhole;
+    else merged.push({ ...image });
+  }
+
+  return merged
+    .filter((image) => !image.seenWhole)
+    .filter(
+      (image) =>
+        !findings.some(
+          (finding) =>
+            finding.source === 'ocr' &&
+            overlapFraction(image.position, finding.position) >= SAME_FINDING_OVERLAP,
+        ),
+    )
+    .map((image) => ({
+      category: 'other' as const,
+      source: 'visual' as const,
+      // Says what happened, and does not name a category. Claiming to have
+      // found an ID in an image nothing ever read whole would be the trust
+      // surface telling the one kind of lie it must never tell.
+      reason: 'image large enough to hold a document, never fully on screen to be read',
+      position: image.position,
+    }));
 }
 
 /** What a completed scan reports, as counts and never as content. */

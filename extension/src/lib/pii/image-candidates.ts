@@ -108,6 +108,33 @@ export function imageCandidates(elements: readonly DomElement[]): ImageCandidate
 }
 
 /**
+ * Was the whole of this candidate inside the frame that was read?
+ *
+ * A crop is taken from a captured frame, and a frame holds one viewport. An
+ * image that starts on screen and continues past the edge yields a crop of its
+ * visible part only — and OCR then reports, accurately, that it found no
+ * identifier in the half it was given. The caller reads that as "this image is
+ * clean".
+ *
+ * That is how a scan can walk a whole page and still miss a card: clipped at
+ * the bottom of one look, clipped at the top of the next, read twice and never
+ * seen whole. The overlap between stops makes it rarer; this is what makes the
+ * remaining cases reportable instead of invisible.
+ */
+export function fullyVisible(
+  candidate: ImageCandidate,
+  viewportWidth: number,
+  viewportHeight: number,
+): boolean {
+  return (
+    candidate.x >= 0 &&
+    candidate.y >= 0 &&
+    candidate.x + candidate.width <= viewportWidth &&
+    candidate.y + candidate.height <= viewportHeight
+  );
+}
+
+/**
  * Cover a candidate entirely, because it could not be read.
  *
  * The fallback, and the reason the whole feature is safe to ship before the

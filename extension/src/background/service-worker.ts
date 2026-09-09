@@ -36,16 +36,23 @@ import {
   dedupeFindings,
   describeCoverage,
   planScanStops,
+  unexaminedImages,
   type ScanFinding,
+  type ScannedImage,
   type ScanSummary,
 } from '../lib/coverage';
 import { detectDomPii } from '../lib/pii/dom-rules';
 import { faceRegions } from '../lib/pii/face-regions';
-import { imageCandidates, unreadableImageRegions } from '../lib/pii/image-candidates';
+import {
+  fullyVisible,
+  imageCandidates,
+  unreadableImageRegions,
+} from '../lib/pii/image-candidates';
 import { ocrRegions } from '../lib/pii/ocr-regions';
 import { buildManifest, redactDomElements } from '../lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../lib/redaction/payload';
 import { recordTransmission } from '../lib/redaction/evidence';
+import { buildAuditEntry, recordAudit } from '../lib/audit';
 import { send } from '../lib/transport/client';
 import { readSettings } from '../lib/settings';
 import { readSelfTestRecord, writeSelfTestRecord } from '../lib/self-test-record';
@@ -942,6 +949,20 @@ async function runStep(
     );
     markStageComplete('sending');
 
+    // The durable half of the evidence (FR-26). `recordTransmission` above keeps
+    // the LAST payload in full, which is the claim a sceptic reads literally;
+    // this keeps every pass as counts, which is what makes "has this been
+    // protecting me all week?" answerable. Not awaited: a storage write must
+    // never sit in the path of the run it describes.
+    void recordAudit(
+      buildAuditEntry(regions, {
+        kind: 'run',
+        examined: 'viewport',
+        transmitted: true,
+        durationMs: stepTimings.reduce((sum, timing) => sum + timing.durationMs, 0),
+      }),
+    );
+
     setStatus('thinking');
     markStageComplete('thinking');
 
@@ -1385,6 +1406,10 @@ async function scanPage(): Promise<void> {
     );
 
     const findings: ScanFinding[] = [];
+    // Every document-sized image, once per look, with whether THAT look held all
+    // of it. An image clipped at every stop was never actually read, however
+    // many times OCR ran on a piece of it.
+    const images: ScannedImage[] = [];
     let examinedTo = 0;
     let stoppedEarly = plan.truncated;
     let previousLanding: number | null = null;
@@ -1428,6 +1453,21 @@ async function scanPage(): Promise<void> {
         });
         if (!analysis.ok) throw new Error(analysis.message);
 
+        // Recorded before reading, so an image that OCR happened to find
+        // nothing in is still known to have been clipped when it was read.
+        for (const candidate of imageCandidates(domMap.elements)) {
+          images.push({
+            elementId: candidate.elementId,
+            seenWhole: fullyVisible(candidate, viewport.width, landed.viewportHeight),
+            position: {
+              x: candidate.x + landed.scrollX,
+              y: candidate.y + landed.scrollY,
+              width: candidate.width,
+              height: candidate.height,
+            },
+          });
+        }
+
         const regions: SensitiveRegion[] = [
           ...detectDomPii(domMap.elements),
           ...faceRegions(analysis.detection.faces, analysis.frame),
@@ -1467,29 +1507,57 @@ async function scanPage(): Promise<void> {
 
     if (abandoned()) return;
 
-    const unique = dedupeFindings(findings);
+    const read = dedupeFindings(findings);
+    // Added last and never deduped against: an image nothing read whole is a
+    // statement about a gap, and a gap cannot be merged into a finding.
+    const unread = unexaminedImages(images, read);
+    const all = [...read, ...unread];
+
     const summary: ScanSummary = {
       at: Date.now(),
       stops: plan.stops.length,
       documentHeight: origin.documentHeight,
       viewportHeight: origin.viewportHeight,
       truncated: stoppedEarly,
-      counts: countByCategory(unique),
-      total: unique.length,
+      counts: countByCategory(all),
+      total: all.length,
     };
 
     console.info(
-      `[shield] scan complete — ${unique.length} finding(s) across ` +
+      `[shield] scan complete — ${all.length} finding(s) across ` +
         `${examinedTo}px of ${origin.documentHeight}px` +
+        `${unread.length > 0 ? `, ${unread.length} image(s) never fully on screen` : ''}` +
         `${stoppedEarly ? ' (stopped early)' : ''}; nothing was transmitted`,
     );
 
     await sendToTab(tabId, {
       type: MSG.SHOW_SCAN,
-      findings: unique,
+      findings: all,
       truncated: stoppedEarly,
       examinedTo,
     });
+
+    void recordAudit(
+      buildAuditEntry(
+        // The findings, restored to region shape only so far as the entry
+        // builder needs. It reads `category` and `reason` and keeps nothing else.
+        all.map((finding) => ({
+          regionId: '',
+          category: finding.category,
+          source: finding.source,
+          confidence: 1,
+          elementId: null,
+          reason: finding.reason,
+          position: finding.position,
+        })),
+        {
+          kind: 'scan',
+          examined: stoppedEarly ? 'document-partial' : 'document',
+          // Stated, not inferred. A scan reaches no transport at all.
+          transmitted: false,
+        },
+      ),
+    );
 
     setState({ status: 'done', scan: summary, scanProgress: null });
   } catch (error) {

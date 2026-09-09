@@ -14,7 +14,7 @@ Chrome against the live backend.
 
 | Measure | Value |
 |---|---|
-| Client tests | 140 |
+| Client tests | 163 |
 | Reasoner checks | 82 |
 | Prompt checks | 35 |
 | One full pass | ≈150ms, every stage inside budget |
@@ -26,20 +26,23 @@ manual marking, payload inspector, latency panel, observe-only mode, CPU
 fallback (self-proved), zero-leak sweep, type seal, stage-order guard, Indian
 identifier taxonomy, OCR over image crops.
 
-**Built, not yet verified in Chrome:** whole-page coverage — every run states
-how much of the document it read, and "Scan the whole page" walks the document
-in overlapping viewports and transmits nothing.
+**Verified in Chrome:** the whole-page scan finds the Aadhaar and PAN on the
+second look without anyone scrolling first, reaches the true bottom, and
+transmits nothing.
 
-**Open gaps:** names in prose, consent preview, audit log, configurable
-aggressiveness, adaptive model sizing, the 8-site sweep.
+**Built, not yet verified in Chrome:** the audit log panel and its export; the
+clipped-image reporting; the reworded coverage line.
+
+**Open gaps:** names in prose, consent preview, configurable aggressiveness,
+adaptive model sizing, the 8-site sweep.
 
 ---
 
 ## Next session starts with
 
-**Verifying the whole-page scan in Chrome**, on the login fixture and then on
-one real page: does it walk, does it find the Aadhaar and PAN without anyone
-scrolling first, does it put the page back, does the coverage line appear.
+**Verifying the audit log in Chrome** — the panel lists passes, the export
+downloads and contains no page content, Clear empties it. Then repeat the same
+scan twice and confirm it now reports the same thing both times.
 
 Then the remaining Day 2 items in docs/TASKS.md — consent preview and the
 profile-edit fixture are the two that add most to the demo.
@@ -77,6 +80,7 @@ Nothing is uncommitted. Do not commit until explicitly told to.
 | 22 | Manual marking fixed: reachable before a run, drag preview corrected, popup reworked |
 | 23 | Indian identifier taxonomy; OCR over image crops, engine load fixed under MV3 CSP |
 | 24 | Whole-page coverage: the run boundary is stated, and a scan that sends nothing |
+| 25 | Scan verified in Chrome. Clipped-image defect found by two scans disagreeing. Audit log built |
 
 ---
 
@@ -95,3 +99,7 @@ Nothing is uncommitted. Do not commit until explicitly told to.
    would have justified a far riskier change than the facts supported.
 5. **An absence is read as a verdict.** A field with no box on it looks checked.
    Every boundary Shield has is now said out loud rather than left to inference.
+6. **Two runs disagreeing is a finding, not noise.** One scan reported two
+   identifiers and the next reported one; the cause was a card clipped by the
+   viewport edge, read as its visible half and reported clean. Nothing in the
+   test suite could have found it — it needed the same page looked at twice.
