@@ -15,6 +15,7 @@
  */
 
 import { CONTENT_PATTERNS, phoneMatchIsCredible } from '../pii/dom-rules';
+import { findIndianIds } from '../pii/indian-ids';
 import type {
   DomElement,
   RedactedDomEntry,
@@ -84,6 +85,22 @@ export function placeholderFor(category: SensitiveCategory): string {
  */
 export function scrubTextContent(text: string): string {
   let scrubbed = text;
+
+  // Indian identifiers first, and this is not merely for a better label.
+  //
+  // The classifier and this scrubber are two separate paths over the same text.
+  // The classifier flags an element and its VALUE is tokenised; this scrubs
+  // free text, including labels. An identifier the classifier now recognises
+  // but the scrubber does not would be hidden in the value and transmitted in
+  // the label — which is exactly the defect found on a real site earlier, where
+  // an account address rode out inside a label no field rule could see.
+  //
+  // Replaced longest-first so a span is never half-substituted by an overlap.
+  for (const match of findIndianIds(scrubbed).sort(
+    (a, b) => b.value.length - a.value.length,
+  )) {
+    scrubbed = scrubbed.split(match.value).join(placeholderFor('id_number'));
+  }
 
   for (const [category, pattern] of CONTENT_PATTERNS) {
     // A fresh global copy per call. The source patterns are non-global and

@@ -31,6 +31,8 @@ import type { DomElement, SensitiveCategory, SensitiveRegion } from '../types';
  * If a future change introduces `if (confidence > x)` around a redaction, that
  * is a policy violation, not an optimisation.
  */
+import { KIND_LABEL, strongestIndianId } from './indian-ids';
+
 const CONFIDENCE = {
   /** `input[type=password]`. A declaration by the page author. */
   declaredPassword: 1,
@@ -40,6 +42,16 @@ const CONFIDENCE = {
   declaredInputType: 0.8,
   /** A label, name or placeholder matching a known pattern. */
   textPattern: 0.6,
+  /**
+   * A formatted identifier whose checksum agrees — a Verhoeff-valid Aadhaar, a
+   * Luhn-valid card.
+   *
+   * Ranked just below an explicit `autocomplete` token. The page author saying
+   * what a field holds is still the stronger signal, but a checksum is close:
+   * it is arithmetic, not a guess, and the odds of arbitrary text satisfying
+   * Verhoeff by accident are one in ten.
+   */
+  verifiedChecksum: 0.95,
 } as const;
 
 /**
@@ -364,6 +376,23 @@ export function phoneMatchIsCredible(matched: string): boolean {
  * ordinary prose, which is the overwhelming majority of text on any page.
  */
 export function classifyTextContent(text: string): DomRuleHit | null {
+  // Indian identifiers first, because they are the more specific claim on the
+  // same characters. The generic rules would still redact most of these — a
+  // twelve-digit Aadhaar is a nine-plus digit run — but they would report it as
+  // an unnamed id_number, and the name is what reaches the reasoning model's
+  // placeholder and the user's overlay. The ones the generic rules miss
+  // entirely (IFSC, UPI, voter ID, passport) are the reason this runs at all.
+  const indian = strongestIndianId(text);
+  if (indian) {
+    return {
+      category: 'id_number',
+      // A confirmed checksum earns the higher confidence. A failed one does not
+      // lose the detection — see indian-ids.ts — it only stays unconfirmed.
+      confidence: indian.verified ? CONFIDENCE.verifiedChecksum : CONFIDENCE.textPattern,
+      reason: `visible text matched ${KIND_LABEL[indian.kind]} format`,
+    };
+  }
+
   for (const [category, pattern] of CONTENT_PATTERNS) {
     const match = pattern.exec(text);
     if (!match) continue;
