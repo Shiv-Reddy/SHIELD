@@ -1,0 +1,20 @@
+/* Shares proof.css for the header, promise line, empty states and palette.
+
+   Only the figure differs. The scan record shows a strip of screens; this shows
+   the single image that crossed the network, and somebody is going to zoom into
+   a black rectangle to check what is under it is gone. Full width, natural
+   height, and the same surface treatment the strip uses so the two records look
+   like they belong to one product. */
+.frame {
+  margin: 18px 0 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

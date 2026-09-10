@@ -27,10 +27,27 @@ export interface Transmission {
   /**
    * The payload as sent, with the frame's base64 replaced by a placeholder.
    *
-   * The frame is omitted for length alone — it is redacted and safe, but it is
-   * hundreds of kilobytes of base64 that would bury the part worth reading.
+   * The frame is omitted HERE for length alone — it is redacted and safe, but
+   * it is hundreds of kilobytes of base64 that would bury the part worth
+   * reading. It is kept beside this, in `frame`.
    */
   json: string;
+  /**
+   * The redacted frame itself, as it was sent.
+   *
+   * The strongest claim this project can make, and until now the one nobody
+   * could see on a real page: the placeholders were readable and the picture
+   * they travelled with was not. The scan record proves a scan; this proves a
+   * run.
+   *
+   * Safe by construction, for the same reason `json` is — it is the frame that
+   * passed the seal's verification, so what is under those black rectangles
+   * never left the machine either.
+   *
+   * Absent when storage refused it. That is a missing picture, never a missing
+   * record: see `recordTransmission`.
+   */
+  frame?: string;
 }
 
 export async function recordTransmission(
@@ -49,9 +66,20 @@ export async function recordTransmission(
       endpoint,
       frameBytes,
       json: JSON.stringify(readable, null, 2),
+      frame: payload.redacted_frame,
     };
 
-    await chrome.storage.local.set({ [STORAGE_KEY]: transmission });
+    try {
+      await chrome.storage.local.set({ [STORAGE_KEY]: transmission });
+    } catch (quota) {
+      // The JSON is the evidence; the picture is the demonstration. They must
+      // not fail together, and if only one can be kept it is not the picture.
+      // A few hundred kilobytes is bounded — one entry, overwritten every run —
+      // but a quota is somebody else's setting, not ours to assume.
+      console.warn('[shield] the frame would not fit; keeping the payload alone', quota);
+      const { frame: _dropped, ...withoutFrame } = transmission;
+      await chrome.storage.local.set({ [STORAGE_KEY]: withoutFrame });
+    }
   } catch (error) {
     // Recording is evidence, not protection. Failing to store it must never
     // interfere with the run it is describing.

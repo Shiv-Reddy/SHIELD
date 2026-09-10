@@ -64,6 +64,7 @@ const evidenceToggleLabel = required<HTMLSpanElement>('#evidence-toggle-label');
 const evidenceBody = required<HTMLDivElement>('#evidence-body');
 const evidenceMeta = required<HTMLParagraphElement>('#evidence-meta');
 const evidenceJson = required<HTMLPreElement>('#evidence-json');
+const evidenceFrame = required<HTMLButtonElement>('#evidence-frame');
 const auditToggle = required<HTMLButtonElement>('#audit-toggle');
 const auditToggleLabel = required<HTMLSpanElement>('#audit-toggle-label');
 const auditBody = required<HTMLDivElement>('#audit-body');
@@ -228,13 +229,23 @@ async function renderEvidence(): Promise<void> {
   if (!transmission) {
     evidenceMeta.textContent = 'Nothing has been sent yet.';
     evidenceJson.textContent = '';
+    evidenceFrame.hidden = true;
     return;
   }
+
+  // Offered only when the picture is actually there. A button that opens an
+  // apology is worse than no button, and a frame can be absent because storage
+  // refused it - which costs the picture and never the record.
+  evidenceFrame.hidden = transmission.frame === undefined;
 
   const when = new Date(transmission.at).toLocaleTimeString();
   evidenceMeta.textContent = `Sent to ${transmission.endpoint} at ${when}.`;
   evidenceJson.textContent = transmission.json;
 }
+
+evidenceFrame.addEventListener('click', () => {
+  void chrome.tabs.create({ url: chrome.runtime.getURL('sent/sent.html') });
+});
 
 evidenceToggle.addEventListener('click', () => {
   const opening = evidenceBody.hidden;

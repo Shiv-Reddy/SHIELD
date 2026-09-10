@@ -45,10 +45,10 @@ indefensible answer to metric 1.
 | Redaction | Semantic placeholders + opaque fill. Type seal + stage guard + zero-leak sweep |
 | Transport | FastAPI, provider-agnostic, sealed payloads only |
 | Action execution | click / type / scroll, re-verified against the capture |
-| Trust UI | Overlay, payload inspector, latency panel, manual marking, audit log |
+| Trust UI | Overlay, payload inspector (with the frame that was sent), latency panel, manual marking, audit log |
 | Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
 | Scan record | Redacted picture of every screen examined, kept local |
-| Tests | 265 client, 82 reasoner, 35 prompt |
+| Tests | 269 client, 82 reasoner, 35 prompt |
 
 Phases 1–3 (login autofill, multi-field signup, faces) are closed.
 

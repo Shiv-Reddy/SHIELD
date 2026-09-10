@@ -69,6 +69,7 @@ export default defineConfig({
         // 348px popup cannot show a screenshot at a size where somebody can
         // check that their ID number really was covered.
         proof: fileURLToPath(new URL('./src/proof/proof.html', import.meta.url)),
+        sent: fileURLToPath(new URL('./src/sent/sent.html', import.meta.url)),
       },
       output: {
         entryFileNames: '[name].js',

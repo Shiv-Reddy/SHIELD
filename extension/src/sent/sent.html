@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shield — what was sent</title>
+    <link rel="stylesheet" href="../proof/proof.css" />
+    <link rel="stylesheet" href="./sent.css" />
+  </head>
+  <body>
+    <!--
+      A full tab, for the same reason the scan record gets one. This is the
+      picture that actually crossed the network, and the only useful thing to do
+      with it is look closely at a black rectangle and check what is under it is
+      gone. A 348px popup cannot show that.
+
+      Deliberately a SEPARATE page from proof.html. That one answers "was the
+      whole page examined"; this answers "what left the machine on the last
+      run". DECISIONS.md 149 split those two records because neither replaces
+      the other, and sharing a page would blur the distinction.
+    -->
+    <header class="header">
+      <span class="brand">
+        <svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 725 725" fill="currentColor">
+          <clipPath id="sh"><rect x="0" y="0" width="347.5" height="725"/></clipPath>
+          <path d="M347.5 0C245 28 128 92 47.5 163C47.5 380 140 600 347.5 725ZM100 352C165 245 258 232 347.5 232C347.5 232 347.5 472 347.5 472C258 472 165 459 100 352ZM363 352C363 390.659932486 331.659932486 422 293 422C254.340067514 422 223 390.659932486 223 352C223 313.340067514 254.340067514 282 293 282C331.659932486 282 363 313.340067514 363 352ZM349 352C349 362.4934102462 340.4934102462 371 330 371C319.5065897538 371 311 362.4934102462 311 352C311 341.5065897538 319.5065897538 333 330 333C340.4934102462 333 349 341.5065897538 349 352Z" fill-rule="evenodd" clip-path="url(#sh)"/>
+          <rect x="352" y="214" width="40" height="40"/><rect x="352" y="297" width="36" height="36"/><rect x="352" y="372" width="36" height="36"/><rect x="352" y="449" width="40" height="40"/><rect x="398" y="258" width="46" height="46"/><rect x="400" y="340" width="28" height="28"/><rect x="398" y="398" width="44" height="44"/><rect x="452" y="166" width="50" height="50"/><rect x="455" y="320" width="30" height="30"/><rect x="452" y="440" width="48" height="48"/><rect x="505" y="96" width="34" height="34"/><rect x="512" y="250" width="56" height="56"/><rect x="515" y="355" width="36" height="36"/><rect x="500" y="512" width="50" height="50"/><rect x="568" y="158" width="46" height="46"/><rect x="566" y="310" width="50" height="50"/><rect x="560" y="440" width="40" height="40"/><rect x="530" y="592" width="36" height="36"/><rect x="636" y="232" width="28" height="28"/><rect x="640" y="366" width="34" height="34"/><rect x="620" y="536" width="28" height="28"/><rect x="478" y="610" width="24" height="24"/>
+        </svg>
+        <span class="brand-name">Shield</span>
+      </span>
+      <h1 class="title">What was sent</h1>
+    </header>
+
+    <main class="body">
+      <p id="summary" class="summary"></p>
+
+      <!--
+        The claim restated where the evidence is. Somebody shown this tab did
+        not necessarily see anything that came before it, and this is the one
+        picture in the product that DID cross the network — so the sentence has
+        to be exact rather than reassuring.
+      -->
+      <p class="promise">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M6 8.5V6a4 4 0 0 1 8 0v2.5"/>
+          <rect x="4" y="8.5" width="12" height="8.5" rx="2"/>
+        </svg>
+        This is the image itself, exactly as it was transmitted. Everything
+        under a black rectangle was removed on this computer before sending —
+        the original pixels never left it.
+      </p>
+
+      <p id="empty" class="empty" hidden>
+        Nothing has been sent yet. Run a task with Shield, then open this again.
+      </p>
+
+      <p id="missing" class="empty" hidden>
+        A task was sent, but the image could not be kept — browser storage
+        refused it. The record of <em>what</em> was sent is still in the popup
+        under <strong>What was sent?</strong>
+      </p>
+
+      <figure id="figure" class="frame" hidden>
+        <img id="image" alt="The redacted screenshot that was transmitted" />
+      </figure>
+    </main>
+
+    <script type="module" src="./sent.ts"></script>
+  </body>
+</html>

@@ -15,7 +15,7 @@ that was not written to flatter them.
 
 | Measure | Value |
 |---|---|
-| Client tests | 265 |
+| Client tests | 269 |
 | Reasoner checks | 82 |
 | Prompt checks | 35 |
 | One full pass | ≈150ms, every stage inside budget |
@@ -106,6 +106,16 @@ this is not a 150ms operation.
 **None of it has seen a real screen.** 24 tests cover the logic; the agreement
 rate is unmeasured and the wiring is unverified in Chrome.
 
+**The payload inspector now shows the picture, not only the placeholders.**
+`evidence.ts` dropped the frame from the stored transmission, with a comment
+saying it was omitted for length alone since it is redacted and safe. That was
+true and it left the strongest demonstrable claim unavailable on a real page:
+the tags were readable, the image they travelled with was not. The scan record
+proves a scan; nothing proved a run. One frame is now kept beside the
+transmission and opened at full size in `sent/sent.html`, and if storage refuses
+it the payload is stored again without it — losing the record to keep a
+screenshot would invert what the surface is for.
+
 **The caveat that matters most:** the corpus contains **no real page**. Every
 one was written here, and a measurement against our own description of a page
 proves less than one against somebody else's. The runner prints that line on
@@ -135,7 +145,9 @@ the boxes cannot be committed because `face-a.jpg` and `face-b.png` are not.
 Then T1.2, the local screen-understanding model — 25% of the score and the
 capability the problem statement is named after.
 
-**Uncommitted:** the whole vision layer — `src/lib/vision/screen-text.ts`,
+**Uncommitted:** the sent-frame record — `src/sent/`, the `frame` field on
+`Transmission`, `tests/evidence.test.ts`, the popup button, the vite input, and
+DECISIONS 189–192. Also the whole vision layer — `src/lib/vision/screen-text.ts`,
 `src/lib/vision/agreement.ts`, `tests/vision.test.ts`, the `READ_SCREEN` message
 and its offscreen handler, the scan-path wiring in `service-worker.ts`, the
 `screen` field on `ScanSummary`, and the DECISIONS/TASKS/SESSION_LOG edits.
