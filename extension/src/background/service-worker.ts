@@ -26,6 +26,7 @@ import {
   sendToOffscreen,
   redactOffscreenFrame,
   readOffscreenImages,
+  readOffscreenScreen,
   type OcrReadResult,
   warmOffscreen,
   reloadOffscreenModel,
@@ -43,7 +44,7 @@ import {
   type ScannedImage,
   type ScanSummary,
 } from '../lib/coverage';
-import { detectDomPii } from '../lib/pii/dom-rules';
+import { classifyTextContent, detectDomPii } from '../lib/pii/dom-rules';
 import { faceRegions } from '../lib/pii/face-regions';
 import {
   fullyVisible,
@@ -51,6 +52,7 @@ import {
   unreadableImageRegions,
 } from '../lib/pii/image-candidates';
 import { ocrRegions } from '../lib/pii/ocr-regions';
+import { compareReadings, domTextItems } from '../lib/vision/agreement';
 import { buildManifest, redactDomElements } from '../lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../lib/redaction/payload';
 import { recordTransmission } from '../lib/redaction/evidence';
@@ -1166,6 +1168,92 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Read the whole screen, and hide what only the screen could tell us.
+ *
+ * WHY THIS RUNS ONLY IN A SCAN
+ *
+ * Reading a full viewport costs a different order of magnitude from reading a
+ * 320x200 crop, and a run is budgeted at roughly 150ms end to end. Putting this
+ * in the run path would trade 35% of the rubric - latency and resource use -
+ * for part of the 25% it earns. A scan already walks the whole document,
+ * transmits nothing, and carries its findings into every later run on the page,
+ * so this protects a run without slowing one (DECISIONS.md 188, 152).
+ *
+ * WHY ONLY THE PIXEL-ONLY REGIONS BECOME FINDINGS
+ *
+ * Text that both readers saw is text the DOM already handed to
+ * `classifyTextContent` through `detectDomPii`. Flagging it again would put two
+ * regions on one fact and overstate what was found, which the manifest, the
+ * overlay and the audit counts are all meant to be exact about. What is new is
+ * only what markup could not describe: a number drawn into a canvas, an address
+ * inside an iframe, an identifier in a pasted screenshot. Those reach a capture
+ * unexamined today, and that is a leak path rather than a missing feature.
+ *
+ * A failed read is reported and nothing is invented. It never returns an empty
+ * list dressed up as "the screen is clean".
+ */
+async function screenTextFindings(
+  frame: RawFrame,
+  elements: readonly DomElement[],
+  viewport: { width: number; height: number },
+  record: (counted: {
+    agreed: number;
+    pixelOnly: number;
+    domOnly: number;
+    hidden: number;
+  }) => void,
+): Promise<SensitiveRegion[]> {
+  const reading = await readOffscreenScreen({
+    dataUrl: frame.dataUrl,
+    viewportWidth: viewport.width,
+    viewportHeight: viewport.height,
+  });
+
+  if (!reading.ok) {
+    console.warn(`[shield] the screen could not be read: ${reading.message}`);
+    return [];
+  }
+
+  const report = compareReadings(domTextItems(elements), reading.regions);
+  const regions: SensitiveRegion[] = [];
+
+  report.pixelOnly.forEach((region, index) => {
+    const hit = classifyTextContent(region.text);
+    if (!hit) return;
+
+    regions.push({
+      regionId: `screen-${index}`,
+      category: hit.category,
+      source: 'ocr',
+      confidence: hit.confidence,
+      // No element, because that is the whole point: nothing in the markup
+      // describes this. The redaction canvas takes the box directly.
+      elementId: null,
+      // Says where it was found as well as which rule fired, and quotes
+      // nothing. `ocr-regions.ts` carries the test asserting a reason never
+      // repeats the text it matched.
+      reason: `text on screen with no element - ${hit.reason}`,
+      position: region.position,
+    });
+  });
+
+  record({
+    agreed: report.agreed.length,
+    pixelOnly: report.pixelOnly.length,
+    domOnly: report.domOnly.length,
+    hidden: regions.length,
+  });
+
+  console.info(
+    `[shield] screen read: ${report.agreed.length} agreed, ` +
+      `${report.pixelOnly.length} seen only in pixels (${regions.length} hidden), ` +
+      `${report.domOnly.length} seen only in markup`,
+  );
+
+  return regions;
+}
+
+/**
  * Read identifying text out of the page's images, and cover what cannot be read.
  *
  * TWO STAGES THAT FAIL IN OPPOSITE DIRECTIONS
@@ -1541,6 +1629,11 @@ async function scanPage(): Promise<void> {
     let stoppedEarly = plan.truncated;
     let previousLanding: number | null = null;
 
+    // Summed across stops. Left undefined until a screen is actually read, so
+    // "never read" stays distinguishable from "read and found nothing".
+    let screenAgreement: { agreed: number; pixelOnly: number; domOnly: number; hidden: number }
+      | undefined;
+
     for (const [index, stop] of plan.stops.entries()) {
       if (abandoned()) return;
 
@@ -1599,6 +1692,14 @@ async function scanPage(): Promise<void> {
           ...detectDomPii(domMap.elements),
           ...faceRegions(analysis.detection.faces, analysis.frame),
           ...(await ocrImageRegions(frame, domMap.elements, analysis.frame)),
+          ...(await screenTextFindings(frame, domMap.elements, viewport, (counted) => {
+            screenAgreement = {
+              agreed: (screenAgreement?.agreed ?? 0) + counted.agreed,
+              pixelOnly: (screenAgreement?.pixelOnly ?? 0) + counted.pixelOnly,
+              domOnly: (screenAgreement?.domOnly ?? 0) + counted.domOnly,
+              hidden: (screenAgreement?.hidden ?? 0) + counted.hidden,
+            };
+          })),
         ];
 
         // Kept, not painted. What is sensitive on this screen is not fully known
@@ -1657,6 +1758,7 @@ async function scanPage(): Promise<void> {
       documentHeight: origin.documentHeight,
       viewportHeight: origin.viewportHeight,
       truncated: stoppedEarly,
+      ...(screenAgreement ? { screen: screenAgreement } : {}),
       counts: countByCategory(all),
       total: all.length,
     };

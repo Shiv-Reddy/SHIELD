@@ -7,7 +7,7 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-09
+## Current state — 2026-09-10
 
 **Core is complete.** Phases 1–3 closed. Every module A–G built and verified in
 Chrome against the live backend. Metrics 2 and 3 now have numbers over a corpus
@@ -15,7 +15,7 @@ that was not written to flatter them.
 
 | Measure | Value |
 |---|---|
-| Client tests | 241 |
+| Client tests | 265 |
 | Reasoner checks | 82 |
 | Prompt checks | 35 |
 | One full pass | ≈150ms, every stage inside budget |
@@ -86,6 +86,26 @@ becomes a target:
 2. Prose generally. Names, addresses and dates of birth in sentences are missed
    everywhere, and that is most of what a bill or a statement contains.
 
+**Metric 1 — the vision layer now reads the whole screen, not just image crops.**
+DECISIONS 41 ruled out generic UI-element detection and stays in force for icons;
+185 amends it for text. OmniParser's `icon_detect` was evaluated and rejected on
+**licence** — AGPL-3.0 inherited from Ultralytics, on a repository with no
+LICENSE file — and small VLMs on **output shape**, since they emit text where an
+element map needs boxes. Neither was rejected on merit, and both are recorded so
+nobody re-derives it.
+
+What was built instead costs no new model and no new licence: `READ_SCREEN` runs
+the Tesseract path that was already there over the whole frame,
+`vision/screen-text.ts` turns words into text regions in viewport pixels, and
+`vision/agreement.ts` compares that reading against the DOM walk. Text only the
+pixels saw becomes a scan finding, so a number drawn into a canvas is redacted on
+every later run — content that reached a capture unexamined until today. Reading
+the frame belongs to the scan and never to a run: a run is budgeted at 150ms and
+this is not a 150ms operation.
+
+**None of it has seen a real screen.** 24 tests cover the logic; the agreement
+rate is unmeasured and the wiring is unverified in Chrome.
+
 **The caveat that matters most:** the corpus contains **no real page**. Every
 one was written here, and a measurement against our own description of a page
 proves less than one against somebody else's. The runner prints that line on
@@ -95,7 +115,14 @@ every run for as long as it is true.
 
 ## Next session starts with
 
-**Finishing T1.1: the real-page share.** The capture path exists and nothing has
+**Verifying the screen reader in Chrome, then measuring it.** Scan a page with
+text in a canvas or an iframe and check the console line
+`[shield] screen read: N agreed, N seen only in pixels ...`, then confirm the
+pixel-only text is actually covered on the next run. After that, the agreement
+rate on ≥10 real pages is the metric-1 evidence, and the dom-only column decides
+whether the frame needs upscaling before recognition.
+
+**Then T1.1: the real-page share.** The capture path exists and nothing has
 been driven through it. Load the extension with `SHIELD_DEV=1`, open the capture
 panel on logged-out or synthetic-data pages, save the maps into
 `extension/benchmark/captured/`, add `about` and `sensitive` by hand, and re-run
@@ -108,14 +135,13 @@ the boxes cannot be committed because `face-a.jpg` and `face-b.png` are not.
 Then T1.2, the local screen-understanding model — 25% of the score and the
 capability the problem statement is named after.
 
-**Uncommitted:** everything from the previous session (the benchmark instrument,
-`docs/BENCHMARK.md`, the TASKS.md rewrite, DECISIONS 164–168, the `benchmark`
-npm script) plus this session's work — the identifier fix and its tests, the
-element-map export and its tests, `benchmark/pages/`, `benchmark/pixels.ts`,
-the rewritten `benchmark/corpus.ts`, `tests/corpus.test.ts`, the `scorePixels`
-path, the `__SHIELD_DEV__` build define, the popup capture panel, and the
-tsconfig/TASKS/DECISIONS/SESSION_LOG edits. Do not commit until explicitly told
-to, and use the identity given at that time.
+**Uncommitted:** the whole vision layer — `src/lib/vision/screen-text.ts`,
+`src/lib/vision/agreement.ts`, `tests/vision.test.ts`, the `READ_SCREEN` message
+and its offscreen handler, the scan-path wiring in `service-worker.ts`, the
+`screen` field on `ScanSummary`, and the DECISIONS/TASKS/SESSION_LOG edits.
+`ppt.md` at the repository root is a scratch file for the idea deck and is not
+meant to be committed. Do not commit until explicitly told to, and use the
+identity given at that time.
 
 ---
 
@@ -151,6 +177,7 @@ to, and use the identity given at that time.
 | 25 | Scan verified in Chrome. Clipped-image defect found by two scans disagreeing. Audit log built |
 | 26 | Task list rebuilt around the five scored metrics. Benchmark instrument, corpus and first baseline for metrics 2 and 3 |
 | 27 | Corpus grown 4 pages to 38; pixel ground truth and a pixel scoring path; dev-only element-map export; identifier explanation fixed |
+| 28 | Vision layer evaluated and amended: whole-frame text regions and a DOM-versus-pixels comparison, no new model or licence |
 
 ---
 

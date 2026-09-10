@@ -12,7 +12,7 @@ next.
 
 | # | Metric | Weight | State |
 |---|---|---|---|
-| 1 | Accuracy of visual context from screen | 25% | **Weakest.** No pixel-level screen understanding |
+| 1 | Accuracy of visual context from screen | 25% | Pixel text regions built; **agreement rate not yet measured on a real page** |
 | 2 | Recall & precision of PII detection | 20% | **Measured.** 81.3% / 83.0% over 38 pages |
 | 3 | Precision of redaction | 20% | **Measured.** 83.4% precision, 56.5% coverage |
 | 4 | Client-side resource utilization | 20% | **Unmeasured.** Latency only |
@@ -48,7 +48,7 @@ indefensible answer to metric 1.
 | Trust UI | Overlay, payload inspector, latency panel, manual marking, audit log |
 | Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
 | Scan record | Redacted picture of every screen examined, kept local |
-| Tests | 241 client, 82 reasoner, 35 prompt |
+| Tests | 265 client, 82 reasoner, 35 prompt |
 
 Phases 1–3 (login autofill, multi-field signup, faces) are closed.
 
@@ -130,18 +130,37 @@ helped rather than assert it.
 ### T1.2 Local screen-understanding model
 **Metric 1 — 25%. The PS's namesake capability.**
 
-- [ ] Evaluate candidates for browser inference: UI-element detectors
-      (OmniParser icon model), small VLMs via Transformers.js (named in the PS,
-      currently unused). Record the choice and the reason in DECISIONS.md
-- [ ] Run it in the offscreen document alongside UltraFace, WebGPU + fallback
-- [ ] Produce a pixel-derived element map: regions, types, text areas
-- [ ] **Measure it against the DOM map.** Agreement rate, what each finds that
-      the other misses. This comparison *is* the metric-1 evidence
-- [ ] Keep DOM-primary for action targeting; vision becomes a second opinion
-      that can stand alone when markup is absent (canvas, iframe, image-only UI)
+Scope amended — DECISIONS.md 185. Text regions from the whole frame, **not**
+generic icon detection. The DOM maps a form in under 4ms and stays primary;
+what it cannot do at all is read a canvas, an iframe or a pasted screenshot.
 
-**Done when:** Shield extracts screen structure from pixels with no DOM at all,
-and we can show the agreement rate against the DOM map on ≥10 pages.
+- [x] **Candidates evaluated, choice recorded** — DECISIONS.md 185–188.
+      OmniParser `icon_detect` rejected on **licence**: it is a YOLOv8
+      fine-tune carrying AGPL-3.0 from Ultralytics, and it is the one part of
+      that pipeline you cannot skip. Its MIT replacement is a YOLOv9-**E**,
+      published in an unmerged PR with no ONNX export and far past a 1.1MB
+      budget. Small VLMs (SmolVLM-256M, Florence-2) rejected on **output
+      shape** before size: they emit text, and an element map needs boxes.
+- [x] **Runs in the offscreen document** — `READ_SCREEN` reads the whole frame
+      through the Tesseract path already there. No new model, no new licence,
+      no new weight. Not WebGPU: this path is WASM and always was.
+- [x] **Pixel-derived element map** — `lib/vision/screen-text.ts`. Words to
+      lines to text regions, in viewport CSS pixels, in reading order.
+- [x] **The comparison, which is the metric-1 evidence** —
+      `lib/vision/agreement.ts`. Agreed / pixel-only / dom-only, matched on
+      position **and** text because either alone is wrong. 24 tests.
+- [x] **DOM stays primary.** Only pixel-only text becomes a new finding;
+      anything both readers saw was already `detectDomPii`'s.
+- [ ] **Run it on ≥10 real pages and record the agreement rate.** The
+      machinery is built and has never seen a real screen. Needs a browser.
+- [ ] **Decide whether the frame needs upscaling.** Read at native resolution
+      today; 16px body text is marginal for the engine at that size. The
+      dom-only column is about to say how much that costs, so the threshold is
+      set from a measurement rather than a guess.
+
+**Done when:** the agreement rate against the DOM map is recorded on ≥10 real
+pages, and canvas/iframe text is shown being hidden on a page where the DOM
+sees nothing.
 
 ### T1.3 Open-weights server model, vision path on
 **Explicit PS requirement.**

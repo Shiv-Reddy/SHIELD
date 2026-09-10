@@ -430,6 +430,24 @@ export interface ScanSummary {
   truncated: boolean;
   counts: { category: SensitiveCategory; count: number }[];
   total: number;
+  /**
+   * What the DOM walk and the pixel reader each saw, summed over every stop.
+   *
+   * This is the metric-1 evidence: two independent readers of the same screen,
+   * and the two ways they disagree. `pixelOnly` is text that is on screen and
+   * that markup cannot describe - a canvas, an iframe, a pasted screenshot -
+   * and it is the number that justifies reading pixels at all. `domOnly` is the
+   * pixel reader's ceiling, mostly small or low-contrast type.
+   *
+   * Absent when the screen was never read, which is not the same as zero.
+   */
+  screen?: {
+    agreed: number;
+    pixelOnly: number;
+    domOnly: number;
+    /** Pixel-only text that classified as sensitive and became a finding. */
+    hidden: number;
+  };
 }
 
 /** Tally findings by category, commonest first. */
