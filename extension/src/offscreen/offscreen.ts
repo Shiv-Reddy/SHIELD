@@ -15,7 +15,9 @@ import {
   type OffscreenMessage,
   type AnalyseFrameResult,
   type ReadImagesReply,
+  type ReadScreenReply,
 } from '../lib/messages';
+import { screenTextRegions } from '../lib/vision/screen-text';
 import type { ExecutionBackend } from '../lib/settings';
 import {
   detectFaces,
@@ -145,6 +147,67 @@ async function readImages(
   }
 }
 
+/**
+ * Read every word on the whole frame.
+ *
+ * WHY THIS IS ONE CROP AND NOT A NEW ENGINE PATH
+ *
+ * `readCrop` already takes an arbitrary rectangle in frame pixels, upscales it,
+ * draws it to an OffscreenCanvas and hands it to the engine. The whole frame is
+ * that rectangle. Writing a second path would mean two places where a crop
+ * becomes a blob and two places to get the CSP pinning wrong.
+ *
+ * WHY IT IS NOT UPSCALED
+ *
+ * `readCrop` lifts a small crop to 1000px because an ID number inside a
+ * photograph is tiny by the time the viewport has been captured. A frame is
+ * already wider than that, so the scale is 1 and the frame is read at native
+ * resolution. Body text at sixteen CSS pixels is marginal for the engine at
+ * that size, and upscaling would help — at the cost of a canvas four times the
+ * area, on a metric that scores resource use at 20%.
+ *
+ * That trade is left unmade on purpose. `vision/agreement.ts` reports exactly
+ * what the engine failed to read that the DOM did see, so the size of the
+ * problem is about to be a measured number rather than a guess. Tuning first
+ * and measuring afterwards is how a threshold becomes folklore.
+ */
+async function readScreen(
+  dataUrl: string,
+  viewportWidth: number,
+  viewportHeight: number,
+): Promise<ReadScreenReply> {
+  let bitmap: ImageBitmap | undefined;
+  try {
+    bitmap = await createImageBitmap(dataUrlToBlob(dataUrl));
+
+    const reading = await readCrop(bitmap, {
+      elementId: 'screen',
+      x: 0,
+      y: 0,
+      width: bitmap.width,
+      height: bitmap.height,
+    });
+
+    if (!reading.ok) return { ok: false, message: reading.message };
+
+    return {
+      ok: true,
+      regions: screenTextRegions(
+        reading.words,
+        { width: reading.cropWidth, height: reading.cropHeight },
+        { width: viewportWidth, height: viewportHeight },
+      ),
+      frameWidth: bitmap.width,
+      frameHeight: bitmap.height,
+      words: reading.words.length,
+    };
+  } finally {
+    // The frame is a full-viewport screenshot and the most sensitive object in
+    // the extension. Released on every path, as everywhere else here.
+    bitmap?.close();
+  }
+}
+
 chrome.runtime.onMessage.addListener((message: OffscreenMessage, _sender, sendResponse) => {
   if (message.type === MSG.READ_IMAGES) {
     resetIdleTimer();
@@ -162,6 +225,23 @@ chrome.runtime.onMessage.addListener((message: OffscreenMessage, _sender, sendRe
             message: error instanceof Error ? error.message : String(error),
           })),
         });
+      });
+    return true;
+  }
+
+  if (message.type === MSG.READ_SCREEN) {
+    resetIdleTimer();
+    readScreen(message.dataUrl, message.viewportWidth, message.viewportHeight)
+      .then(sendResponse)
+      .catch((error: unknown) => {
+        // Reported as a failure, never as an empty read. A caller that cannot
+        // tell "no text on this screen" from "this screen was never examined"
+        // will treat the second as the first.
+        console.error('[shield] screen reading failed', error);
+        sendResponse({
+          ok: false,
+          message: error instanceof Error ? error.message : String(error),
+        } satisfies ReadScreenReply);
       });
     return true;
   }

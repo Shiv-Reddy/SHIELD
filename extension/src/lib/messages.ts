@@ -9,6 +9,7 @@
 
 import type { CropRequest, OcrReadResult } from '../offscreen/ocr';
 import type { PageCoverage, ScanFinding } from './coverage';
+import type { ScreenTextRegion } from './vision/screen-text';
 import type {
   DomElement,
   SensitiveCategory,
@@ -72,6 +73,16 @@ export const MSG = {
   REDACT_FRAME: 'shield/redact-frame',
   /** Worker -> offscreen document: read text out of image crops of the frame. */
   READ_IMAGES: 'shield/read-images',
+  /**
+   * Worker -> offscreen document: read every word on the whole frame.
+   *
+   * Separate from READ_IMAGES, which reads named image elements. This reads
+   * the screen itself, including what no element describes - text drawn into a
+   * canvas, inside an iframe, or baked into a pasted screenshot. It costs far
+   * more than a crop, so it belongs to the scan path and never to a run
+   * (DECISIONS.md 188).
+   */
+  READ_SCREEN: 'shield/read-screen',
   /**
    * Popup -> worker: examine the whole page, top to bottom, and send nothing.
    *
@@ -511,6 +522,27 @@ export interface ReadImagesMessage {
   crops: CropRequest[];
 }
 
+export interface ReadScreenMessage {
+  type: typeof MSG.READ_SCREEN;
+  /** Raw and unredacted. Never leaves the extension. */
+  dataUrl: string;
+  /** CSS pixels, so frame coordinates can be converted exactly once. */
+  viewportWidth: number;
+  viewportHeight: number;
+}
+
+export type ReadScreenReply =
+  | {
+      ok: true;
+      regions: ScreenTextRegion[];
+      /** What the engine actually worked on, for the record. */
+      frameWidth: number;
+      frameHeight: number;
+      /** Every word read, before grouping. Counted, never logged. */
+      words: number;
+    }
+  | { ok: false; message: string };
+
 export interface ReadImagesReply {
   /**
    * One entry per crop, each independently ok or not.
@@ -535,6 +567,7 @@ export type RedactFrameReply =
 
 export type OffscreenMessage =
   | ReadImagesMessage
+  | ReadScreenMessage
   | AnalyseFrameMessage
   | WarmUpMessage
   | ReloadModelMessage
@@ -674,6 +707,22 @@ export async function readOffscreenImages(
     type: MSG.READ_IMAGES,
     ...message,
   })) as ReadImagesReply;
+}
+
+/**
+ * Ask the offscreen document to read the whole screen.
+ *
+ * Failures are not swallowed, for the same reason `readOffscreenImages` does
+ * not swallow them: an empty reading and a failed one look identical to a
+ * caller, and only one of them means the screen is clean.
+ */
+export async function readOffscreenScreen(
+  message: Omit<ReadScreenMessage, 'type'>,
+): Promise<ReadScreenReply> {
+  return (await chrome.runtime.sendMessage({
+    type: MSG.READ_SCREEN,
+    ...message,
+  })) as ReadScreenReply;
 }
 
 /** Ask the offscreen document to prove the CPU fallback and report back. */
