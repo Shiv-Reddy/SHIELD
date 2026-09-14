@@ -1,0 +1,5109 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:25:08.274Z",
+  "about": "Hacker News front page, a clean control. Truncated at the 300-element cap",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(1) > a",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 152,
+        "y": 10,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > b > a",
+      "label": "Hacker News",
+      "value": "Hacker News",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 177,
+        "y": 12,
+        "width": 98,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "new",
+      "value": "new",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 280,
+        "y": 12,
+        "width": 27,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "past",
+      "value": "past",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 322,
+        "y": 12,
+        "width": 29,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "comments",
+      "value": "comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 366,
+        "y": 12,
+        "width": 70,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(4)",
+      "label": "ask",
+      "value": "ask",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 451,
+        "y": 12,
+        "width": 23,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(5)",
+      "label": "show",
+      "value": "show",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 490,
+        "y": 12,
+        "width": 34,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(6)",
+      "label": "jobs",
+      "value": "jobs",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 539,
+        "y": 12,
+        "width": 28,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span > a:nth-of-type(7)",
+      "label": "submit",
+      "value": "submit",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 583,
+        "y": 12,
+        "width": 46,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(3) > span > a",
+      "label": "login",
+      "value": "login",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1717,
+        "y": 12,
+        "width": 32,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#up_49688695",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 45,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#\\34 9688695 > td:nth-of-type(3) > span > a",
+      "label": "Fable 5.1 Solves the Cyphral Distich, a 370-year-old cipher",
+      "value": "Fable 5.1 Solves the Cyphral Distich, a 370-year-old cipher",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 44,
+        "width": 396,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "button",
+      "selector": "#\\34 9688695 > td:nth-of-type(3) > span > span > a",
+      "label": "vals.ai",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 590,
+        "y": 46,
+        "width": 34,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "u1hcw9nx",
+      "value": "u1hcw9nx",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 61,
+        "width": 48,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "12 hours ago",
+      "value": "12 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 304,
+        "y": 61,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 376,
+        "y": 61,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "387 comments",
+      "value": "387 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 407,
+        "y": 61,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "button",
+      "selector": "#up_49638510",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 80,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "button",
+      "selector": "#\\34 9638510 > td:nth-of-type(3) > span > a",
+      "label": "Spaceships (Reverse Asteroid)",
+      "value": "Spaceships (Reverse Asteroid)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 79,
+        "width": 204,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "button",
+      "selector": "#\\34 9638510 > td:nth-of-type(3) > span > span > a",
+      "label": "treybastian.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 398,
+        "y": 81,
+        "width": 87,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "zdw",
+      "value": "zdw",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 96,
+        "width": 18,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "8 hours ago",
+      "value": "8 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 275,
+        "y": 96,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 341,
+        "y": 96,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "40 comments",
+      "value": "40 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 372,
+        "y": 96,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "button",
+      "selector": "#up_49693613",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 115,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "button",
+      "selector": "#\\34 9693613 > td:nth-of-type(3) > span > a",
+      "label": "A 386 PC for Your RP2350",
+      "value": "A 386 PC for Your RP2350",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 114,
+        "width": 175,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "button",
+      "selector": "#\\34 9693613 > td:nth-of-type(3) > span > span > a",
+      "label": "github.com/rh1tech",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 369,
+        "y": 116,
+        "width": 106,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(8) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "SamuraiLion",
+      "value": "SamuraiLion",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 241,
+        "y": 131,
+        "width": 58,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(8) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "57 minutes ago",
+      "value": "57 minutes ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 303,
+        "y": 131,
+        "width": 73,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(8) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 386,
+        "y": 131,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(8) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "discuss",
+      "value": "discuss",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 417,
+        "y": 131,
+        "width": 34,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "button",
+      "selector": "#up_49693610",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 150,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "button",
+      "selector": "#\\34 9693610 > td:nth-of-type(3) > span > a",
+      "label": "EuroBirdPortal – Live bird movements across Europe",
+      "value": "EuroBirdPortal – Live bird movements across Europe",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 149,
+        "width": 353,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "button",
+      "selector": "#\\34 9693610 > td:nth-of-type(3) > span > span > a",
+      "label": "eurobirdportal.org",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 547,
+        "y": 151,
+        "width": 98,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(11) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "NKosmatos",
+      "value": "NKosmatos",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 241,
+        "y": 166,
+        "width": 53,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(11) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "58 minutes ago",
+      "value": "58 minutes ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 297,
+        "y": 166,
+        "width": 73,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(11) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 381,
+        "y": 166,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(11) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "1 comment",
+      "value": "1 comment",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 411,
+        "y": 166,
+        "width": 53,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e38",
+      "elementType": "button",
+      "selector": "#up_49689048",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 185,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e39",
+      "elementType": "button",
+      "selector": "#\\34 9689048 > td:nth-of-type(3) > span > a",
+      "label": "Registration without a phone number on Signal will use zero-knowledge proofs",
+      "value": "Registration without a phone number on Signal will use zero-knowledge proofs",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 184,
+        "width": 529,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e40",
+      "elementType": "button",
+      "selector": "#\\34 9689048 > td:nth-of-type(3) > span > span > a",
+      "label": "signalusers.org",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 723,
+        "y": 186,
+        "width": 82,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e41",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(14) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "Cider9986",
+      "value": "Cider9986",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 201,
+        "width": 48,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e42",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(14) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "11 hours ago",
+      "value": "11 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 304,
+        "y": 201,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e43",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(14) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 377,
+        "y": 201,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e44",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(14) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "120 comments",
+      "value": "120 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 408,
+        "y": 201,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e45",
+      "elementType": "button",
+      "selector": "#up_49690174",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 220,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e46",
+      "elementType": "button",
+      "selector": "#\\34 9690174 > td:nth-of-type(3) > span > a",
+      "label": "Apple's Dimensional Drawings",
+      "value": "Apple's Dimensional Drawings",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 219,
+        "width": 201,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e47",
+      "elementType": "button",
+      "selector": "#\\34 9690174 > td:nth-of-type(3) > span > span > a",
+      "label": "developer.apple.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 395,
+        "y": 221,
+        "width": 110,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e48",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(17) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "herbertl",
+      "value": "herbertl",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 236,
+        "width": 37,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e49",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(17) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "9 hours ago",
+      "value": "9 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 293,
+        "y": 236,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e50",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(17) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 360,
+        "y": 236,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e51",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(17) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "72 comments",
+      "value": "72 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 391,
+        "y": 236,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e52",
+      "elementType": "button",
+      "selector": "#up_49690554",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 255,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e53",
+      "elementType": "button",
+      "selector": "#\\34 9690554 > td:nth-of-type(3) > span > a",
+      "label": "The case against JPEG XL",
+      "value": "The case against JPEG XL",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 254,
+        "width": 171,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e54",
+      "elementType": "button",
+      "selector": "#\\34 9690554 > td:nth-of-type(3) > span > span > a",
+      "label": "giannirosato.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 365,
+        "y": 256,
+        "width": 92,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e55",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(20) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "contact9879",
+      "value": "contact9879",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 271,
+        "width": 58,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e56",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(20) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "8 hours ago",
+      "value": "8 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 314,
+        "y": 271,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e57",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(20) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 381,
+        "y": 271,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e58",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(20) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "211 comments",
+      "value": "211 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 412,
+        "y": 271,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e59",
+      "elementType": "button",
+      "selector": "#up_49693226",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 290,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e60",
+      "elementType": "button",
+      "selector": "#\\34 9693226 > td:nth-of-type(3) > span > a",
+      "label": "Show HN: 1080p is 920px tall – 1k real browser viewports",
+      "value": "Show HN: 1080p is 920px tall – 1k real browser viewports",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 289,
+        "width": 393,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e61",
+      "elementType": "button",
+      "selector": "#\\34 9693226 > td:nth-of-type(3) > span > span > a",
+      "label": "screensize.net",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 587,
+        "y": 291,
+        "width": 77,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e62",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(23) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "zenpe",
+      "value": "zenpe",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 241,
+        "y": 306,
+        "width": 28,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e63",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(23) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "1 hour ago",
+      "value": "1 hour ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 272,
+        "y": 306,
+        "width": 51,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e64",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(23) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 334,
+        "y": 306,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e65",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(23) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "6 comments",
+      "value": "6 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 365,
+        "y": 306,
+        "width": 58,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e66",
+      "elementType": "button",
+      "selector": "#up_49692765",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 325,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e67",
+      "elementType": "button",
+      "selector": "#\\34 9692765 > td:nth-of-type(3) > span > a",
+      "label": "Of Gods and Languages: On \"When God Spoke Greek\" (2013)",
+      "value": "Of Gods and Languages: On \"When God Spoke Greek\" (2013)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 324,
+        "width": 417,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e68",
+      "elementType": "button",
+      "selector": "#\\34 9692765 > td:nth-of-type(3) > span > span > a",
+      "label": "lareviewofbooks.org",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 611,
+        "y": 326,
+        "width": 108,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e69",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(26) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "bryanrasmussen",
+      "value": "bryanrasmussen",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 341,
+        "width": 77,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e70",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(26) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "2 hours ago",
+      "value": "2 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 327,
+        "y": 341,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e71",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(26) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 394,
+        "y": 341,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e72",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(26) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "17 comments",
+      "value": "17 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 425,
+        "y": 341,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e73",
+      "elementType": "button",
+      "selector": "#up_49662246",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 360,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e74",
+      "elementType": "button",
+      "selector": "#\\34 9662246 > td:nth-of-type(3) > span > a",
+      "label": "Rope, twine and thread: Invisible technologies of the Stone Age",
+      "value": "Rope, twine and thread: Invisible technologies of the Stone Age",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 359,
+        "width": 429,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e75",
+      "elementType": "button",
+      "selector": "#\\34 9662246 > td:nth-of-type(3) > span > span > a",
+      "label": "knowablemagazine.org",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 623,
+        "y": 361,
+        "width": 123,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e76",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(29) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "knowablemag",
+      "value": "knowablemag",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 376,
+        "width": 65,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e77",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(29) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "7 hours ago",
+      "value": "7 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 315,
+        "y": 376,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e78",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(29) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 382,
+        "y": 376,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e79",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(29) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "16 comments",
+      "value": "16 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 412,
+        "y": 376,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e80",
+      "elementType": "button",
+      "selector": "#up_49688259",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 395,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e81",
+      "elementType": "button",
+      "selector": "#\\34 9688259 > td:nth-of-type(3) > span > a",
+      "label": "Mullenweg has returned as CEO after attempted board ouster",
+      "value": "Mullenweg has returned as CEO after attempted board ouster",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 394,
+        "width": 414,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e82",
+      "elementType": "button",
+      "selector": "#\\34 9688259 > td:nth-of-type(3) > span > span > a",
+      "label": "techcrunch.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 608,
+        "y": 396,
+        "width": 85,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e83",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(32) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "ilamont",
+      "value": "ilamont",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 411,
+        "width": 35,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e84",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(32) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "13 hours ago",
+      "value": "13 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 291,
+        "y": 411,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e85",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(32) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 364,
+        "y": 411,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e86",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(32) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "205 comments",
+      "value": "205 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 395,
+        "y": 411,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e87",
+      "elementType": "button",
+      "selector": "#up_49686380",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 430,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e88",
+      "elementType": "button",
+      "selector": "#\\34 9686380 > td:nth-of-type(3) > span > a",
+      "label": "Ask HN: What are you working on? (September 2026)",
+      "value": "Ask HN: What are you working on? (September 2026)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 429,
+        "width": 365,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e89",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(35) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "david927",
+      "value": "david927",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 446,
+        "width": 43,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e90",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(35) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "15 hours ago",
+      "value": "15 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 299,
+        "y": 446,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e91",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(35) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 372,
+        "y": 446,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e92",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(35) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "519 comments",
+      "value": "519 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 403,
+        "y": 446,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e93",
+      "elementType": "button",
+      "selector": "#up_49642645",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 465,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e94",
+      "elementType": "button",
+      "selector": "#\\34 9642645 > td:nth-of-type(3) > span > a",
+      "label": "Julia 1.13 highlights",
+      "value": "Julia 1.13 highlights",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 464,
+        "width": 135,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e95",
+      "elementType": "button",
+      "selector": "#\\34 9642645 > td:nth-of-type(3) > span > span > a",
+      "label": "julialang.org",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 329,
+        "y": 466,
+        "width": 67,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e96",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(38) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "eigenspace",
+      "value": "eigenspace",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 481,
+        "width": 52,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e97",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(38) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "14 hours ago",
+      "value": "14 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 308,
+        "y": 481,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e98",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(38) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 381,
+        "y": 481,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e99",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(38) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "21 comments",
+      "value": "21 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 412,
+        "y": 481,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e100",
+      "elementType": "button",
+      "selector": "#up_49691152",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 500,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e101",
+      "elementType": "button",
+      "selector": "#\\34 9691152 > td:nth-of-type(3) > span > a",
+      "label": "OEMpocalypse: Unprivileged Android app to root on Samsung, Xiaomi, others",
+      "value": "OEMpocalypse: Unprivileged Android app to root on Samsung, Xiaomi, others",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 499,
+        "width": 521,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e102",
+      "elementType": "button",
+      "selector": "#\\34 9691152 > td:nth-of-type(3) > span > span > a",
+      "label": "calif.io",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 715,
+        "y": 501,
+        "width": 34,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e103",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(41) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "negura",
+      "value": "negura",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 516,
+        "width": 33,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e104",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(41) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "6 hours ago",
+      "value": "6 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 283,
+        "y": 516,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e105",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(41) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 350,
+        "y": 516,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e106",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(41) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "24 comments",
+      "value": "24 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 380,
+        "y": 516,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e107",
+      "elementType": "button",
+      "selector": "#up_49686445",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 535,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e108",
+      "elementType": "button",
+      "selector": "#\\34 9686445 > td:nth-of-type(3) > span > a",
+      "label": "Why is Google still serving dodgy ads?",
+      "value": "Why is Google still serving dodgy ads?",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 534,
+        "width": 258,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e109",
+      "elementType": "button",
+      "selector": "#\\34 9686445 > td:nth-of-type(3) > span > span > a",
+      "label": "atomic14.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 452,
+        "y": 536,
+        "width": 76,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e110",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(44) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "iamflimflam1",
+      "value": "iamflimflam1",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 551,
+        "width": 61,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e111",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(44) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "15 hours ago",
+      "value": "15 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 317,
+        "y": 551,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e112",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(44) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 390,
+        "y": 551,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e113",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(44) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "357 comments",
+      "value": "357 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 421,
+        "y": 551,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e114",
+      "elementType": "button",
+      "selector": "#up_49649164",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 570,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e115",
+      "elementType": "button",
+      "selector": "#\\34 9649164 > td:nth-of-type(3) > span > a",
+      "label": "The GDR and Vietnam: From Fake Coffee to Coffee Empire",
+      "value": "The GDR and Vietnam: From Fake Coffee to Coffee Empire",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 569,
+        "width": 394,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e116",
+      "elementType": "button",
+      "selector": "#\\34 9649164 > td:nth-of-type(3) > span > span > a",
+      "label": "katjahoyer.uk",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 588,
+        "y": 571,
+        "width": 73,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e117",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(47) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "NaOH",
+      "value": "NaOH",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 586,
+        "width": 27,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e118",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(47) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "11 hours ago",
+      "value": "11 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 277,
+        "y": 586,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e119",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(47) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 350,
+        "y": 586,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e120",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(47) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "32 comments",
+      "value": "32 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 381,
+        "y": 586,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e121",
+      "elementType": "button",
+      "selector": "#up_49645654",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 605,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e122",
+      "elementType": "button",
+      "selector": "#\\34 9645654 > td:nth-of-type(3) > span > a",
+      "label": "Show HN: EterDB, a Postgres fork that makes it easy to recover from incidents",
+      "value": "Show HN: EterDB, a Postgres fork that makes it easy to recover from incidents",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 604,
+        "width": 531,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e123",
+      "elementType": "button",
+      "selector": "#\\34 9645654 > td:nth-of-type(3) > span > span > a",
+      "label": "eterdb.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 725,
+        "y": 606,
+        "width": 61,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e124",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(50) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "fdeth",
+      "value": "fdeth",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 621,
+        "width": 24,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e125",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(50) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "6 hours ago",
+      "value": "6 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 275,
+        "y": 621,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e126",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(50) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 341,
+        "y": 621,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e127",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(50) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "11 comments",
+      "value": "11 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 372,
+        "y": 621,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e128",
+      "elementType": "button",
+      "selector": "#up_49688391",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 640,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e129",
+      "elementType": "button",
+      "selector": "#\\34 9688391 > td:nth-of-type(3) > span > a",
+      "label": "Flawed routers flood University of Wisconsin internet time server (2003)",
+      "value": "Flawed routers flood University of Wisconsin internet time server (2003)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 639,
+        "width": 486,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e130",
+      "elementType": "button",
+      "selector": "#\\34 9688391 > td:nth-of-type(3) > span > span > a",
+      "label": "wisc.edu",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 680,
+        "y": 641,
+        "width": 46,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e131",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(53) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "walrus01",
+      "value": "walrus01",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 656,
+        "width": 42,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e132",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(53) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "12 hours ago",
+      "value": "12 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 293,
+        "y": 656,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e133",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(53) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 365,
+        "y": 656,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e134",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(53) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "10 comments",
+      "value": "10 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 396,
+        "y": 656,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e135",
+      "elementType": "button",
+      "selector": "#up_49690260",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 675,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e136",
+      "elementType": "button",
+      "selector": "#\\34 9690260 > td:nth-of-type(3) > span > a",
+      "label": "Open-source AI and open models reading list",
+      "value": "Open-source AI and open models reading list",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 674,
+        "width": 303,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e137",
+      "elementType": "button",
+      "selector": "#\\34 9690260 > td:nth-of-type(3) > span > span > a",
+      "label": "interconnects.ai",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 497,
+        "y": 676,
+        "width": 85,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e138",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(56) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "simonpure",
+      "value": "simonpure",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 691,
+        "width": 49,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e139",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(56) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "9 hours ago",
+      "value": "9 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 306,
+        "y": 691,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e140",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(56) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 372,
+        "y": 691,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e141",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(56) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "18 comments",
+      "value": "18 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 403,
+        "y": 691,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e142",
+      "elementType": "button",
+      "selector": "#up_49660631",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 710,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e143",
+      "elementType": "button",
+      "selector": "#\\34 9660631 > td:nth-of-type(3) > span > a",
+      "label": "Five Words from Vanishing Fleece",
+      "value": "Five Words from Vanishing Fleece",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 709,
+        "width": 225,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e144",
+      "elementType": "button",
+      "selector": "#\\34 9660631 > td:nth-of-type(3) > span > span > a",
+      "label": "wordnik.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 419,
+        "y": 711,
+        "width": 69,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e145",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(59) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "dan353hehe",
+      "value": "dan353hehe",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 241,
+        "y": 726,
+        "width": 58,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e146",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(59) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "3 hours ago",
+      "value": "3 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 302,
+        "y": 726,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e147",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(59) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 369,
+        "y": 726,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e148",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(59) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "discuss",
+      "value": "discuss",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 400,
+        "y": 726,
+        "width": 34,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e149",
+      "elementType": "button",
+      "selector": "#up_49667198",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 745,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e150",
+      "elementType": "button",
+      "selector": "#\\34 9667198 > td:nth-of-type(3) > span > a",
+      "label": "The Nature of Dance",
+      "value": "The Nature of Dance",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 744,
+        "width": 138,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e151",
+      "elementType": "button",
+      "selector": "#\\34 9667198 > td:nth-of-type(3) > span > span > a",
+      "label": "vester.si",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 332,
+        "y": 746,
+        "width": 44,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e152",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(62) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "wonger_",
+      "value": "wonger_",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 241,
+        "y": 761,
+        "width": 41,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e153",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(62) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "2 hours ago",
+      "value": "2 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 285,
+        "y": 761,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e154",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(62) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 352,
+        "y": 761,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e155",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(62) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "discuss",
+      "value": "discuss",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 382,
+        "y": 761,
+        "width": 34,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e156",
+      "elementType": "button",
+      "selector": "#up_49655621",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 780,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e157",
+      "elementType": "button",
+      "selector": "#\\34 9655621 > td:nth-of-type(3) > span > a",
+      "label": "Bad benchmarks and evals: Senior SWE-Bench, napkin math, and winter tires",
+      "value": "Bad benchmarks and evals: Senior SWE-Bench, napkin math, and winter tires",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 779,
+        "width": 525,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e158",
+      "elementType": "button",
+      "selector": "#\\34 9655621 > td:nth-of-type(3) > span > span > a",
+      "label": "danluu.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 719,
+        "y": 781,
+        "width": 62,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e159",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(65) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "luu",
+      "value": "luu",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 796,
+        "width": 14,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e160",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(65) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "4 hours ago",
+      "value": "4 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 265,
+        "y": 796,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e161",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(65) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 331,
+        "y": 796,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e162",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(65) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "5 comments",
+      "value": "5 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 362,
+        "y": 796,
+        "width": 58,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e163",
+      "elementType": "button",
+      "selector": "#up_49691343",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 815,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e164",
+      "elementType": "button",
+      "selector": "#\\34 9691343 > td:nth-of-type(3) > span > a",
+      "label": "Nike exits the S&P 100 after 18 years and a $200B market-cap wipeout",
+      "value": "Nike exits the S&P 100 after 18 years and a $200B market-cap wipeout",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 814,
+        "width": 481,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e165",
+      "elementType": "button",
+      "selector": "#\\34 9691343 > td:nth-of-type(3) > span > span > a",
+      "label": "fortune.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 675,
+        "y": 816,
+        "width": 65,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e166",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(68) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "andsoitis",
+      "value": "andsoitis",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 831,
+        "width": 42,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e167",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(68) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "6 hours ago",
+      "value": "6 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 298,
+        "y": 831,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e168",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(68) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 364,
+        "y": 831,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e169",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(68) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "158 comments",
+      "value": "158 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 395,
+        "y": 831,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e170",
+      "elementType": "button",
+      "selector": "#up_49684356",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 850,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e171",
+      "elementType": "button",
+      "selector": "#\\34 9684356 > td:nth-of-type(3) > span > a",
+      "label": "CUDA for AMD on Windows",
+      "value": "CUDA for AMD on Windows",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 849,
+        "width": 182,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e172",
+      "elementType": "button",
+      "selector": "#\\34 9684356 > td:nth-of-type(3) > span > span > a",
+      "label": "github.com/speedstu",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 376,
+        "y": 851,
+        "width": 113,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e173",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(71) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "chiassedu80",
+      "value": "chiassedu80",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 866,
+        "width": 58,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e174",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(71) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "18 hours ago",
+      "value": "18 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 314,
+        "y": 866,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e175",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(71) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 387,
+        "y": 866,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e176",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(71) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "86 comments",
+      "value": "86 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 417,
+        "y": 866,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e177",
+      "elementType": "button",
+      "selector": "#up_49690678",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 885,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e178",
+      "elementType": "button",
+      "selector": "#\\34 9690678 > td:nth-of-type(3) > span > a",
+      "label": "The Malicious Use of Artificial Intelligence",
+      "value": "The Malicious Use of Artificial Intelligence",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 884,
+        "width": 278,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e179",
+      "elementType": "button",
+      "selector": "#\\34 9690678 > td:nth-of-type(3) > span > span > a",
+      "label": "arxiv.org",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 472,
+        "y": 886,
+        "width": 47,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e180",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(74) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "rasengan0",
+      "value": "rasengan0",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 901,
+        "width": 49,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e181",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(74) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "8 hours ago",
+      "value": "8 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 299,
+        "y": 901,
+        "width": 56,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e182",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(74) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 366,
+        "y": 901,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e183",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(74) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "14 comments",
+      "value": "14 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 397,
+        "y": 901,
+        "width": 64,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e184",
+      "elementType": "button",
+      "selector": "#up_49684393",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 171,
+        "y": 920,
+        "width": 14,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e185",
+      "elementType": "button",
+      "selector": "#\\34 9684393 > td:nth-of-type(3) > span > a",
+      "label": "Astra and Fable still hack on simple variants of alignment evals from 2025",
+      "value": "Astra and Fable still hack on simple variants of alignment evals from 2025",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 919,
+        "width": 498,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e186",
+      "elementType": "button",
+      "selector": "#\\34 9684393 > td:nth-of-type(3) > span > span > a",
+      "label": "lesswrong.com",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 692,
+        "y": 921,
+        "width": 80,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e187",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(77) > td:nth-of-type(2) > span > a:nth-of-type(1)",
+      "label": "Levitating",
+      "value": "Levitating",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 253,
+        "y": 936,
+        "width": 46,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e188",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(77) > td:nth-of-type(2) > span > span:nth-of-type(2) > a",
+      "label": "18 hours ago",
+      "value": "18 hours ago",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 302,
+        "y": 936,
+        "width": 62,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e189",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(77) > td:nth-of-type(2) > span > a:nth-of-type(2)",
+      "label": "hide",
+      "value": "hide",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 375,
+        "y": 936,
+        "width": 20,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e190",
+      "elementType": "button",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(77) > td:nth-of-type(2) > span > a:nth-of-type(3)",
+      "label": "204 comments",
+      "value": "204 comments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 406,
+        "y": 936,
+        "width": 70,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e191",
+      "elementType": "image",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(1) > a > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 152,
+        "y": 10,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e192",
+      "elementType": "text",
+      "selector": "#hnmain > tbody > tr:nth-of-type(1) > td > table > tbody > tr > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "| | | | | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 176,
+        "y": 12,
+        "width": 453,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e193",
+      "elementType": "text",
+      "selector": "#\\34 9688695 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "1.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 42,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e194",
+      "elementType": "text",
+      "selector": "#\\34 9688695 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 582,
+        "y": 46,
+        "width": 48,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e195",
+      "elementType": "text",
+      "selector": "#\\34 9688695 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "vals.ai",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 590,
+        "y": 46,
+        "width": 34,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e196",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(2) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 61,
+        "width": 291,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e197",
+      "elementType": "text",
+      "selector": "#score_49688695",
+      "label": null,
+      "value": "915 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 61,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e198",
+      "elementType": "text",
+      "selector": "#\\34 9638510 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "2.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 77,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e199",
+      "elementType": "text",
+      "selector": "#\\34 9638510 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 390,
+        "y": 81,
+        "width": 100,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e200",
+      "elementType": "text",
+      "selector": "#\\34 9638510 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "treybastian.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 398,
+        "y": 81,
+        "width": 87,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e201",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 96,
+        "width": 250,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e202",
+      "elementType": "text",
+      "selector": "#score_49638510",
+      "label": null,
+      "value": "234 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 96,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e203",
+      "elementType": "text",
+      "selector": "#\\34 9693613 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "3.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 112,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e204",
+      "elementType": "text",
+      "selector": "#\\34 9693613 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 360,
+        "y": 116,
+        "width": 119,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e205",
+      "elementType": "text",
+      "selector": "#\\34 9693613 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "github.com/rh1tech",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 369,
+        "y": 116,
+        "width": 106,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e206",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(8) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 131,
+        "width": 265,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e207",
+      "elementType": "text",
+      "selector": "#score_49693613",
+      "label": null,
+      "value": "8 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 131,
+        "width": 38,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e208",
+      "elementType": "text",
+      "selector": "#\\34 9693610 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "4.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 147,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e209",
+      "elementType": "text",
+      "selector": "#\\34 9693610 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 538,
+        "y": 151,
+        "width": 111,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e210",
+      "elementType": "text",
+      "selector": "#\\34 9693610 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "eurobirdportal.org",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 547,
+        "y": 151,
+        "width": 98,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e211",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(11) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 166,
+        "width": 279,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e212",
+      "elementType": "text",
+      "selector": "#score_49693610",
+      "label": null,
+      "value": "6 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 166,
+        "width": 38,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e213",
+      "elementType": "text",
+      "selector": "#\\34 9689048 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "5.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 182,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e214",
+      "elementType": "text",
+      "selector": "#\\34 9689048 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 714,
+        "y": 186,
+        "width": 95,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e215",
+      "elementType": "text",
+      "selector": "#\\34 9689048 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "signalusers.org",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 723,
+        "y": 186,
+        "width": 82,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e216",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(14) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 201,
+        "width": 292,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e217",
+      "elementType": "text",
+      "selector": "#score_49689048",
+      "label": null,
+      "value": "254 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 201,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e218",
+      "elementType": "text",
+      "selector": "#\\34 9690174 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "6.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 217,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e219",
+      "elementType": "text",
+      "selector": "#\\34 9690174 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 387,
+        "y": 221,
+        "width": 124,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e220",
+      "elementType": "text",
+      "selector": "#\\34 9690174 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "developer.apple.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 395,
+        "y": 221,
+        "width": 110,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e221",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(17) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 236,
+        "width": 269,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e222",
+      "elementType": "text",
+      "selector": "#score_49690174",
+      "label": null,
+      "value": "186 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 236,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e223",
+      "elementType": "text",
+      "selector": "#\\34 9690554 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "7.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 252,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e224",
+      "elementType": "text",
+      "selector": "#\\34 9690554 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 357,
+        "y": 256,
+        "width": 106,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e225",
+      "elementType": "text",
+      "selector": "#\\34 9690554 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "giannirosato.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 365,
+        "y": 256,
+        "width": 92,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e226",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(20) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 271,
+        "width": 296,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e227",
+      "elementType": "text",
+      "selector": "#score_49690554",
+      "label": null,
+      "value": "156 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 271,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e228",
+      "elementType": "text",
+      "selector": "#\\34 9693226 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "8.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 287,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e229",
+      "elementType": "text",
+      "selector": "#\\34 9693226 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 578,
+        "y": 291,
+        "width": 90,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e230",
+      "elementType": "text",
+      "selector": "#\\34 9693226 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "screensize.net",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 587,
+        "y": 291,
+        "width": 77,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e231",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(23) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 306,
+        "width": 237,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e232",
+      "elementType": "text",
+      "selector": "#score_49693226",
+      "label": null,
+      "value": "9 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 306,
+        "width": 38,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e233",
+      "elementType": "text",
+      "selector": "#\\34 9692765 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "9.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 158,
+        "y": 322,
+        "width": 13,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e234",
+      "elementType": "text",
+      "selector": "#\\34 9692765 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 602,
+        "y": 326,
+        "width": 121,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e235",
+      "elementType": "text",
+      "selector": "#\\34 9692765 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "lareviewofbooks.org",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 611,
+        "y": 326,
+        "width": 108,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e236",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(26) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 341,
+        "width": 303,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e237",
+      "elementType": "text",
+      "selector": "#score_49692765",
+      "label": null,
+      "value": "26 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 341,
+        "width": 44,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e238",
+      "elementType": "text",
+      "selector": "#\\34 9662246 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "10.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 357,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e239",
+      "elementType": "text",
+      "selector": "#\\34 9662246 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 615,
+        "y": 361,
+        "width": 137,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e240",
+      "elementType": "text",
+      "selector": "#\\34 9662246 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "knowablemagazine.org",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 623,
+        "y": 361,
+        "width": 123,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e241",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(29) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 376,
+        "width": 291,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e242",
+      "elementType": "text",
+      "selector": "#score_49662246",
+      "label": null,
+      "value": "64 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 376,
+        "width": 44,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e243",
+      "elementType": "text",
+      "selector": "#\\34 9688259 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "11.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 392,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e244",
+      "elementType": "text",
+      "selector": "#\\34 9688259 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 599,
+        "y": 396,
+        "width": 98,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e245",
+      "elementType": "text",
+      "selector": "#\\34 9688259 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "techcrunch.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 608,
+        "y": 396,
+        "width": 85,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e246",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(32) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 411,
+        "width": 279,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e247",
+      "elementType": "text",
+      "selector": "#score_49688259",
+      "label": null,
+      "value": "151 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 411,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e248",
+      "elementType": "text",
+      "selector": "#\\34 9686380 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "12.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 427,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e249",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(35) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 446,
+        "width": 287,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e250",
+      "elementType": "text",
+      "selector": "#score_49686380",
+      "label": null,
+      "value": "165 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 446,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e251",
+      "elementType": "text",
+      "selector": "#\\34 9642645 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "13.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 462,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e252",
+      "elementType": "text",
+      "selector": "#\\34 9642645 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 320,
+        "y": 466,
+        "width": 80,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e253",
+      "elementType": "text",
+      "selector": "#\\34 9642645 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "julialang.org",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 329,
+        "y": 466,
+        "width": 67,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e254",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(38) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 481,
+        "width": 290,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e255",
+      "elementType": "text",
+      "selector": "#score_49642645",
+      "label": null,
+      "value": "229 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 481,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e256",
+      "elementType": "text",
+      "selector": "#\\34 9691152 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "14.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 497,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e257",
+      "elementType": "text",
+      "selector": "#\\34 9691152 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 706,
+        "y": 501,
+        "width": 48,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e258",
+      "elementType": "text",
+      "selector": "#\\34 9691152 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "calif.io",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 715,
+        "y": 501,
+        "width": 34,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e259",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(41) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 516,
+        "width": 259,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e260",
+      "elementType": "text",
+      "selector": "#score_49691152",
+      "label": null,
+      "value": "52 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 516,
+        "width": 44,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e261",
+      "elementType": "text",
+      "selector": "#\\34 9686445 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "15.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 532,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e262",
+      "elementType": "text",
+      "selector": "#\\34 9686445 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 443,
+        "y": 536,
+        "width": 89,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e263",
+      "elementType": "text",
+      "selector": "#\\34 9686445 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "atomic14.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 452,
+        "y": 536,
+        "width": 76,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e264",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(44) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 551,
+        "width": 305,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e265",
+      "elementType": "text",
+      "selector": "#score_49686445",
+      "label": null,
+      "value": "808 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 551,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e266",
+      "elementType": "text",
+      "selector": "#\\34 9649164 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "16.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 567,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e267",
+      "elementType": "text",
+      "selector": "#\\34 9649164 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 579,
+        "y": 571,
+        "width": 86,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e268",
+      "elementType": "text",
+      "selector": "#\\34 9649164 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "katjahoyer.uk",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 588,
+        "y": 571,
+        "width": 73,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e269",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(47) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 586,
+        "width": 259,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e270",
+      "elementType": "text",
+      "selector": "#score_49649164",
+      "label": null,
+      "value": "77 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 586,
+        "width": 44,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e271",
+      "elementType": "text",
+      "selector": "#\\34 9645654 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "17.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 602,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e272",
+      "elementType": "text",
+      "selector": "#\\34 9645654 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 716,
+        "y": 606,
+        "width": 74,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e273",
+      "elementType": "text",
+      "selector": "#\\34 9645654 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "eterdb.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 725,
+        "y": 606,
+        "width": 61,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e274",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(50) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 621,
+        "width": 250,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e275",
+      "elementType": "text",
+      "selector": "#score_49645654",
+      "label": null,
+      "value": "31 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 621,
+        "width": 44,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e276",
+      "elementType": "text",
+      "selector": "#\\34 9688391 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "18.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 637,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e277",
+      "elementType": "text",
+      "selector": "#\\34 9688391 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 671,
+        "y": 641,
+        "width": 60,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e278",
+      "elementType": "text",
+      "selector": "#\\34 9688391 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "wisc.edu",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 680,
+        "y": 641,
+        "width": 46,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e279",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(53) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 656,
+        "width": 274,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e280",
+      "elementType": "text",
+      "selector": "#score_49688391",
+      "label": null,
+      "value": "82 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 656,
+        "width": 44,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e281",
+      "elementType": "text",
+      "selector": "#\\34 9690260 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "19.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 672,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e282",
+      "elementType": "text",
+      "selector": "#\\34 9690260 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 489,
+        "y": 676,
+        "width": 99,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e283",
+      "elementType": "text",
+      "selector": "#\\34 9690260 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "interconnects.ai",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 497,
+        "y": 676,
+        "width": 85,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e284",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(56) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 691,
+        "width": 281,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e285",
+      "elementType": "text",
+      "selector": "#score_49690260",
+      "label": null,
+      "value": "108 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 691,
+        "width": 50,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e286",
+      "elementType": "text",
+      "selector": "#\\34 9660631 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "20.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 707,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e287",
+      "elementType": "text",
+      "selector": "#\\34 9660631 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 411,
+        "y": 711,
+        "width": 82,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e288",
+      "elementType": "text",
+      "selector": "#\\34 9660631 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "wordnik.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 419,
+        "y": 711,
+        "width": 69,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e289",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(59) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 726,
+        "width": 248,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e290",
+      "elementType": "text",
+      "selector": "#score_49660631",
+      "label": null,
+      "value": "9 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 726,
+        "width": 38,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e291",
+      "elementType": "text",
+      "selector": "#\\34 9667198 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "21.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 742,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e292",
+      "elementType": "text",
+      "selector": "#\\34 9667198 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 324,
+        "y": 746,
+        "width": 58,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e293",
+      "elementType": "text",
+      "selector": "#\\34 9667198 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "vester.si",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 332,
+        "y": 746,
+        "width": 44,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e294",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(62) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 761,
+        "width": 230,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e295",
+      "elementType": "text",
+      "selector": "#score_49667198",
+      "label": null,
+      "value": "3 points",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 761,
+        "width": 38,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e296",
+      "elementType": "text",
+      "selector": "#\\34 9655621 > td:nth-of-type(1) > span",
+      "label": null,
+      "value": "22.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 150,
+        "y": 777,
+        "width": 22,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e297",
+      "elementType": "text",
+      "selector": "#\\34 9655621 > td:nth-of-type(3) > span > span",
+      "label": null,
+      "value": "()",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 710,
+        "y": 781,
+        "width": 76,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e298",
+      "elementType": "text",
+      "selector": "#\\34 9655621 > td:nth-of-type(3) > span > span > a > span",
+      "label": null,
+      "value": "danluu.com",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 719,
+        "y": 781,
+        "width": 62,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e299",
+      "elementType": "text",
+      "selector": "#bigbox > td > table > tbody > tr:nth-of-type(65) > td:nth-of-type(2) > span",
+      "label": null,
+      "value": "by | |",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 185,
+        "y": 796,
+        "width": 234,
+        "height": 11
+      }
+    }
+  ],
+  "sensitive": []
+}

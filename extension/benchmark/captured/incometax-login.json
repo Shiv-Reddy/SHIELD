@@ -1,0 +1,864 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:13:29.900Z",
+  "about": "Income tax e-filing login, PAN as the user ID, first step of two",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(1) > button",
+      "label": "callCall Usexpand_more",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1147,
+        "y": 17,
+        "width": 92,
+        "height": 28
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > img",
+      "label": "reduce font size",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1391,
+        "y": 19,
+        "width": 18,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > img",
+      "label": "default font size",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1425,
+        "y": 19,
+        "width": 18,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(3) > img",
+      "label": "increase font size",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1459,
+        "y": 19,
+        "width": 18,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2)",
+      "label": "switch to dark theme",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1511,
+        "y": 18,
+        "width": 14,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#navBar-\\ 0",
+      "label": "Home",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": "Home",
+      "placeholder": null,
+      "position": {
+        "x": 385,
+        "y": 90,
+        "width": 38,
+        "height": 51
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#navBar-\\ 5",
+      "label": "Downloads",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": "Downloads",
+      "placeholder": null,
+      "position": {
+        "x": 1127,
+        "y": 90,
+        "width": 70,
+        "height": 51
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#navBar-\\ 6",
+      "label": "Help",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": "Help",
+      "placeholder": null,
+      "position": {
+        "x": 1241,
+        "y": 90,
+        "width": 29,
+        "height": 51
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "input",
+      "selector": "#panAdhaarUserId",
+      "label": "Enter your User ID*",
+      "value": "ABCPK1234F",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "panAdhaarUserId",
+      "placeholder": "PAN/ Aadhaar/ Other User ID",
+      "position": {
+        "x": 446,
+        "y": 369,
+        "width": 316,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button",
+      "label": "Continue",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 435,
+        "y": 437,
+        "width": 337,
+        "height": 46
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(3) > button",
+      "label": "Back",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 435,
+        "y": 499,
+        "width": 337,
+        "height": 46
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(1) > button",
+      "label": "Net Banking",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 435,
+        "y": 646,
+        "width": 40,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "image",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > img",
+      "label": "E Filing logo",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 385,
+        "y": 22,
+        "width": 236,
+        "height": 45
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "text",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span",
+      "label": null,
+      "value": "Call Us",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1171,
+        "y": 20,
+        "width": 44,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "text",
+      "selector": "#mat-select-value-0 > span > span",
+      "label": null,
+      "value": "English",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1293,
+        "y": 21,
+        "width": 46,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "image",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img",
+      "label": "switch to dark theme",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1511,
+        "y": 21,
+        "width": 14,
+        "height": 14
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "text",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(2) > div > span:nth-of-type(1)",
+      "label": null,
+      "value": "Do not have an account?",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1313,
+        "y": 55,
+        "width": 153,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "text",
+      "selector": "html > body > app-root > div:nth-of-type(1) > div:nth-of-type(1) > app-header-unlogged > div > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(2) > div > span:nth-of-type(2)",
+      "label": null,
+      "value": "Register",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1469,
+        "y": 55,
+        "width": 56,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "text",
+      "selector": "#navBar-\\ 0 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Home",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 385,
+        "y": 107,
+        "width": 38,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "text",
+      "selector": "#navBar-\\ 1 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Individual/HUF",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 468,
+        "y": 110,
+        "width": 93,
+        "height": 14
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "text",
+      "selector": "#navBar-\\ 2 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Company",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 622,
+        "y": 110,
+        "width": 59,
+        "height": 14
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "text",
+      "selector": "#navBar-\\ 3 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Non-Company",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 744,
+        "y": 110,
+        "width": 90,
+        "height": 14
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "text",
+      "selector": "#navBar-\\ 4 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Tax Professionals & Others",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 895,
+        "y": 110,
+        "width": 169,
+        "height": 14
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "text",
+      "selector": "#navBar-\\ 5 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Downloads",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1127,
+        "y": 108,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "text",
+      "selector": "#navBar-\\ 6 > span:nth-of-type(2)",
+      "label": null,
+      "value": "Help",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1241,
+        "y": 108,
+        "width": 29,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(1) > span",
+      "label": null,
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1358,
+        "y": 165,
+        "width": 6,
+        "height": 21
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > h1",
+      "label": null,
+      "value": "Login",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 435,
+        "y": 259,
+        "width": 359,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > mat-label > label > span:nth-of-type(1)",
+      "label": "Enter your User ID*",
+      "value": "Enter your User ID",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 435,
+        "y": 333,
+        "width": 111,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > mat-label > label > span:nth-of-type(2)",
+      "label": "Enter your User ID*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 550,
+        "y": 333,
+        "width": 6,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button > span",
+      "label": null,
+      "value": "Continue",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 560,
+        "y": 450,
+        "width": 86,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "image",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button > span > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 629,
+        "y": 450,
+        "width": 18,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "image",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(3) > button > span > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 570,
+        "y": 512,
+        "width": 18,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(3) > button > span > span",
+      "label": null,
+      "value": "Back",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 588,
+        "y": 512,
+        "width": 35,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "image",
+      "selector": "#Component_1",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 443,
+        "y": 654,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div:nth-of-type(1) > span",
+      "label": null,
+      "value": "Net Banking",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 475,
+        "y": 657,
+        "width": 82,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > h2 > div > span:nth-of-type(1)",
+      "label": null,
+      "value": "Know about your",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 922,
+        "y": 267,
+        "width": 155,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > h2 > div > span:nth-of-type(2)",
+      "label": null,
+      "value": "User ID",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1081,
+        "y": 267,
+        "width": 65,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "image",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > img",
+      "label": "PAN icon",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 922,
+        "y": 331,
+        "width": 56,
+        "height": 56
+      }
+    },
+    {
+      "elementId": "e38",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > span",
+      "label": null,
+      "value": "Individuals",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1002,
+        "y": 354,
+        "width": 71,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e39",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > span",
+      "label": null,
+      "value": "Other Than Individuals",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1002,
+        "y": 375,
+        "width": 151,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e40",
+      "elementType": "image",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+      "label": "AADHAAR icon",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 922,
+        "y": 472,
+        "width": 56,
+        "height": 56
+      }
+    },
+    {
+      "elementId": "e41",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span",
+      "label": null,
+      "value": "Individuals",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1002,
+        "y": 495,
+        "width": 71,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e42",
+      "elementType": "image",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > img",
+      "label": "USERID icon",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 922,
+        "y": 571,
+        "width": 56,
+        "height": 56
+      }
+    },
+    {
+      "elementId": "e43",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > span",
+      "label": null,
+      "value": "CA, External Agency, ERI, Tax Deductor & Tax collector, TIN 2.0 Stakeholders, ITDREIN, Non-Residents not holding PAN",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1002,
+        "y": 594,
+        "width": 407,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e44",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > ul > li:nth-of-type(1)",
+      "label": null,
+      "value": "ARCA (Authorised Representative Chartered Accountant) followed by 6 digit number",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1018,
+        "y": 634,
+        "width": 457,
+        "height": 42
+      }
+    },
+    {
+      "elementId": "e45",
+      "elementType": "text",
+      "selector": "#maincontentid > app-login > div > app-login-page > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > ul > li:nth-of-type(2)",
+      "label": null,
+      "value": "TAN (Tax Deductor & Collector)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1018,
+        "y": 676,
+        "width": 457,
+        "height": 21
+      }
+    },
+    {
+      "elementId": "e46",
+      "elementType": "text",
+      "selector": "#aboutUs > strong",
+      "label": null,
+      "value": "About Us",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 370,
+        "y": 884,
+        "width": 74,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e47",
+      "elementType": "text",
+      "selector": "#contactUs > strong",
+      "label": null,
+      "value": "Contact Us",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 663,
+        "y": 884,
+        "width": 89,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e48",
+      "elementType": "text",
+      "selector": "#usingThePortal > strong",
+      "label": null,
+      "value": "Using the Portal",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 858,
+        "y": 884,
+        "width": 129,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e49",
+      "elementType": "text",
+      "selector": "#relatedSites > strong",
+      "label": null,
+      "value": "Related Sites",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1150,
+        "y": 884,
+        "width": 106,
+        "height": 22
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e8",
+      "category": "id_number"
+    }
+  ]
+}

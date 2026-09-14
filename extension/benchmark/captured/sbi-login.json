@@ -1,0 +1,885 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:19:54.541Z",
+  "about": "SBI YONO internet banking login, username, password and captcha, logged out",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(2) > button",
+      "label": "Personal Banking",
+      "value": "Personal Banking",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 443,
+        "y": 8,
+        "width": 151,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > a",
+      "label": "Skip to main content",
+      "value": "Skip to main content",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 929,
+        "y": 10,
+        "width": 110,
+        "height": 25
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(8) > button",
+      "label": "displayLanguage",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1412,
+        "y": 4,
+        "width": 85,
+        "height": 37
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "#navbarNavDarkDropdown > div > ul:nth-of-type(1) > div > li > a",
+      "label": "Navigation menu Start Home",
+      "value": "Home",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 445,
+        "y": 62,
+        "width": 79,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "#navbarNavDarkDropdown > div > ul:nth-of-type(2) > div > li > a",
+      "label": "Accounts & Deposits",
+      "value": "Accounts & Deposits",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 524,
+        "y": 62,
+        "width": 184,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#navbarNavDarkDropdown > div > ul:nth-of-type(3) > div > li > a",
+      "label": "Loans",
+      "value": "Loans",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 708,
+        "y": 62,
+        "width": 80,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#navbarNavDarkDropdown > div > ul:nth-of-type(4) > div > li > a",
+      "label": "Cards",
+      "value": "Cards",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 787,
+        "y": 62,
+        "width": 78,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#navbarNavDarkDropdown > div > ul:nth-of-type(5) > div > li > a",
+      "label": "Navigation Region END Investments",
+      "value": "Investments",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 865,
+        "y": 62,
+        "width": 124,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "button",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > button",
+      "label": "Register Now",
+      "value": "Register Now",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 355,
+        "y": 426,
+        "width": 231,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > button",
+      "label": "Activate Username",
+      "value": "Activate Username",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 608,
+        "y": 426,
+        "width": 231,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(3) > a",
+      "label": "Open Now",
+      "value": "Open Now",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 582,
+        "y": 552,
+        "width": 74,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#defaultOpen",
+      "label": "Username / Password",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1081,
+        "y": 136,
+        "width": 476,
+        "height": 54
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "input",
+      "selector": "#mat-input-1",
+      "label": "UserName",
+      "value": "dfg23rfc",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1114,
+        "y": 228,
+        "width": 390,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "input",
+      "selector": "#mat-input-2",
+      "label": "Password",
+      "value": "[has value]",
+      "inputType": "password",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1118,
+        "y": 333,
+        "width": 286,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "button",
+      "selector": "#usernameTab > form > div:nth-of-type(2) > div > app-virtual-keyboard > div:nth-of-type(1) > div > div > dff-inputfield > span > mat-form-field > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button",
+      "label": "Show password",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1408,
+        "y": 313,
+        "width": 48,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "button",
+      "selector": "#usernameTab > form > div:nth-of-type(2) > div > app-virtual-keyboard > div:nth-of-type(1) > div > div > div > button",
+      "label": "Virtual Keyboard",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1458,
+        "y": 319,
+        "width": 58,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "button",
+      "selector": "#usernameTab > form > div:nth-of-type(2) > div > div > button",
+      "label": "Forgot Password",
+      "value": "Forgot Password?",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1106,
+        "y": 368,
+        "width": 124,
+        "height": 23
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "input",
+      "selector": "#mat-input-0",
+      "label": "enterCaptchaLabel",
+      "value": null,
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1114,
+        "y": 486,
+        "width": 204,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "button",
+      "selector": "#usernameTab > form > div:nth-of-type(3) > div > app-captcha-input > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > button:nth-of-type(1)",
+      "label": null,
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1484,
+        "y": 440,
+        "width": 35,
+        "height": 35
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "button",
+      "selector": "#usernameTab > form > div:nth-of-type(3) > div > app-captcha-input > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > button:nth-of-type(2)",
+      "label": null,
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1484,
+        "y": 482,
+        "width": 35,
+        "height": 35
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "button",
+      "selector": "#usernameTab > form > div:nth-of-type(4) > div:nth-of-type(1) > button",
+      "label": "Login",
+      "value": "Login",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1104,
+        "y": 564,
+        "width": 414,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(2) > img",
+      "label": "desktop equilizer",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1164,
+        "y": 12,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(4) > a > img",
+      "label": "get help",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1259,
+        "y": 13,
+        "width": 24,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(6) > a > img",
+      "label": "whatsApp",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1366,
+        "y": 13,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "text",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(8) > button > span",
+      "label": null,
+      "value": "English",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1424,
+        "y": 15,
+        "width": 41,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(8) > button > img",
+      "label": "arrow-drop",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1465,
+        "y": 13,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(9) > span:nth-of-type(1) > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1514,
+        "y": 19,
+        "width": 11,
+        "height": 8
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(9) > span:nth-of-type(2) > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1535,
+        "y": 19,
+        "width": 9,
+        "height": 9
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(1) > div > div > div:nth-of-type(3) > div:nth-of-type(9) > span:nth-of-type(3) > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1554,
+        "y": 18,
+        "width": 17,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "image",
+      "selector": "html > body > app-root > app-registration > app-registration-header > div:nth-of-type(1) > nav:nth-of-type(2) > div > div:nth-of-type(1) > img",
+      "label": "YONOSBILogo",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 305,
+        "y": 58,
+        "width": 126,
+        "height": 46
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "image",
+      "selector": "#navbarNavDarkDropdown > div > ul:nth-of-type(1) > div > li > div > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 474,
+        "y": 91,
+        "width": 21,
+        "height": 4
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "text",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(1) > h1 > span",
+      "label": null,
+      "value": "Hello!",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 353,
+        "y": 183,
+        "width": 204,
+        "height": 111
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "text",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > p:nth-of-type(1)",
+      "label": null,
+      "value": "Welcome to the world of YONO SBI",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 353,
+        "y": 304,
+        "width": 588,
+        "height": 30
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "text",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > p:nth-of-type(2)",
+      "label": null,
+      "value": "Are you a new user?",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 353,
+        "y": 350,
+        "width": 588,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "text",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > div > p:nth-of-type(3)",
+      "label": null,
+      "value": "Choose one of the following options if you are a new user",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 353,
+        "y": 382,
+        "width": 588,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "text",
+      "selector": "#defaultOpen > span",
+      "label": null,
+      "value": "Username / Password",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1246,
+        "y": 155,
+        "width": 145,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "image",
+      "selector": "#usernameTab > form > div:nth-of-type(2) > div > app-virtual-keyboard > div:nth-of-type(1) > div > div > div > button > span > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1471,
+        "y": 328,
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "image",
+      "selector": "#usernameTab > form > div:nth-of-type(3) > div > app-captcha-input > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > span > img",
+      "label": "captcha",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1360,
+        "y": 463,
+        "width": 120,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e38",
+      "elementType": "image",
+      "selector": "#usernameTab > form > div:nth-of-type(3) > div > app-captcha-input > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > button:nth-of-type(1) > img",
+      "label": "Audio captcha",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1493,
+        "y": 448,
+        "width": 18,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e39",
+      "elementType": "image",
+      "selector": "#usernameTab > form > div:nth-of-type(3) > div > app-captcha-input > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > button:nth-of-type(2) > img",
+      "label": "refresh",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1494,
+        "y": 491,
+        "width": 16,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e40",
+      "elementType": "text",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(1) > div > h1",
+      "label": null,
+      "value": "Quick Actions",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 343,
+        "y": 664,
+        "width": 1257,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e41",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > img",
+      "label": "Mate IC_complaints",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 363,
+        "y": 740,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e42",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div > img",
+      "label": "Mate IC_Report Unauthorized transaction",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 528,
+        "y": 740,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e43",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > img",
+      "label": "Mate IC_Trouble Logging In",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 692,
+        "y": 742,
+        "width": 26,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e44",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(1) > div > div > img",
+      "label": "FAQs",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 858,
+        "y": 744,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e45",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > img",
+      "label": "Cyber Fraud",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1022,
+        "y": 740,
+        "width": 26,
+        "height": 25
+      }
+    },
+    {
+      "elementId": "e46",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(6) > div:nth-of-type(1) > div > div > img",
+      "label": "Mate IC_password management",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1188,
+        "y": 740,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e47",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(7) > div:nth-of-type(1) > div > div > img",
+      "label": "Mate IC_security tips",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1353,
+        "y": 740,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e48",
+      "elementType": "image",
+      "selector": "#mainContent > div > div:nth-of-type(3) > app-welcome-login > div > aside > div > div > div:nth-of-type(2) > div:nth-of-type(8) > div:nth-of-type(1) > div > div > img",
+      "label": "Mate IC_Report phishing",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1518,
+        "y": 740,
+        "width": 25,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e49",
+      "elementType": "text",
+      "selector": "#impnoticescontainer > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p",
+      "label": null,
+      "value": "Important Notices",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 366,
+        "y": 935,
+        "width": 383,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e50",
+      "elementType": "text",
+      "selector": "#impnoticescontainer > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > p",
+      "label": null,
+      "value": "Security Best Practices",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 987,
+        "y": 935,
+        "width": 361,
+        "height": 32
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e12",
+      "category": "id_number"
+    },
+    {
+      "elementId": "e13",
+      "category": "password"
+    }
+  ]
+}

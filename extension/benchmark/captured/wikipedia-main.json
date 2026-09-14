@@ -1,0 +1,1879 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:24:38.587Z",
+  "about": "Wikipedia main page, encyclopedia content only, a clean control",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > a",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 14,
+        "width": 140,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "input",
+      "selector": "#searchInput",
+      "label": "Search Wikipedia",
+      "value": null,
+      "inputType": "search",
+      "autocomplete": "off",
+      "name": "search",
+      "placeholder": "Search Wikipedia",
+      "position": {
+        "x": 481,
+        "y": 17,
+        "width": 404,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#searchform > button",
+      "label": "Search",
+      "value": "Search",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 884,
+        "y": 17,
+        "width": 71,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "#pt-sitesupport-2 > a",
+      "label": "Donate",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1500,
+        "y": 25,
+        "width": 45,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "#pt-createaccount-2 > a",
+      "label": "You are encouraged to create an account and log in; however, it is not mandatory",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1553,
+        "y": 25,
+        "width": 95,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#pt-login-2 > a",
+      "label": "You're encouraged to log in; however, it's not mandatory. [alt-o]",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1656,
+        "y": 25,
+        "width": 38,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#banner1",
+      "label": "Wiki Loves Monuments: Photograph a monument, help Wikipedia and win! Learn more",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 223,
+        "y": 106,
+        "width": 1460,
+        "height": 64
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#ca-nstab-main > a",
+      "label": "View the content page [alt-c]",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 207,
+        "y": 212,
+        "width": 67,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "button",
+      "selector": "#ca-talk > a",
+      "label": "Discuss improvements to the content page [alt-t]",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 289,
+        "y": 212,
+        "width": 25,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#ca-view > a",
+      "label": "Read",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1178,
+        "y": 212,
+        "width": 33,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#ca-viewsource > a",
+      "label": "This page is protected. You can view its source [alt-e]",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1227,
+        "y": 212,
+        "width": 76,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#ca-history > a",
+      "label": "Past revisions of this page [alt-h]",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1319,
+        "y": 212,
+        "width": 75,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "button",
+      "selector": "#vector-appearance > div:nth-of-type(1) > button:nth-of-type(2)",
+      "label": "Hide Appearance",
+      "value": "hide",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1559,
+        "y": 259,
+        "width": 39,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "button",
+      "selector": "#mwBg",
+      "label": "Wikipedia",
+      "value": "Wikipedia",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 829,
+        "y": 278,
+        "width": 112,
+        "height": 28
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "button",
+      "selector": "#mwBw",
+      "label": "Free content",
+      "value": "free",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 697,
+        "y": 319,
+        "width": 26,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "button",
+      "selector": "#mwCA",
+      "label": "Help:Introduction to Wikipedia",
+      "value": "anyone can edit",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 850,
+        "y": 319,
+        "width": 107,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "button",
+      "selector": "#mwCw",
+      "label": "Special:Statistics",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 659,
+        "y": 343,
+        "width": 49,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "button",
+      "selector": "#mwDg",
+      "label": "Special:Statistics",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 804,
+        "y": 343,
+        "width": 61,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "button",
+      "selector": "#mwEA",
+      "label": "English language",
+      "value": "English",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 930,
+        "y": 343,
+        "width": 45,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "button",
+      "selector": "#mp-tfa-img > div > span > a",
+      "label": "13th-century depiction of Melisende",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 216,
+        "y": 518,
+        "width": 120,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > b > a",
+      "label": "Melisende of Jerusalem",
+      "value": "Melisende",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 350,
+        "y": 442,
+        "width": 77,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(1)",
+      "label": "King of Jerusalem",
+      "value": "queen of Jerusalem",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 609,
+        "y": 442,
+        "width": 141,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(2)",
+      "label": "Baldwin II of Jerusalem",
+      "value": "BaldwinII",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 620,
+        "y": 468,
+        "width": 69,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(3)",
+      "label": "Fulk V of Anjou",
+      "value": "Fulk",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 521,
+        "y": 494,
+        "width": 30,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(4)",
+      "label": "Baldwin III of Jerusalem",
+      "value": "BaldwinIII",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 380,
+        "y": 624,
+        "width": 74,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(5)",
+      "label": "Edessa",
+      "value": "Edessa",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 500,
+        "y": 624,
+        "width": 53,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(6)",
+      "label": "Second Crusade",
+      "value": "Second Crusade",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 624,
+        "y": 650,
+        "width": 119,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(7)",
+      "label": "Nablus",
+      "value": "Nablus",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 457,
+        "y": 728,
+        "width": 50,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > a:nth-of-type(8)",
+      "label": "William of Tyre",
+      "value": "William of Tyre",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 268,
+        "y": 754,
+        "width": 105,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "button",
+      "selector": "#mp-tfa > p > i > b > a",
+      "label": "Melisende of Jerusalem",
+      "value": "Fullarticle...",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 523,
+        "y": 780,
+        "width": 93,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "button",
+      "selector": "#mp-tfa > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > a",
+      "label": "Thomas Hardy (Royal Navy officer, died 1732)",
+      "value": "Thomas Hardy (Royal Navy officer, died 1732)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 361,
+        "y": 822,
+        "width": 328,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "button",
+      "selector": "#mp-tfa > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > a",
+      "label": "United States v. Moore (1973)",
+      "value": "(1973)",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 616,
+        "y": 822,
+        "width": 249,
+        "height": 43
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "button",
+      "selector": "#mp-tfa > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a",
+      "label": "American Airlines Flight 11",
+      "value": "American Airlines Flight 11",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 676,
+        "y": 848,
+        "width": 188,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "button",
+      "selector": "#mwEw > ul > li:nth-of-type(1) > b > a",
+      "label": "Wikipedia:Today's featured article/September 2026",
+      "value": "Archive",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 485,
+        "y": 874,
+        "width": 59,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "button",
+      "selector": "#mwEw > ul > li:nth-of-type(2) > b > a",
+      "label": "mail:daily-article-l",
+      "value": "By email",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 558,
+        "y": 874,
+        "width": 66,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "button",
+      "selector": "#mwEw > ul > li:nth-of-type(3) > b > a",
+      "label": "Wikipedia:Featured articles (linked from TFAfooter)",
+      "value": "More featured articles",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 638,
+        "y": 874,
+        "width": 166,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "button",
+      "selector": "#mwEw > ul > li:nth-of-type(4) > b > a",
+      "label": "Wikipedia:About Today's featured article",
+      "value": "About",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 818,
+        "y": 874,
+        "width": 46,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(1) > div > span > a",
+      "label": "MV June Aster after the fire",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1256,
+        "y": 492,
+        "width": 162,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e38",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(1) > b > a",
+      "label": "MV June Aster ship fire",
+      "value": "A ferry fire",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 442,
+        "width": 80,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e39",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(1) > a",
+      "label": "Coron, Palawan",
+      "value": "Coron, Palawan",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 442,
+        "width": 299,
+        "height": 43
+      }
+    },
+    {
+      "elementId": "e40",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(2) > b > a",
+      "label": "2026 Yemen offensives",
+      "value": "heavy fighting",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 988,
+        "y": 496,
+        "width": 108,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e41",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(2) > a:nth-of-type(1)",
+      "label": "Houthis",
+      "value": "Houthis",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1192,
+        "y": 496,
+        "width": 54,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e42",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(2) > a:nth-of-type(2)",
+      "label": "Presidential Leadership Council",
+      "value": "Presidential Leadership Council",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 970,
+        "y": 522,
+        "width": 225,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e43",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(3) > b > a",
+      "label": "Gloria Steinem",
+      "value": "Gloria Steinem",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 575,
+        "width": 331,
+        "height": 43
+      }
+    },
+    {
+      "elementId": "e44",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(4) > b > a",
+      "label": "Murder of Tupac Shakur",
+      "value": "the 1996 murder",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1211,
+        "y": 629,
+        "width": 124,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e45",
+      "elementType": "button",
+      "selector": "#mp-itn > ul > li:nth-of-type(4) > a",
+      "label": "Tupac Shakur",
+      "value": "Tupac Shakur",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1035,
+        "y": 655,
+        "width": 98,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e46",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(1) > div > ul > li:nth-of-type(1) > a:nth-of-type(1)",
+      "label": "2026 Iran war",
+      "value": "Iran war",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 961,
+        "y": 689,
+        "width": 58,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e47",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(1) > div > ul > li:nth-of-type(1) > a:nth-of-type(2)",
+      "label": "2026 Lebanon war",
+      "value": "Lebanon war",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1029,
+        "y": 689,
+        "width": 93,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e48",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(1) > div > ul > li:nth-of-type(2) > a",
+      "label": "Russo-Ukrainian war (2022–present)",
+      "value": "Russo-Ukrainian war",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1141,
+        "y": 689,
+        "width": 149,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e49",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(1) > div > ul > li:nth-of-type(2) > ul > li > a",
+      "label": "Timeline of the Russo-Ukrainian war (1 September 2026 – present)",
+      "value": "timeline",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1299,
+        "y": 689,
+        "width": 55,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e50",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > b > a",
+      "label": "Deaths in 2026",
+      "value": "Recent deaths",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 887,
+        "y": 715,
+        "width": 109,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e51",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > a",
+      "label": "François Rossé",
+      "value": "François Rossé",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1005,
+        "y": 715,
+        "width": 111,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e52",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > a",
+      "label": "Johan Mijail",
+      "value": "Johan Mijail",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1130,
+        "y": 715,
+        "width": 84,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e53",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a",
+      "label": "Erni Mangold",
+      "value": "Erni Mangold",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1229,
+        "y": 715,
+        "width": 94,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e54",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(4) > a",
+      "label": "Joe Morgan (baseball manager)",
+      "value": "Joe Morgan",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 887,
+        "y": 715,
+        "width": 477,
+        "height": 43
+      }
+    },
+    {
+      "elementId": "e55",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(5) > a",
+      "label": "Margaret Bedggood",
+      "value": "Margaret Bedggood",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 955,
+        "y": 741,
+        "width": 141,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e56",
+      "elementType": "button",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(6) > a",
+      "label": "Frank McDonald (journalist)",
+      "value": "Frank McDonald",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1111,
+        "y": 741,
+        "width": 117,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e57",
+      "elementType": "button",
+      "selector": "#mwGQ > ul > li:nth-of-type(1) > b > a",
+      "label": "Portal:Current events",
+      "value": "More current events",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1103,
+        "y": 767,
+        "width": 153,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e58",
+      "elementType": "button",
+      "selector": "#mwGQ > ul > li:nth-of-type(2) > b > a",
+      "label": "Wikipedia:In the news/Candidates",
+      "value": "Nominate an article",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1270,
+        "y": 767,
+        "width": 148,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e59",
+      "elementType": "button",
+      "selector": "#mp-otd > p > b > a",
+      "label": "September 14",
+      "value": "September 14",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 887,
+        "y": 848,
+        "width": 105,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e60",
+      "elementType": "button",
+      "selector": "#mp-otd > ul > li:nth-of-type(1) > a:nth-of-type(1)",
+      "label": "AD 81",
+      "value": "AD 81",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 890,
+        "width": 44,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e61",
+      "elementType": "button",
+      "selector": "#mp-otd > ul > li:nth-of-type(1) > b > a",
+      "label": "Domitian",
+      "value": "Domitian",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 974,
+        "y": 890,
+        "width": 68,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e62",
+      "elementType": "button",
+      "selector": "#mp-otd > ul > li:nth-of-type(1) > a:nth-of-type(2)",
+      "label": "Flavian dynasty",
+      "value": "Flavian emperor",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1108,
+        "y": 890,
+        "width": 116,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e63",
+      "elementType": "button",
+      "selector": "#mp-otd > ul > li:nth-of-type(1) > a:nth-of-type(3)",
+      "label": "Roman Senate",
+      "value": "Senate",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1119,
+        "y": 916,
+        "width": 51,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e64",
+      "elementType": "button",
+      "selector": "#mp-otd > ul > li:nth-of-type(1) > a:nth-of-type(4)",
+      "label": "Titus",
+      "value": "Titus",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 967,
+        "y": 942,
+        "width": 34,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e65",
+      "elementType": "text",
+      "selector": "#vector-main-menu-dropdown-label > span:nth-of-type(2)",
+      "label": "Main menu",
+      "value": "Main menu",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 216,
+        "y": 33,
+        "width": 1,
+        "height": 1
+      }
+    },
+    {
+      "elementId": "e66",
+      "elementType": "image",
+      "selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > a > span > img:nth-of-type(1)",
+      "label": "Wikipedia",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 14,
+        "width": 140,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e67",
+      "elementType": "image",
+      "selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > a > span > img:nth-of-type(2)",
+      "label": "The Free Encyclopedia",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 247,
+        "y": 41,
+        "width": 140,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e68",
+      "elementType": "text",
+      "selector": "#pt-sitesupport-2 > a > span",
+      "label": null,
+      "value": "Donate",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1500,
+        "y": 25,
+        "width": 45,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e69",
+      "elementType": "text",
+      "selector": "#pt-createaccount-2 > a > span",
+      "label": null,
+      "value": "Create account",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1553,
+        "y": 25,
+        "width": 95,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e70",
+      "elementType": "text",
+      "selector": "#pt-login-2 > a > span",
+      "label": null,
+      "value": "Log in",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1656,
+        "y": 25,
+        "width": 38,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e71",
+      "elementType": "image",
+      "selector": "#banner1 > figure:nth-of-type(1) > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 223,
+        "y": 105,
+        "width": 60,
+        "height": 55
+      }
+    },
+    {
+      "elementId": "e72",
+      "elementType": "text",
+      "selector": "#banner1 > p > span:nth-of-type(1)",
+      "label": null,
+      "value": "Wiki Loves Monuments: Photograph a monument, help Wikipedia and win!",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 306,
+        "y": 114,
+        "width": 593,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e73",
+      "elementType": "text",
+      "selector": "#banner1 > p > span:nth-of-type(2)",
+      "label": null,
+      "value": "Learn more",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 306,
+        "y": 140,
+        "width": 1313,
+        "height": 30
+      }
+    },
+    {
+      "elementId": "e74",
+      "elementType": "text",
+      "selector": "#ca-nstab-main > a > span",
+      "label": null,
+      "value": "Main Page",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 207,
+        "y": 220,
+        "width": 67,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e75",
+      "elementType": "text",
+      "selector": "#ca-talk > a > span",
+      "label": null,
+      "value": "Talk",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 289,
+        "y": 220,
+        "width": 25,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e76",
+      "elementType": "text",
+      "selector": "#ca-view > a > span",
+      "label": null,
+      "value": "Read",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1178,
+        "y": 220,
+        "width": 33,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e77",
+      "elementType": "text",
+      "selector": "#ca-viewsource > a > span",
+      "label": null,
+      "value": "View source",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1227,
+        "y": 220,
+        "width": 76,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e78",
+      "elementType": "text",
+      "selector": "#ca-history > a > span",
+      "label": null,
+      "value": "View history",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1319,
+        "y": 220,
+        "width": 75,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e79",
+      "elementType": "text",
+      "selector": "#vector-page-tools-dropdown-label > span:nth-of-type(2)",
+      "label": "Tools",
+      "value": "Tools",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1418,
+        "y": 228,
+        "width": 1,
+        "height": 1
+      }
+    },
+    {
+      "elementId": "e80",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-vector-feature-custom-font-size > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(1) > label > span",
+      "label": "Small",
+      "value": "Small",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 335,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e81",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-vector-feature-custom-font-size > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(2) > label > span",
+      "label": "Standard",
+      "value": "Standard",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 367,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e82",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-vector-feature-custom-font-size > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(3) > label > span",
+      "label": "Large",
+      "value": "Large",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 399,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e83",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-vector-feature-limited-width > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(1) > label > span",
+      "label": "Standard",
+      "value": "Standard",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 478,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e84",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-vector-feature-limited-width > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(2) > label > span",
+      "label": "Wide",
+      "value": "Wide",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 510,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e85",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-skin-theme > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(1) > label > span",
+      "label": "Automatic",
+      "value": "Automatic",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 589,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e86",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-skin-theme > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(2) > label > span",
+      "label": "Light",
+      "value": "Light",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 621,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e87",
+      "elementType": "text",
+      "selector": "#skin-client-prefs-skin-theme > div:nth-of-type(2) > ul > li > div > form > div:nth-of-type(3) > label > span",
+      "label": "Dark",
+      "value": "Dark",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1491,
+        "y": 653,
+        "width": 192,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e88",
+      "elementType": "text",
+      "selector": "#Welcome_to_Wikipedia",
+      "label": null,
+      "value": "Welcome to",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 685,
+        "y": 265,
+        "width": 256,
+        "height": 45
+      }
+    },
+    {
+      "elementId": "e89",
+      "elementType": "text",
+      "selector": "#mwCg",
+      "label": null,
+      "value": "active editors",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 659,
+        "y": 343,
+        "width": 145,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e90",
+      "elementType": "text",
+      "selector": "#mwDA",
+      "label": null,
+      "value": "260,720",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 659,
+        "y": 343,
+        "width": 49,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e91",
+      "elementType": "text",
+      "selector": "#mwDQ",
+      "label": null,
+      "value": "articles in",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 804,
+        "y": 343,
+        "width": 170,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e92",
+      "elementType": "text",
+      "selector": "#mwDw",
+      "label": null,
+      "value": "7,239,432",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 804,
+        "y": 343,
+        "width": 61,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e93",
+      "elementType": "text",
+      "selector": "#mwEg",
+      "label": null,
+      "value": "From today's featured article",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 224,
+        "y": 399,
+        "width": 263,
+        "height": 21
+      }
+    },
+    {
+      "elementId": "e94",
+      "elementType": "image",
+      "selector": "#mp-tfa-img > div > span > a > img",
+      "label": "13th-century depiction of Melisende",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 216,
+        "y": 446,
+        "width": 120,
+        "height": 163
+      }
+    },
+    {
+      "elementId": "e95",
+      "elementType": "text",
+      "selector": "#mp-tfa > p",
+      "label": null,
+      "value": "(– 1161) was the from 1131 to 1152. The eldest daughter and heir of , she was crowned alongside her husband, . He initially sidelined Melisende, but she forced him to share power after a baronial upri…",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 216,
+        "y": 438,
+        "width": 649,
+        "height": 364
+      }
+    },
+    {
+      "elementId": "e96",
+      "elementType": "text",
+      "selector": "#mp-tfa > p > span:nth-of-type(1)",
+      "label": null,
+      "value": "1109",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 449,
+        "y": 442,
+        "width": 38,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e97",
+      "elementType": "text",
+      "selector": "#mp-dyk-h2",
+      "label": null,
+      "value": "Did you know...",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 216,
+        "y": 906,
+        "width": 649,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e98",
+      "elementType": "text",
+      "selector": "#mp-itn-h2",
+      "label": null,
+      "value": "In the news",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 887,
+        "y": 392,
+        "width": 531,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e99",
+      "elementType": "image",
+      "selector": "#mp-itn > div:nth-of-type(1) > div > span > a > img",
+      "label": "MV June Aster after the fire",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1256,
+        "y": 441,
+        "width": 162,
+        "height": 122
+      }
+    },
+    {
+      "elementId": "e100",
+      "elementType": "text",
+      "selector": "#mp-itn > ul > li:nth-of-type(1)",
+      "label": null,
+      "value": "off , Philippines, kills at least 76 people.",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 438,
+        "width": 505,
+        "height": 52
+      }
+    },
+    {
+      "elementId": "e101",
+      "elementType": "text",
+      "selector": "#mp-itn > ul > li:nth-of-type(2)",
+      "label": null,
+      "value": "In Yemen, between the and the leaves hundreds of people dead.",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 492,
+        "width": 505,
+        "height": 78
+      }
+    },
+    {
+      "elementId": "e102",
+      "elementType": "text",
+      "selector": "#mp-itn > ul > li:nth-of-type(3)",
+      "label": null,
+      "value": "American journalist and feminist activist dies at the .",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 571,
+        "width": 505,
+        "height": 52
+      }
+    },
+    {
+      "elementId": "e103",
+      "elementType": "text",
+      "selector": "#mp-itn > ul > li:nth-of-type(3) > span",
+      "label": null,
+      "value": "age of 92",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1057,
+        "y": 601,
+        "width": 67,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e104",
+      "elementType": "text",
+      "selector": "#mp-itn > ul > li:nth-of-type(4)",
+      "label": null,
+      "value": "Duane Davis is convicted of orchestrating of American rapper .",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 625,
+        "width": 505,
+        "height": 52
+      }
+    },
+    {
+      "elementId": "e105",
+      "elementType": "text",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(1) > div > ul > li:nth-of-type(1)",
+      "label": null,
+      "value": "()",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 961,
+        "y": 689,
+        "width": 180,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e106",
+      "elementType": "text",
+      "selector": "#mp-itn > div:nth-of-type(2) > div:nth-of-type(2) > span",
+      "label": null,
+      "value": ":",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 996,
+        "y": 715,
+        "width": 4,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e107",
+      "elementType": "text",
+      "selector": "#mp-otd-h2",
+      "label": null,
+      "value": "On this day",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 887,
+        "y": 798,
+        "width": 531,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e108",
+      "elementType": "image",
+      "selector": "#mp-otd-img > div > span > a > img",
+      "label": "Nur Muhammad Taraki",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1298,
+        "y": 886,
+        "width": 120,
+        "height": 163
+      }
+    },
+    {
+      "elementId": "e109",
+      "elementType": "text",
+      "selector": "#mp-otd > ul > li:nth-of-type(1)",
+      "label": null,
+      "value": "– , the last of Rome, was confirmed by the to succeed his brother .",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 912,
+        "y": 886,
+        "width": 505,
+        "height": 78
+      }
+    }
+  ],
+  "sensitive": []
+}

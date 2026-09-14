@@ -1,0 +1,834 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:18:23.965Z",
+  "about": "GST portal login, username, password and captcha, logged out",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(1) > ng-include:nth-of-type(1) > header > div:nth-of-type(1) > div > div > div > ul > li:nth-of-type(1) > a",
+      "label": "Skip to Main Content",
+      "value": "Skip to Main Content",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1308,
+        "y": 8,
+        "width": 126,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "#emblemDis",
+      "label": "Goods and Services Tax Home",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 383,
+        "y": 75,
+        "width": 67,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#emblemTitDis",
+      "label": "Goods and Services TaxGovernment of India, States and Union Territories",
+      "value": "Goods and Services Tax",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 474,
+        "y": 45,
+        "width": 439,
+        "height": 71
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(1) > ng-include:nth-of-type(1) > header > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > a",
+      "label": "Register",
+      "value": "Register",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1328,
+        "y": 68,
+        "width": 104,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(1) > ng-include:nth-of-type(1) > header > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > a",
+      "label": "Login",
+      "value": "Login",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1446,
+        "y": 68,
+        "width": 76,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(1) > a:nth-of-type(3)",
+      "label": "Home",
+      "value": "Home",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 354,
+        "y": 142,
+        "width": 115,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(2) > a",
+      "label": "Services",
+      "value": "Services",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 469,
+        "y": 142,
+        "width": 113,
+        "height": 49
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(3) > a",
+      "label": "GST Law",
+      "value": "GST Law",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 581,
+        "y": 142,
+        "width": 101,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(4) > a",
+      "label": "Downloads",
+      "value": "Downloads",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 682,
+        "y": 142,
+        "width": 130,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(5) > a",
+      "label": "Search Taxpayer",
+      "value": "Search Taxpayer",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 812,
+        "y": 142,
+        "width": 170,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(6) > a",
+      "label": "Help and Taxpayer Facilities",
+      "value": "Help and Taxpayer Facilities",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 983,
+        "y": 142,
+        "width": 234,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(7) > a",
+      "label": "e-Invoice",
+      "value": "e-Invoice",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1217,
+        "y": 142,
+        "width": 104,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "button",
+      "selector": "#main > ul > li:nth-of-type(8) > a",
+      "label": "News and Updates",
+      "value": "News and Updates",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1321,
+        "y": 142,
+        "width": 170,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > ol > li:nth-of-type(1) > a",
+      "label": "Home",
+      "value": "Home",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 383,
+        "y": 200,
+        "width": 41,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "input",
+      "selector": "#username",
+      "label": "Username",
+      "value": "123456789123456",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "user_name",
+      "placeholder": "Enter Username",
+      "position": {
+        "x": 690,
+        "y": 326,
+        "width": 525,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "input",
+      "selector": "#user_pass",
+      "label": "Password",
+      "value": "[has value]",
+      "inputType": "password",
+      "autocomplete": "off",
+      "name": "user_pass",
+      "placeholder": "Enter Password",
+      "position": {
+        "x": 690,
+        "y": 395,
+        "width": 525,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "input",
+      "selector": "#captcha",
+      "label": "Type the characters you see in the image below",
+      "value": null,
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "captcha",
+      "placeholder": "Enter Characters shown below",
+      "position": {
+        "x": 690,
+        "y": 464,
+        "width": 525,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(5) > div > div > div > table > tbody > tr:nth-of-type(1) > th:nth-of-type(2) > button",
+      "label": null,
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 872,
+        "y": 508,
+        "width": 29,
+        "height": 26
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(5) > div > div > div > table > tbody > tr:nth-of-type(2) > td > button",
+      "label": null,
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 872,
+        "y": 534,
+        "width": 28,
+        "height": 26
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(6) > div > button",
+      "label": "Login",
+      "value": "Login",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 690,
+        "y": 580,
+        "width": 98,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(7) > div:nth-of-type(1) > a",
+      "label": "Forgot Username",
+      "value": "Forgot Username",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 690,
+        "y": 635,
+        "width": 121,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(7) > div:nth-of-type(2) > div > a",
+      "label": "Forgot Password",
+      "value": "Forgot Password",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1099,
+        "y": 635,
+        "width": 116,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(8) > div > p > a",
+      "label": "here",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1145,
+        "y": 670,
+        "width": 32,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(1) > a",
+      "label": "About GST",
+      "value": "About GST",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 383,
+        "y": 815,
+        "width": 82,
+        "height": 37
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(1) > ul > li:nth-of-type(1) > a",
+      "label": "GST Council Structure",
+      "value": "GST Council Structure",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 383,
+        "y": 863,
+        "width": 145,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > a",
+      "label": "GST History",
+      "value": "GST History",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 383,
+        "y": 907,
+        "width": 78,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(2) > a",
+      "label": "Website Policies",
+      "value": "Website Policies",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 578,
+        "y": 815,
+        "width": 129,
+        "height": 37
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(2) > ul > li:nth-of-type(1) > a",
+      "label": "Website Policy",
+      "value": "Website Policy",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 578,
+        "y": 863,
+        "width": 93,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(2) > ul > li:nth-of-type(2) > a",
+      "label": "Terms and Conditions",
+      "value": "Terms and Conditions",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 578,
+        "y": 907,
+        "width": 141,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(3) > a",
+      "label": "Related Sites",
+      "value": "Related Sites",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 773,
+        "y": 815,
+        "width": 103,
+        "height": 37
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(3) > ul > li:nth-of-type(1) > a",
+      "label": "Central Board of Indirect Taxes and Customs",
+      "value": "Central Board of Indirect Taxes and Customs",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 773,
+        "y": 863,
+        "width": 162,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(3) > ul > li:nth-of-type(2) > a",
+      "label": "State Tax Websites",
+      "value": "State Tax Websites",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 773,
+        "y": 927,
+        "width": 124,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(4) > a",
+      "label": "Help and Taxpayer Facilities",
+      "value": "Help and Taxpayer Facilities",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 968,
+        "y": 815,
+        "width": 222,
+        "height": 37
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(4) > ul > li:nth-of-type(1) > a",
+      "label": "System Requirements",
+      "value": "System Requirements",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 968,
+        "y": 862,
+        "width": 143,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(4) > ul > li:nth-of-type(2) > a",
+      "label": "GST Knowledge Portal",
+      "value": "GST Knowledge Portal",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 968,
+        "y": 904,
+        "width": 145,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "button",
+      "selector": "#siteDis > div > div > div:nth-of-type(5) > a",
+      "label": "Contact Us",
+      "value": "Contact Us",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1260,
+        "y": 815,
+        "width": 85,
+        "height": 37
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(1) > ng-include:nth-of-type(1) > header > div:nth-of-type(1) > div > div > div > ul > li:nth-of-type(3)",
+      "label": null,
+      "value": "A",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1470,
+        "y": 7,
+        "width": 26,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(1) > ng-include:nth-of-type(1) > header > div:nth-of-type(1) > div > div > div > ul > li:nth-of-type(4)",
+      "label": null,
+      "value": "A",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1500,
+        "y": 7,
+        "width": 22,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e38",
+      "elementType": "image",
+      "selector": "#emblemDis > img",
+      "label": "Goods and Services Tax Home",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 395,
+        "y": 43,
+        "width": 62,
+        "height": 72
+      }
+    },
+    {
+      "elementId": "e39",
+      "elementType": "text",
+      "selector": "#emblemTitDis > span",
+      "label": null,
+      "value": "Government of India, States and Union Territories",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 474,
+        "y": 90,
+        "width": 439,
+        "height": 22
+      }
+    },
+    {
+      "elementId": "e40",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > ol > li:nth-of-type(2) > ng-switch > span",
+      "label": null,
+      "value": "Login",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 443,
+        "y": 200,
+        "width": 38,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e41",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > h4",
+      "label": null,
+      "value": "Login",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 690,
+        "y": 237,
+        "width": 525,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e42",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > p:nth-of-type(2)",
+      "label": null,
+      "value": "indicates mandatory fields",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 690,
+        "y": 273,
+        "width": 525,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e43",
+      "elementType": "image",
+      "selector": "#imgCaptcha",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 690,
+        "y": 509,
+        "width": 182,
+        "height": 50
+      }
+    },
+    {
+      "elementId": "e44",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(8) > div > p",
+      "label": null,
+      "value": "If you are logging in for the first time, click to log in.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 690,
+        "y": 669,
+        "width": 525,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e45",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > div > div > div > form > div:nth-of-type(8) > div > p > strong",
+      "label": null,
+      "value": "First time login:",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 702,
+        "y": 670,
+        "width": 130,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e46",
+      "elementType": "text",
+      "selector": "#siteDis > div > div > div:nth-of-type(5) > ul > li:nth-of-type(1) > span",
+      "label": null,
+      "value": "Help Desk Number: 1800-103-4786",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1260,
+        "y": 864,
+        "width": 119,
+        "height": 35
+      }
+    },
+    {
+      "elementId": "e47",
+      "elementType": "text",
+      "selector": "#siteDis > div > div > div:nth-of-type(5) > ul > li:nth-of-type(2) > span",
+      "label": null,
+      "value": "Log/Track Your Issue:",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1260,
+        "y": 928,
+        "width": 131,
+        "height": 15
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e14",
+      "category": "id_number"
+    },
+    {
+      "elementId": "e15",
+      "category": "password"
+    }
+  ]
+}

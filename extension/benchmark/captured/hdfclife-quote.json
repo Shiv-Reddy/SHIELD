@@ -1,0 +1,383 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:24:04.876Z",
+  "about": "HDFC Life login form carrying email, mobile and date of birth",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "#_portal > header > header:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(1) > a",
+      "label": "Toll Free : 1800 - 266 - 9777",
+      "value": "Toll Free : 1800 - 266 - 9777",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1536,
+        "y": 7,
+        "width": 176,
+        "height": 14
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "#_portal > header > header:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(2) > a",
+      "label": "Instant Call Back",
+      "value": "Instant Call Back",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1755,
+        "y": 7,
+        "width": 95,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "input",
+      "selector": "#login-email-input",
+      "label": "Email ID*",
+      "value": "ravi.kumar@example.com",
+      "inputType": "text",
+      "autocomplete": null,
+      "name": "sec.email",
+      "placeholder": null,
+      "position": {
+        "x": 374,
+        "y": 413,
+        "width": 269,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "input",
+      "selector": "#login-mobileCd-input",
+      "label": "login.mobcntrycode",
+      "value": "12435",
+      "inputType": "text",
+      "autocomplete": null,
+      "name": "login.mobcntrycode",
+      "placeholder": null,
+      "position": {
+        "x": 729,
+        "y": 413,
+        "width": 206,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "input",
+      "selector": "#login-mobile-input",
+      "label": "Country Code*",
+      "value": "345457656756",
+      "inputType": "tel",
+      "autocomplete": null,
+      "name": "login.mobno",
+      "placeholder": null,
+      "position": {
+        "x": 1010,
+        "y": 413,
+        "width": 269,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "input",
+      "selector": "#login-dob-input",
+      "label": "Date of Birth*",
+      "value": "16/09/1996",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "login.dob",
+      "placeholder": "DD/MM/YYYY",
+      "position": {
+        "x": 374,
+        "y": 514,
+        "width": 264,
+        "height": 35
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "input",
+      "selector": "#alternate\\#login-dob-input",
+      "label": null,
+      "value": "",
+      "inputType": "text",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 590,
+        "y": 509,
+        "width": 48,
+        "height": 39
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#loginBtn",
+      "label": "Login",
+      "value": "PROCEED",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": "login",
+      "placeholder": null,
+      "position": {
+        "x": 829,
+        "y": 514,
+        "width": 140,
+        "height": 36
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "image",
+      "selector": "#_portal > header > header:nth-of-type(1) > div:nth-of-type(1) > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 62,
+        "y": 15,
+        "width": 80,
+        "height": 52
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "text",
+      "selector": "#resume-login > h2",
+      "label": null,
+      "value": "Login",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 105,
+        "y": 140,
+        "width": 1675,
+        "height": 44
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(1) > p:nth-of-type(1)",
+      "label": null,
+      "value": "Welcome Back,",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 860,
+        "y": 205,
+        "width": 933,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(1) > p:nth-of-type(2)",
+      "label": null,
+      "value": "You are just a few steps away from being insured. There are some more details that you need to fill to complete your chosen application",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 477,
+        "y": 245,
+        "width": 966,
+        "height": 21
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(1) > div > div > div > div > div > div:nth-of-type(1) > div > label",
+      "label": "Email ID",
+      "value": "Email ID",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 709,
+        "y": 290,
+        "width": 121,
+        "height": 30
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(1) > div > div > div > div > div > div:nth-of-type(2) > div > label",
+      "label": "Application No.",
+      "value": "Application No.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1071,
+        "y": 290,
+        "width": 182,
+        "height": 30
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(2) > div > div:nth-of-type(1) > label > span",
+      "label": "Email ID*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 422,
+        "y": 384,
+        "width": 8,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(2) > div > div:nth-of-type(3) > label > span",
+      "label": "Country Code*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 808,
+        "y": 383,
+        "width": 8,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(2) > div > div:nth-of-type(4) > label",
+      "label": "Mobile Number*",
+      "value": "Mobile Number",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1010,
+        "y": 387,
+        "width": 97,
+        "height": 13
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(2) > div > div:nth-of-type(4) > label > span",
+      "label": "Mobile Number*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1100,
+        "y": 383,
+        "width": 8,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "text",
+      "selector": "#login-form > div:nth-of-type(2) > div > div:nth-of-type(5) > label > span",
+      "label": "Date of Birth*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 448,
+        "y": 485,
+        "width": 8,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "image",
+      "selector": "html > body > img:nth-of-type(1)",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 0,
+        "y": 666,
+        "width": 1,
+        "height": 1
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "image",
+      "selector": "html > body > img:nth-of-type(2)",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 5,
+        "y": 666,
+        "width": 1,
+        "height": 1
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e2",
+      "category": "email"
+    },
+    {
+      "elementId": "e3",
+      "category": "phone"
+    },
+    {
+      "elementId": "e4",
+      "category": "phone"
+    },
+    {
+      "elementId": "e5",
+      "category": "other"
+    }
+  ]
+}

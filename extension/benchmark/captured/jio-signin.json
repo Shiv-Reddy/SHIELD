@@ -1,0 +1,405 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:22:54.432Z",
+  "about": "Jio bill payment sign-in, mobile number only",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "#topnav-container > div > div > div > div > section:nth-of-type(1) > header > section > div > section:nth-of-type(2) > nav > ul > li > section > a",
+      "label": "Investor",
+      "value": "Investor",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1377,
+        "y": 26,
+        "width": 84,
+        "height": 31
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "#open-search",
+      "label": "Open search",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1461,
+        "y": 11,
+        "width": 40,
+        "height": 48
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#topnav-container > div > div > div > div > section:nth-of-type(1) > header > section > div > div:nth-of-type(4)",
+      "label": "Profile",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1513,
+        "y": 20,
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "#mobility-tab",
+      "label": "Mobile",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 550,
+        "y": 424,
+        "width": 113,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "#fiber-tab",
+      "label": "Home",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 667,
+        "y": 424,
+        "width": 108,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "input",
+      "selector": "#submitNumber",
+      "label": "Jio Number",
+      "value": "9754674543",
+      "inputType": "tel",
+      "autocomplete": "tel",
+      "name": "tel",
+      "placeholder": "Jio Number",
+      "position": {
+        "x": 494,
+        "y": 492,
+        "width": 336,
+        "height": 42
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > button",
+      "label": "Clear input",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 798,
+        "y": 501,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > div:nth-of-type(2) > div:nth-of-type(3) > button",
+      "label": "Continue",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 494,
+        "y": 774,
+        "width": 336,
+        "height": 50
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "button",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > div:nth-of-type(2) > div:nth-of-type(4) > button",
+      "label": "Pay bills of inactive accounts",
+      "value": "here",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 759,
+        "y": 842,
+        "width": 34,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "image",
+      "selector": "#topnav-container > div > div > div > div > section:nth-of-type(1) > header > section > div > div:nth-of-type(1) > img",
+      "label": "Jio",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 361,
+        "y": 16,
+        "width": 57,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "image",
+      "selector": "#open-search > i > span > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1469,
+        "y": 23,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "image",
+      "selector": "#topnav-container > div > div > div > div > section:nth-of-type(1) > header > section > div > div:nth-of-type(4) > span > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1517,
+        "y": 24,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "image",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > span:nth-of-type(2) > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 646,
+        "y": 260,
+        "width": 32,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "text",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > h1",
+      "label": null,
+      "value": "Pay Mobile Bill",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 576,
+        "y": 312,
+        "width": 172,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "text",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > p",
+      "label": null,
+      "value": "Enjoy the convenience of paying your postpaid bills online.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 494,
+        "y": 362,
+        "width": 336,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "image",
+      "selector": "#mobility-tab > span:nth-of-type(1) > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 566,
+        "y": 432,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "text",
+      "selector": "#mobility-tab > span:nth-of-type(2)",
+      "label": null,
+      "value": "Mobile",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 598,
+        "y": 434,
+        "width": 49,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "image",
+      "selector": "#fiber-tab > span:nth-of-type(1) > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 683,
+        "y": 432,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "text",
+      "selector": "#fiber-tab > span:nth-of-type(2)",
+      "label": null,
+      "value": "Home",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 715,
+        "y": 434,
+        "width": 44,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "text",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > span",
+      "label": null,
+      "value": "+91",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 501,
+        "y": 501,
+        "width": 27,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "image",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > button > span > svg",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 798,
+        "y": 501,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "text",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(1) > div > section > div:nth-of-type(2) > div:nth-of-type(4) > span",
+      "label": null,
+      "value": "Pay bills of inactive accounts",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 532,
+        "y": 842,
+        "width": 227,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "image",
+      "selector": "#__next > div:nth-of-type(2) > section > section:nth-of-type(2) > div > img",
+      "label": "Jio Bill Pay Online",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1012,
+        "y": 338,
+        "width": 474,
+        "height": 432
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e5",
+      "category": "phone"
+    }
+  ]
+}

@@ -4,23 +4,23 @@
 
 Measures SIH metric 2 (recall and precision of PII detection) and metric 3 (precision of redaction) against a hand-labelled corpus. Labels describe the PAGE, never the detector output — several are things the DOM path structurally cannot see, and they are counted as misses because they are.
 
-Last run: 2026-09-09T16:03:37.566Z
+Last run: 2026-09-14T09:31:45.855Z
 
 ## Headline
 
 | Measure | Value |
 |---|---|
-| Pages | 38 |
-| Sensitive elements labelled | 150 |
-| **Recall** | **81.3%** |
-| **Precision** | **83.0%** |
-| F1 | 82.2% |
-| Category accuracy | 88.5% |
+| Pages | 50 |
+| Sensitive elements labelled | 170 |
+| **Recall** | **83.5%** |
+| **Precision** | **83.5%** |
+| F1 | 83.5% |
+| Category accuracy | 83.8% |
 | Missed | 28 |
-| Over-flagged | 25 |
-| Redaction coverage | 56.5% |
-| **Redaction precision** | **83.4%** |
-| Area painted / area needed | 0.68x |
+| Over-flagged | 28 |
+| Redaction coverage | 60.4% |
+| **Redaction precision** | **83.9%** |
+| Area painted / area needed | 0.72x |
 
 Coverage is the share of sensitive AREA painted — but a blanket blur also scores 100% there, so it is never quoted alone. **Redaction precision** is what metric 3 asks: of everything covered, how much needed covering. A blanket blur scores near zero. The area ratio is signed — above 1.00x means more was painted than needed, below means some was left visible.
 
@@ -29,9 +29,8 @@ Coverage is the share of sensitive AREA painted — but a blanket blur also scor
 | Source | Pages | What that means |
 |---|---|---|
 | synthetic | 32 | Written from what a real page of that kind carries, in the field-naming conventions those portals use - but authored here. |
+| real | 12 | Captured from a page nobody here wrote. |
 | fixture | 6 | Test screens, written to exercise our own code. |
-
-**No page in this corpus was written by anybody outside this project.** Every number above is a measurement against our own description of what these pages contain. That is a real limit on what they prove, it is the reason this column is printed, and closing it is the remaining half of TASKS.md T1.1.
 
 ## The pixel layer
 
@@ -77,13 +76,13 @@ Faces carry no boxes here at all. `test-screens/face-a.jpg` and `face-b.png` are
 
 | Category | Labelled | Found | Wrongly claimed | Recall | Precision | F1 |
 |---|---|---|---|---|---|---|
-| id_number | 41 | 33 | 17 | 80.5% | 66.0% | 72.5% |
-| other | 27 | 14 | 10 | 51.9% | 58.3% | 54.9% |
-| name | 25 | 16 | 5 | 64.0% | 76.2% | 69.6% |
-| email | 15 | 15 | 2 | 100.0% | 88.2% | 93.8% |
+| id_number | 51 | 37 | 19 | 72.5% | 66.1% | 69.2% |
+| other | 28 | 15 | 17 | 53.6% | 46.9% | 50.0% |
+| name | 25 | 16 | 6 | 64.0% | 72.7% | 68.1% |
+| phone | 17 | 10 | 2 | 58.8% | 83.3% | 69.0% |
+| email | 16 | 16 | 2 | 100.0% | 88.9% | 94.1% |
+| password | 16 | 15 | 2 | 93.8% | 88.2% | 90.9% |
 | address | 14 | 10 | 3 | 71.4% | 76.9% | 74.1% |
-| phone | 14 | 10 | 1 | 71.4% | 90.9% | 80.0% |
-| password | 11 | 10 | 1 | 90.9% | 90.9% | 90.9% |
 | face | 3 | 0 | 0 | 0.0% | 100.0% | 0.0% |
 
 Reported per category because the aggregate hides what matters. A detector that finds every password and no Aadhaar number scores well overall on a corpus of login pages.
@@ -130,6 +129,18 @@ Reported per category because the aggregate hides what matters. A detector that 
 | ctl-04-tender-notice | synthetic | 0 | 0 | 0 | 0 | 100.0% | 100.0% |
 | doc-01-aadhaar-card | fixture | 1 | 0 | 1 | 0 | 0.0% | 100.0% |
 | doc-02-pan-card | fixture | 1 | 0 | 1 | 0 | 0.0% | 100.0% |
+| axis-home | real | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
+| epfo-login | real | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
+| gst-login | real | 2 | 2 | 0 | 1 | 100.0% | 89.6% |
+| hackernews | real | 0 | 0 | 0 | 0 | 100.0% | 100.0% |
+| hdfc-login | real | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
+| hdfclife-quote | real | 4 | 4 | 0 | 0 | 100.0% | 100.0% |
+| incometax-login | real | 1 | 1 | 0 | 0 | 100.0% | 100.0% |
+| jio-signin | real | 1 | 1 | 0 | 0 | 100.0% | 100.0% |
+| parivahan | real | 3 | 3 | 0 | 2 | 100.0% | 60.0% |
+| sbi-login | real | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
+| uidai-login | real | 1 | 1 | 0 | 0 | 100.0% | 100.0% |
+| wikipedia-main | real | 0 | 0 | 0 | 0 | 100.0% | 100.0% |
 
 ## Every miss, by name
 

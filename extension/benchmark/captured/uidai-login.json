@@ -1,0 +1,201 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:14:33.443Z",
+  "about": "myAadhaar login, Aadhaar number and captcha, logged out",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "input",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(1) > div > div > div > input",
+      "label": "uid",
+      "value": "234567890124",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "uid",
+      "placeholder": null,
+      "position": {
+        "x": 776,
+        "y": 179,
+        "width": 368,
+        "height": 27
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "input",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > input",
+      "label": "captcha",
+      "value": null,
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "captcha",
+      "placeholder": null,
+      "position": {
+        "x": 776,
+        "y": 244,
+        "width": 184,
+        "height": 27
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(3) > div > button",
+      "label": "Login with OTP",
+      "value": "Login with OTP",
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 776,
+        "y": 293,
+        "width": 368,
+        "height": 42
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "image",
+      "selector": "#root > header > div > div:nth-of-type(1) > img",
+      "label": "uidai-logo",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 391,
+        "y": 8,
+        "width": 275,
+        "height": 50
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "image",
+      "selector": "#root > header > div > div:nth-of-type(2) > img",
+      "label": "aadhaar-logo",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1453,
+        "y": 8,
+        "width": 76,
+        "height": 49
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "text",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(1) > div > div > div > label",
+      "label": "Enter Aadhaar Number",
+      "value": "Enter Aadhaar Number",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 776,
+        "y": 158,
+        "width": 331,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "text",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div > label",
+      "label": "Enter Captcha",
+      "value": "Enter Captcha",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 776,
+        "y": 240,
+        "width": 166,
+        "height": 23
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "image",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+      "label": "captcha",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 978,
+        "y": 239,
+        "width": 111,
+        "height": 28
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "image",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > img",
+      "label": "audio icon",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1099,
+        "y": 244,
+        "width": 18,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "image",
+      "selector": "#root > div > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1121,
+        "y": 244,
+        "width": 15,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "text",
+      "selector": "#root > footer > p",
+      "label": null,
+      "value": "Copyright © 2024 Unique Identification Authority of India All Rights Reserved",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 0,
+        "y": 897,
+        "width": 1920,
+        "height": 34
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e0",
+      "category": "id_number"
+    }
+  ]
+}

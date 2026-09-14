@@ -1,0 +1,664 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:20:56.909Z",
+  "about": "HDFC Bank NetBanking login, customer ID and password, logged out",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "#personal-banking",
+      "label": "Personal Banking",
+      "value": "Personal Banking",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1233,
+        "y": 135,
+        "width": 178,
+        "height": 39
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "#credit-card-loans-only",
+      "label": "Credit Cards/Loans Only",
+      "value": "Credit Cards/Loans Only",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1410,
+        "y": 135,
+        "width": 222,
+        "height": 39
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#kc-form-login > div:nth-of-type(2) > div:nth-of-type(1)",
+      "label": "Login without Password NEW Scan using your HDFC Bank App secured with Kavach",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 199,
+        "width": 392,
+        "height": 106
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "#kc-form-login > div:nth-of-type(3) > button",
+      "label": "Virtual Keyboard",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1593,
+        "y": 407,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "input",
+      "selector": "#username",
+      "label": "Enter Customer ID/User ID",
+      "value": "decwferg",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "username",
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 436,
+        "width": 392,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#get-cust-id-link",
+      "label": "Get Customer ID",
+      "value": "Get Customer ID",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 486,
+        "width": 111,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#passwordGrp > button:nth-of-type(1)",
+      "label": "Virtual Keyboard",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1593,
+        "y": 529,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "#passwordGrp > button:nth-of-type(2)",
+      "label": "Password is case sensitive",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1307,
+        "y": 530,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "input",
+      "selector": "#password",
+      "label": "Enter Password",
+      "value": "[has value]",
+      "inputType": "password",
+      "autocomplete": "off",
+      "name": "password",
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 558,
+        "width": 392,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#toggle-eye-icon",
+      "label": "Show Password",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1593,
+        "y": 567,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#passwordGrp > div:nth-of-type(2) > span > a",
+      "label": "Set/Reset Password",
+      "value": "Set/Reset Password",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 608,
+        "width": 136,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#kc-login",
+      "label": "login",
+      "value": "Login",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": "login",
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 651,
+        "width": 392,
+        "height": 41
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "button",
+      "selector": "#register-now-hyperlink",
+      "label": "Register Now",
+      "value": "Register Now",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1451,
+        "y": 709,
+        "width": 90,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "button",
+      "selector": "#kc-form > div:nth-of-type(4) > span:nth-of-type(2) > div:nth-of-type(2) > a",
+      "label": "Know more about our security",
+      "value": "Know More",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1369,
+        "y": 797,
+        "width": 77,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "button",
+      "selector": "#kc-form > div:nth-of-type(5) > ul > li:nth-of-type(2) > a",
+      "label": "Terms and Conditions",
+      "value": "Terms and Conditions",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1407,
+        "y": 872,
+        "width": 127,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "button",
+      "selector": "#kc-form > div:nth-of-type(5) > ul > li:nth-of-type(3) > a",
+      "label": "Privacy Policy",
+      "value": "Privacy Policy",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1542,
+        "y": 872,
+        "width": 79,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "button",
+      "selector": "#compatibleBrowsersLink",
+      "label": "Compatible Browsers",
+      "value": "Compatible Browsers",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1233,
+        "y": 894,
+        "width": 121,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "button",
+      "selector": "#view_cookies_policy_link",
+      "label": "View Cookie Policy",
+      "value": "View Cookie Policy",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1273,
+        "y": 910,
+        "width": 129,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "button",
+      "selector": "#cookies-banner-close-btn",
+      "label": "Close cookies banner",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1418,
+        "y": 909,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "image",
+      "selector": "#login-background-img",
+      "label": "HDFC Bank information banner. Click to view important updates and information.",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 91,
+        "y": 0,
+        "width": 778,
+        "height": 945
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "text",
+      "selector": "#kc-page-title > h1",
+      "label": null,
+      "value": "Welcome to NetBanking",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1233,
+        "y": 32,
+        "width": 400,
+        "height": 30
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "image",
+      "selector": "#kc-page-title > div:nth-of-type(2) > img",
+      "label": "Made Digital By HDFC Bank NOW",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1233,
+        "y": 70,
+        "width": 191,
+        "height": 41
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "image",
+      "selector": "#qr-scan-mb",
+      "label": "Scan QR code",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1254,
+        "y": 216,
+        "width": 72,
+        "height": 72
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "text",
+      "selector": "#kc-form-login > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > span:nth-of-type(1) > span:nth-of-type(1) > p",
+      "label": null,
+      "value": "Login without Password",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1342,
+        "y": 220,
+        "width": 162,
+        "height": 21
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "text",
+      "selector": "#kc-form-login > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > span:nth-of-type(1) > span:nth-of-type(2)",
+      "label": null,
+      "value": "NEW",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1511,
+        "y": 222,
+        "width": 32,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "text",
+      "selector": "#set-login-qr-desc > p",
+      "label": null,
+      "value": "Scan using your HDFC Bank App secured with Kavach",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1342,
+        "y": 245,
+        "width": 238,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "image",
+      "selector": "#kc-form-login > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > img",
+      "label": "Right arrow",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1588,
+        "y": 240,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "text",
+      "selector": "#kc-form-login > div:nth-of-type(2) > div:nth-of-type(2) > div > div > p",
+      "label": null,
+      "value": "Click here to Scan QR Code. It’s secure & faster!",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1249,
+        "y": 314,
+        "width": 368,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "text",
+      "selector": "#kc-form-login > div:nth-of-type(2) > div:nth-of-type(3) > span",
+      "label": null,
+      "value": "Or",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1405,
+        "y": 364,
+        "width": 56,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "text",
+      "selector": "#kc-form-login > div:nth-of-type(3) > label",
+      "label": "Customer ID/User ID",
+      "value": "Customer ID/User ID",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 408,
+        "width": 138,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "text",
+      "selector": "#passwordGrp > label",
+      "label": "Password",
+      "value": "Password",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 530,
+        "width": 66,
+        "height": 20
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "text",
+      "selector": "#kc-registration > span",
+      "label": null,
+      "value": "Not registered for NetBanking?",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1237,
+        "y": 709,
+        "width": 305,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "image",
+      "selector": "#kc-form > div:nth-of-type(4) > span:nth-of-type(1) > img",
+      "label": "DigiCert Secured Site Seal",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1233,
+        "y": 769,
+        "width": 136,
+        "height": 50
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "text",
+      "selector": "#kc-form > div:nth-of-type(5) > ul > li:nth-of-type(1)",
+      "label": null,
+      "value": "© Copyright HDFC Bank Ltd. |",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1233,
+        "y": 871,
+        "width": 170,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "text",
+      "selector": "#kc-form > div:nth-of-type(5) > ul > li:nth-of-type(2)",
+      "label": null,
+      "value": "|",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1407,
+        "y": 871,
+        "width": 131,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "text",
+      "selector": "#kc-form > div:nth-of-type(5) > ul > li:nth-of-type(3)",
+      "label": null,
+      "value": "|",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1542,
+        "y": 871,
+        "width": 87,
+        "height": 18
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "image",
+      "selector": "#cookies-banner > img",
+      "label": "cookie",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 482,
+        "y": 908,
+        "width": 20,
+        "height": 21
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "text",
+      "selector": "#cookies-banner-text-line",
+      "label": null,
+      "value": "We use cookies to enhance your digital banking experience. By browsing this site, you agree to our use of cookies.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 510,
+        "y": 910,
+        "width": 760,
+        "height": 17
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e4",
+      "category": "id_number"
+    },
+    {
+      "elementId": "e8",
+      "category": "password"
+    }
+  ]
+}

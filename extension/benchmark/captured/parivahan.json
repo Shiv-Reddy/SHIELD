@@ -1,0 +1,566 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:19:17.653Z",
+  "about": "Vahan citizen services, mobile-number update form keyed by vehicle identifiers",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "#form_editMobNo > div > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > a",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1,
+        "y": 104,
+        "width": 320,
+        "height": 16
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "input",
+      "selector": "#tf_reg_no",
+      "label": "Vehicle Registration No.*",
+      "value": "dfvdfv",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "tf_reg_no",
+      "placeholder": null,
+      "position": {
+        "x": 352,
+        "y": 257,
+        "width": 426,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "input",
+      "selector": "#tf_chasis_no",
+      "label": "Chassis No (Full)*",
+      "value": "WKZEU1ZERG==",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "tf_chasis_no",
+      "placeholder": null,
+      "position": {
+        "x": 808,
+        "y": 257,
+        "width": 426,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "input",
+      "selector": "#tf_Eng_no",
+      "label": "Engine Number(Full)*",
+      "value": "QVJW",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "tf_Eng_no",
+      "placeholder": null,
+      "position": {
+        "x": 1264,
+        "y": 257,
+        "width": 426,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "input",
+      "selector": "#tf_regndt_input",
+      "label": "Registration Date:*",
+      "value": "09-09-2026",
+      "inputType": "text",
+      "autocomplete": null,
+      "name": "tf_regndt_input",
+      "placeholder": null,
+      "position": {
+        "x": 352,
+        "y": 310,
+        "width": 426,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "input",
+      "selector": "#tf_regnvalidupto_input",
+      "label": "Registration/Fitness Valid Upto Date*",
+      "value": "15-09-2026",
+      "inputType": "text",
+      "autocomplete": null,
+      "name": "tf_regnvalidupto_input",
+      "placeholder": null,
+      "position": {
+        "x": 808,
+        "y": 310,
+        "width": 426,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "#vhn_cap\\:j_idt140",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 753,
+        "y": 358,
+        "width": 15,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "input",
+      "selector": "#vhn_cap\\:CaptchaID",
+      "label": "Captcha*",
+      "value": null,
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "vhn_cap:CaptchaID",
+      "placeholder": "Enter Verification Code:",
+      "position": {
+        "x": 1031,
+        "y": 358,
+        "width": 194,
+        "height": 42
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "button",
+      "selector": "#ajax",
+      "label": "Validate",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": "ajax",
+      "placeholder": null,
+      "position": {
+        "x": 715,
+        "y": 426,
+        "width": 102,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "button",
+      "selector": "#reset1",
+      "label": "Reset",
+      "value": null,
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": "reset1",
+      "placeholder": null,
+      "position": {
+        "x": 830,
+        "y": 426,
+        "width": 83,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#status",
+      "label": "Know Your Application Status",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": "status",
+      "placeholder": null,
+      "position": {
+        "x": 924,
+        "y": 426,
+        "width": 289,
+        "height": 38
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "image",
+      "selector": "#j_idt85",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 16,
+        "y": 1,
+        "width": 305,
+        "height": 116
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "image",
+      "selector": "#j_idt91",
+      "label": "Vahan Citizen Services",
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 681,
+        "y": 1,
+        "width": 119,
+        "height": 80
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "text",
+      "selector": "#j_idt96 > div > div:nth-of-type(1) > div > h2",
+      "label": null,
+      "value": "Application for Mobile number updation",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 31,
+        "y": 142,
+        "width": 1858,
+        "height": 58
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "text",
+      "selector": "#j_idt96 > div > div:nth-of-type(2) > div:nth-of-type(2) > div > span",
+      "label": null,
+      "value": "Please note that in case you don't have complete information then visit RTO for getting details updated.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 591,
+        "y": 205,
+        "width": 738,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "text",
+      "selector": "#j_idt108 > span:nth-of-type(1)",
+      "label": "Vehicle Registration No.*",
+      "value": "Vehicle Registration No.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 352,
+        "y": 242,
+        "width": 149,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "text",
+      "selector": "#j_idt108 > span:nth-of-type(2)",
+      "label": "Vehicle Registration No.*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 505,
+        "y": 245,
+        "width": 4,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "text",
+      "selector": "#j_idt114 > span:nth-of-type(1)",
+      "label": "Chassis No (Full)*",
+      "value": "Chassis No (Full)",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 808,
+        "y": 242,
+        "width": 106,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "text",
+      "selector": "#j_idt114 > span:nth-of-type(2)",
+      "label": "Chassis No (Full)*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 918,
+        "y": 245,
+        "width": 4,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "text",
+      "selector": "#j_idt123 > span:nth-of-type(1)",
+      "label": "Engine Number(Full)*",
+      "value": "Engine Number(Full)",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1264,
+        "y": 242,
+        "width": 128,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "text",
+      "selector": "#j_idt123 > span:nth-of-type(2)",
+      "label": "Engine Number(Full)*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1396,
+        "y": 245,
+        "width": 4,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "text",
+      "selector": "#j_idt127 > span:nth-of-type(1)",
+      "label": "Registration Date:*",
+      "value": "Registration Date:",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 352,
+        "y": 295,
+        "width": 112,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "text",
+      "selector": "#j_idt127 > span:nth-of-type(2)",
+      "label": "Registration Date:*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 468,
+        "y": 298,
+        "width": 4,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "text",
+      "selector": "#j_idt131 > span:nth-of-type(1)",
+      "label": "Registration/Fitness Valid Upto Date*",
+      "value": "Registration/Fitness Valid Upto Date",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 808,
+        "y": 295,
+        "width": 224,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "text",
+      "selector": "#j_idt131 > span:nth-of-type(2)",
+      "label": "Registration/Fitness Valid Upto Date*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1036,
+        "y": 298,
+        "width": 4,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "text",
+      "selector": "#j_idt134 > span",
+      "label": "Enter fitness upto date for commercial vehicle and registration upto for private vehicle",
+      "value": "Enter fitness upto date for commercial vehicle and registration upto for private vehicle",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1264,
+        "y": 305,
+        "width": 440,
+        "height": 30
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "text",
+      "selector": "#vhn_cap\\:j_idt139 > span:nth-of-type(1)",
+      "label": "Captcha*",
+      "value": "Captcha",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 696,
+        "y": 358,
+        "width": 49,
+        "height": 15
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "text",
+      "selector": "#vhn_cap\\:j_idt139 > span:nth-of-type(2)",
+      "label": "Captcha*",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 749,
+        "y": 361,
+        "width": 4,
+        "height": 11
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "image",
+      "selector": "#vhn_cap\\:ref_captcha",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 808,
+        "y": 358,
+        "width": 203,
+        "height": 45
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "text",
+      "selector": "#ajax > span",
+      "label": null,
+      "value": "Validate",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 716,
+        "y": 429,
+        "width": 100,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "text",
+      "selector": "#reset1 > span",
+      "label": null,
+      "value": "Reset",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 831,
+        "y": 429,
+        "width": 81,
+        "height": 32
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "text",
+      "selector": "#status > span",
+      "label": null,
+      "value": "Know Your Application Status",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 925,
+        "y": 429,
+        "width": 287,
+        "height": 32
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e1",
+      "category": "id_number"
+    },
+    {
+      "elementId": "e2",
+      "category": "id_number"
+    },
+    {
+      "elementId": "e3",
+      "category": "id_number"
+    }
+  ]
+}

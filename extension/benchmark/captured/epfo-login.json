@@ -1,0 +1,698 @@
+{
+  "kind": "shield-element-map",
+  "capturedAt": "2026-09-14T09:16:01.263Z",
+  "about": "EPFO member portal login, UAN and password, logged out",
+  "note": "Element map captured for the Shield benchmark corpus. Field values are verbatim - capture only from logged-out or synthetic-data pages. No URL is recorded.",
+  "elements": [
+    {
+      "elementId": "e0",
+      "elementType": "button",
+      "selector": "html > body > header > div > div > div > ul > li > div > a",
+      "label": "Screen Reader Access",
+      "value": "Screen Reader Access",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1573,
+        "y": 8,
+        "width": 164,
+        "height": 28
+      }
+    },
+    {
+      "elementId": "e1",
+      "elementType": "button",
+      "selector": "#btnFontMinus",
+      "label": "A-",
+      "value": "A-",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1747,
+        "y": 8,
+        "width": 38,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e2",
+      "elementType": "button",
+      "selector": "#btnFontReset",
+      "label": "A",
+      "value": "A",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1798,
+        "y": 8,
+        "width": 32,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e3",
+      "elementType": "button",
+      "selector": "#btnFontPlus",
+      "label": "A+",
+      "value": "A+",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1844,
+        "y": 8,
+        "width": 42,
+        "height": 29
+      }
+    },
+    {
+      "elementId": "e4",
+      "elementType": "button",
+      "selector": "#navBar > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > a",
+      "label": "Employees' Provident Fund Organisation, India Ministry of Labour & Employment, Government of India",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 90,
+        "y": 60,
+        "width": 418,
+        "height": 53
+      }
+    },
+    {
+      "elementId": "e5",
+      "elementType": "button",
+      "selector": "#navBar > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > button",
+      "label": "Toggle navigation",
+      "value": null,
+      "inputType": "button",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 257,
+        "y": 111,
+        "width": 16,
+        "height": 10
+      }
+    },
+    {
+      "elementId": "e6",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(2) > a",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 477,
+        "y": 286,
+        "width": 12,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e7",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(3) > a",
+      "label": null,
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 245,
+        "y": 322,
+        "width": 12,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e8",
+      "elementType": "input",
+      "selector": "#userName",
+      "label": "Enter UAN",
+      "value": "465465451123",
+      "inputType": "text",
+      "autocomplete": "off",
+      "name": "userName",
+      "placeholder": "Enter UAN",
+      "position": {
+        "x": 1452,
+        "y": 289,
+        "width": 409,
+        "height": 35
+      }
+    },
+    {
+      "elementId": "e9",
+      "elementType": "input",
+      "selector": "#password",
+      "label": "Enter Password",
+      "value": "[has value]",
+      "inputType": "password",
+      "autocomplete": "off",
+      "name": "password",
+      "placeholder": "Enter Password",
+      "position": {
+        "x": 1452,
+        "y": 382,
+        "width": 409,
+        "height": 35
+      }
+    },
+    {
+      "elementId": "e10",
+      "elementType": "button",
+      "selector": "#AuthenticationForm > div:nth-of-type(3) > div > button:nth-of-type(1)",
+      "label": "Sign in",
+      "value": "Sign in",
+      "inputType": "submit",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1558,
+        "y": 438,
+        "width": 90,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e11",
+      "elementType": "button",
+      "selector": "#AuthenticationForm > div:nth-of-type(3) > div > button:nth-of-type(2)",
+      "label": "Reset",
+      "value": "Reset",
+      "inputType": "reset",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1664,
+        "y": 438,
+        "width": 90,
+        "height": 40
+      }
+    },
+    {
+      "elementId": "e12",
+      "elementType": "button",
+      "selector": "#forgerPass",
+      "label": "Forgot Password",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1447,
+        "y": 482,
+        "width": 116,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e13",
+      "elementType": "button",
+      "selector": "#uanActivationDisable",
+      "label": "Activate UAN Activate your UAN to access EPF services online",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 39,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e14",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > a",
+      "label": "Track Application Status Check the progress of your Pension on Higher Wages application",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 302,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e15",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > a",
+      "label": "Know Your UAN Retrieve your Universal Account Number using basic details",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 566,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e16",
+      "elementType": "button",
+      "selector": "#citizenRegistrationDisable",
+      "label": "Direct UAN Allotment Self-generate your UAN without employer request",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 829,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e17",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(5) > a",
+      "label": "UAN for Existing PF Generate UAN for members with an active PF account",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1092,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e18",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(6) > a",
+      "label": "Death Claim filing by Nominee (Claims) Death Claim filing by Nominee (Claims)",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1355,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e19",
+      "elementType": "button",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(7) > a",
+      "label": "Death Claim filing by Nominee (Pension) Pension Claim filing by Family or Nominee in case of member’s demise",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1619,
+        "y": 556,
+        "width": 247,
+        "height": 237
+      }
+    },
+    {
+      "elementId": "e20",
+      "elementType": "button",
+      "selector": "#footer > div > div > div > div:nth-of-type(2) > div > a:nth-of-type(1)",
+      "label": "EPFO Facebook",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 886,
+        "y": 896,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e21",
+      "elementType": "button",
+      "selector": "#footer > div > div > div > div:nth-of-type(2) > div > a:nth-of-type(2)",
+      "label": "EPFO on X",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 928,
+        "y": 896,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e22",
+      "elementType": "button",
+      "selector": "#footer > div > div > div > div:nth-of-type(2) > div > a:nth-of-type(3)",
+      "label": "EPFO Instagram",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 970,
+        "y": 896,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e23",
+      "elementType": "button",
+      "selector": "#footer > div > div > div > div:nth-of-type(2) > div > a:nth-of-type(4)",
+      "label": "EPFO YouTube",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1012,
+        "y": 896,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e24",
+      "elementType": "button",
+      "selector": "#footer > div > div > div > div:nth-of-type(2) > div > a:nth-of-type(5)",
+      "label": "EPFO LinkedIn",
+      "value": null,
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1054,
+        "y": 896,
+        "width": 34,
+        "height": 34
+      }
+    },
+    {
+      "elementId": "e25",
+      "elementType": "button",
+      "selector": "#footer > div > div > div > div:nth-of-type(3) > a",
+      "label": "Contact Us",
+      "value": "Contact Us",
+      "inputType": "",
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1805,
+        "y": 901,
+        "width": 88,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e26",
+      "elementType": "image",
+      "selector": "#header-icon-img",
+      "label": null,
+      "value": null,
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 10,
+        "y": 47,
+        "width": 70,
+        "height": 74
+      }
+    },
+    {
+      "elementId": "e27",
+      "elementType": "text",
+      "selector": "#navBar > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > a > span:nth-of-type(1)",
+      "label": null,
+      "value": "Employees' Provident Fund Organisation, India",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 90,
+        "y": 65,
+        "width": 352,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e28",
+      "elementType": "text",
+      "selector": "#navBar > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > a > span:nth-of-type(2)",
+      "label": null,
+      "value": "Ministry of Labour & Employment, Government of India",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 90,
+        "y": 89,
+        "width": 418,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e29",
+      "elementType": "text",
+      "selector": "#navBar > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > button > span:nth-of-type(1)",
+      "label": null,
+      "value": "Toggle navigation",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 264,
+        "y": 115,
+        "width": 1,
+        "height": 1
+      }
+    },
+    {
+      "elementId": "e30",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > h6",
+      "label": null,
+      "value": "Dear EPF Members !!",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 39,
+        "y": 203,
+        "width": 1358,
+        "height": 17
+      }
+    },
+    {
+      "elementId": "e31",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > span",
+      "label": null,
+      "value": "NEW",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 39,
+        "y": 248,
+        "width": 51,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e32",
+      "elementType": "text",
+      "selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(4) > span",
+      "label": null,
+      "value": "Filing of nominations by members is mandatory as per EPF Scheme,2026. E-Nominations can be filed and updated during service period.",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 61,
+        "y": 356,
+        "width": 868,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e33",
+      "elementType": "text",
+      "selector": "#loginLabel > label",
+      "label": "UAN Number *",
+      "value": "UAN Number",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1460,
+        "y": 257,
+        "width": 96,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e34",
+      "elementType": "text",
+      "selector": "#loginLabel > label > span",
+      "label": "UAN Number *",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1550,
+        "y": 259,
+        "width": 6,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e35",
+      "elementType": "text",
+      "selector": "#AuthenticationForm > div:nth-of-type(2) > div:nth-of-type(1) > label",
+      "label": "Password *",
+      "value": "Password",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1460,
+        "y": 350,
+        "width": 70,
+        "height": 24
+      }
+    },
+    {
+      "elementId": "e36",
+      "elementType": "text",
+      "selector": "#AuthenticationForm > div:nth-of-type(2) > div:nth-of-type(1) > label > span",
+      "label": "Password *",
+      "value": "*",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1524,
+        "y": 352,
+        "width": 6,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e37",
+      "elementType": "text",
+      "selector": "#forgerPass > span",
+      "label": null,
+      "value": "Forgot Password ?",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 1447,
+        "y": 484,
+        "width": 116,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e38",
+      "elementType": "text",
+      "selector": "#footer > div > div > div > div:nth-of-type(1) > span",
+      "label": null,
+      "value": "Wed 09, September 2026 (CPV 1.0.32)",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 12,
+        "y": 903,
+        "width": 233,
+        "height": 19
+      }
+    },
+    {
+      "elementId": "e39",
+      "elementType": "text",
+      "selector": "#footer > div > div > div > div:nth-of-type(2) > span",
+      "label": null,
+      "value": "Follow us",
+      "inputType": null,
+      "autocomplete": null,
+      "name": null,
+      "placeholder": null,
+      "position": {
+        "x": 817,
+        "y": 901,
+        "width": 58,
+        "height": 24
+      }
+    }
+  ],
+  "sensitive": [
+    {
+      "elementId": "e8",
+      "category": "id_number"
+    },
+    {
+      "elementId": "e9",
+      "category": "password"
+    }
+  ]
+}
