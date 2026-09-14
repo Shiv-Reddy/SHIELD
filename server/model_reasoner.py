@@ -53,25 +53,69 @@ REQUEST_TIMEOUT_S = float(os.environ.get("SHIELD_MODEL_TIMEOUT", "12"))
 # UI is not the place to find that out.
 MAX_SUMMARY_CHARS = 300
 
-# Whether to attach the redacted screenshot. Text-only free tiers are far more
-# widely available than vision ones, and the DOM summary alone is enough for the
-# form tasks in scope — so this defaults off and is turned on when the
-# configured model can actually see.
-SEND_FRAME = os.environ.get("SHIELD_MODEL_VISION", "").lower() in ("1", "true", "yes")
+# Whether to attach the redacted screenshot.
+#
+# ON by default since T1.3, which reverses the original reasoning. That reasoning
+# — text-only free tiers are commoner, and the DOM summary alone handles the form
+# tasks in scope — was true and was answering the wrong question. The problem
+# statement is about *visual* context reaching the reasoner, and a frame that is
+# captured, redacted, sealed, verified and then left behind is the entire
+# capability being built and not used. It is also the only thing on the wire that
+# demonstrates the redaction to the party the redaction is for.
+#
+# Set SHIELD_MODEL_VISION=0 to force text-only.
+SEND_FRAME = os.environ.get("SHIELD_MODEL_VISION", "1").strip().lower() not in (
+    "0",
+    "false",
+    "no",
+)
+
+# Latched the first time a provider refuses an image, so pointing this at a
+# text-only model costs one rejected request for the life of the process rather
+# than one per request. Deliberately not persisted: it is a fact about the
+# configured model, and the configuration can change between runs.
+_vision_refused = False
+
+
+def vision_state() -> str:
+    """What will actually be attached to the next request, for /health.
+
+    Three states, not two. "Configured but refused" is the one worth being able
+    to see: the server is answering, the model is answering, and the capability
+    the problem statement asks about is silently not in use.
+    """
+    if not SEND_FRAME:
+        return "off"
+    return "refused" if _vision_refused else "on"
 
 
 class ModelUnavailable(Exception):
     """The model could not be reached, or answered with something unusable."""
 
 
+class ProviderRejectedRequest(ModelUnavailable):
+    """The provider refused the request itself — a 4xx, not an unusable answer.
+
+    Kept separate because it is the only failure worth retrying differently. A
+    model that cannot see rejects a request carrying an image, and that is a
+    fixable mistake on our side; a model that returned an action outside the
+    allowlist is not, and retrying it would just spend another second arriving
+    at the same rules fallback.
+    """
+
+
 def is_configured() -> bool:
     return bool(MODEL_KEY and MODEL_NAME and MODEL_ENDPOINT)
 
 
-def _messages(request: AnalyzeRequest) -> list[dict[str, object]]:
-    built = build_prompt(request)
+def _messages(request: AnalyzeRequest, with_frame: bool) -> list[dict[str, object]]:
+    # The flag reaches the template as well as the message list. They used to
+    # disagree: the template described a screenshot unconditionally while the
+    # adapter attached one only on request, so every text-only call told the
+    # model about an image it had not been given.
+    built = build_prompt(request, with_frame=with_frame)
 
-    if not SEND_FRAME:
+    if not with_frame:
         return [
             {"role": "system", "content": built.system},
             {"role": "user", "content": built.user},
@@ -122,6 +166,10 @@ def _call_model(body: dict[str, object]) -> dict[str, object]:
     except urllib.error.HTTPError as error:
         # The provider's error body can quote the request back, and the request
         # contains the page description. Only the status code is surfaced.
+        if 400 <= error.code < 500:
+            raise ProviderRejectedRequest(
+                f"provider returned HTTP {error.code}"
+            ) from None
         raise ModelUnavailable(f"provider returned HTTP {error.code}") from None
     except Exception as error:
         raise ModelUnavailable(f"provider call failed ({type(error).__name__})") from None
@@ -296,19 +344,10 @@ def _check_typed_value(
     return value
 
 
-async def decide_with_model(request: AnalyzeRequest) -> tuple[Decision, str]:
-    """Decide using the model, falling back to the rules on any failure.
-
-    Returns the decision and which path produced it, because "the model was
-    configured" and "the model answered this request" are different facts and
-    the second is the one worth logging.
-    """
-    if not is_configured():
-        return decide_by_rules(request), "rules"
-
-    body = {
+def _body(request: AnalyzeRequest, with_frame: bool) -> dict[str, object]:
+    return {
         "model": MODEL_NAME,
-        "messages": _messages(request),
+        "messages": _messages(request, with_frame),
         # Deterministic where the provider honours it. Two identical screens
         # should produce the same action; a rehearsed demo that varies run to
         # run cannot be rehearsed.
@@ -316,9 +355,58 @@ async def decide_with_model(request: AnalyzeRequest) -> tuple[Decision, str]:
         "max_tokens": 400,
     }
 
+
+async def _ask(request: AnalyzeRequest, with_frame: bool) -> Decision:
+    raw = await asyncio.to_thread(_call_model, _body(request, with_frame))
+    return interpret(_parse_json_object(_extract_text(raw)), request)
+
+
+async def decide_with_model(request: AnalyzeRequest) -> tuple[Decision, str]:
+    """Decide using the model, falling back to the rules on any failure.
+
+    Returns the decision and which path produced it, because "the model was
+    configured" and "the model answered this request" are different facts and
+    the second is the one worth logging.
+    """
+    global _vision_refused
+
+    if not is_configured():
+        return decide_by_rules(request), "rules"
+
+    with_frame = SEND_FRAME and not _vision_refused
+
     try:
-        raw = await asyncio.to_thread(_call_model, body)
-        return interpret(_parse_json_object(_extract_text(raw)), request), "model"
+        decision = await _ask(request, with_frame)
+        return decision, "model-vision" if with_frame else "model"
+    except ProviderRejectedRequest as rejected:
+        # Sending an image to a text-only model is a 4xx, and it is the one
+        # mistake worth correcting rather than reporting. Without this, turning
+        # vision on by default would break every text-only configuration that
+        # worked before — silently, because the rules fallback still answers.
+        if not with_frame:
+            logger.warning(
+                "request %s fell back to rules: %s", request.request_id, rejected
+            )
+            return decide_by_rules(request), "rules-fallback"
+
+        try:
+            decision = await _ask(request, with_frame=False)
+        except ModelUnavailable as reason:
+            # The image was not the problem. Report the original refusal, which
+            # is the one that describes what the provider actually said.
+            logger.warning(
+                "request %s fell back to rules: %s", request.request_id, reason
+            )
+            return decide_by_rules(request), "rules-fallback"
+
+        _vision_refused = True
+        logger.warning(
+            "request %s: the configured model refused an image (%s); "
+            "sending text only from here on",
+            request.request_id,
+            rejected,
+        )
+        return decision, "model-text-only"
     except ModelUnavailable as reason:
         # Every message raised in this module is written from our own side of
         # the exchange — a status code, a shape, a rule that was broken — and

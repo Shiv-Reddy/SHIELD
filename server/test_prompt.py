@@ -17,6 +17,9 @@ from __future__ import annotations
 
 import sys
 
+import asyncio
+
+import model_reasoner
 from model_reasoner import ModelUnavailable, interpret
 from prompt import (
     CREDENTIAL_REFERENCE,
@@ -412,6 +415,190 @@ check(
     "the prompt version was bumped with the wording",
     PROMPT_VERSION != "1.0.0",
     f"got {PROMPT_VERSION}",
+)
+
+# --- The screenshot, and the template agreeing with what is actually sent -----
+#
+# These exist because the two used to disagree. The template described a
+# screenshot in every request while the adapter attached one only when
+# SHIELD_MODEL_VISION was set, so a text-only call told the model about three
+# black rectangles it had never been shown. Nothing failed; it just reasoned
+# about a picture that was not there.
+
+with_frame = build_prompt(LOGIN, with_frame=True)
+text_only = build_prompt(LOGIN, with_frame=False)
+
+check(
+    "the template describes a screenshot when one is attached",
+    "screenshot" in with_frame.system.lower()
+    and "black" in with_frame.system.lower(),
+)
+check(
+    "the template says there is no screenshot when none is attached",
+    "no screenshot" in text_only.system.lower(),
+)
+check(
+    "a text-only prompt never mentions the black rectangles",
+    "black" not in text_only.system.lower(),
+)
+check(
+    "the page description is the same either way",
+    with_frame.user == text_only.user,
+)
+check(
+    "the image is named as supplementary, not as the source of elementIds",
+    "page context is authoritative" in with_frame.system.lower(),
+)
+
+# The adapter and the template are handed the same flag, which is the whole
+# point of passing it rather than each deciding for itself.
+vision_messages = model_reasoner._messages(LOGIN, with_frame=True)
+plain_messages = model_reasoner._messages(LOGIN, with_frame=False)
+
+check(
+    "a vision request carries the frame as an image part",
+    isinstance(vision_messages[1]["content"], list)
+    and any(
+        part.get("type") == "image_url" for part in vision_messages[1]["content"]
+    ),
+)
+check(
+    "a vision request sends the redacted frame and nothing else",
+    vision_messages[1]["content"][1]["image_url"]["url"] == FRAME,
+)
+check(
+    "a text-only request carries no image part at all",
+    isinstance(plain_messages[1]["content"], str),
+)
+check(
+    "a text-only request uses the text-only system prompt",
+    plain_messages[0]["content"] == text_only.system,
+)
+check(
+    "a vision request uses the vision system prompt",
+    vision_messages[0]["content"] == with_frame.system,
+)
+
+# Vision is on by default as of T1.3. A frame that is captured, redacted,
+# sealed and then left behind is the capability being built and not used.
+check(
+    "the frame is attached by default",
+    model_reasoner.SEND_FRAME,
+)
+
+
+# --- Turning vision on by default must not break a text-only model ------------
+
+REPLY = {
+    "choices": [
+        {
+            "message": {
+                "content": '{"status": "action_ready", "action": {"type": "click",'
+                ' "selector": "e2", "value": null}, "confidence": 0.9,'
+                ' "reasoning_summary": "Submitting the form."}'
+            }
+        }
+    ]
+}
+
+
+def _with_fake_provider(behaviour):
+    """Run one decision against a stubbed provider, and restore everything after.
+
+    The latch in `decide_with_model` is module state on purpose — it is a fact
+    about the configured model, learned once — so a test that sets it has to put
+    it back, or it silently changes every check that follows.
+    """
+    original_call = model_reasoner._call_model
+    original = (
+        model_reasoner.MODEL_KEY,
+        model_reasoner.MODEL_NAME,
+        model_reasoner.MODEL_ENDPOINT,
+        model_reasoner._vision_refused,
+    )
+    model_reasoner.MODEL_KEY = "test-key"
+    model_reasoner.MODEL_NAME = "test-model"
+    model_reasoner.MODEL_ENDPOINT = "https://example.invalid/v1/chat/completions"
+    model_reasoner._vision_refused = False
+    model_reasoner._call_model = behaviour
+
+    try:
+        return asyncio.run(model_reasoner.decide_with_model(LOGIN))
+    finally:
+        model_reasoner._call_model = original_call
+        (
+            model_reasoner.MODEL_KEY,
+            model_reasoner.MODEL_NAME,
+            model_reasoner.MODEL_ENDPOINT,
+            model_reasoner._vision_refused,
+        ) = original
+
+
+sent = []
+
+
+def _text_only_provider(body):
+    """A provider whose model cannot see: an image is a 400."""
+    sent.append(body)
+    content = body["messages"][1]["content"]
+    if not isinstance(content, str):
+        raise model_reasoner.ProviderRejectedRequest("provider returned HTTP 400")
+    return REPLY
+
+
+decision, path = _with_fake_provider(_text_only_provider)
+
+check(
+    "a model that cannot see still answers, without the image",
+    path == "model-text-only",
+    f"got {path}",
+)
+check(
+    "and it answers correctly rather than falling back to the rules",
+    decision.action is not None and decision.action.selector == "e2",
+    f"got {decision.action}",
+)
+check(
+    "the image was tried first, then dropped",
+    len(sent) == 2
+    and not isinstance(sent[0]["messages"][1]["content"], str)
+    and isinstance(sent[1]["messages"][1]["content"], str),
+    f"got {len(sent)} call(s)",
+)
+
+
+def _vision_provider(body):
+    sent.append(body)
+    return REPLY
+
+
+decision, path = _with_fake_provider(_vision_provider)
+check(
+    "a model that can see is told so in the path",
+    path == "model-vision",
+    f"got {path}",
+)
+
+
+def _broken_provider(body):
+    raise model_reasoner.ProviderRejectedRequest("provider returned HTTP 401")
+
+
+decision, path = _with_fake_provider(_broken_provider)
+check(
+    "a refusal the image did not cause still falls back to the rules",
+    path == "rules-fallback",
+    f"got {path}",
+)
+
+check(
+    "the latch is left where the tests found it",
+    model_reasoner._vision_refused is False,
+)
+check(
+    "health reports what will actually be attached",
+    model_reasoner.vision_state() == "on",
+    f"got {model_reasoner.vision_state()}",
 )
 
 print()

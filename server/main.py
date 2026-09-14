@@ -24,7 +24,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from model_reasoner import decide_with_model, is_configured
+from model_reasoner import decide_with_model, is_configured, vision_state
 from prompt import PROMPT_VERSION
 from schemas import (
     ALLOWED_ACTIONS,
@@ -70,6 +70,12 @@ def health() -> dict[str, object]:
         # says what will be tried first rather than what will answer.
         "reasoner": "model" if is_configured() else "rules",
         "model_configured": is_configured(),
+        # Whether the redacted frame is actually travelling. "refused" means the
+        # configured model rejected an image and is being sent text only — the
+        # server works, the model answers, and the capability the problem
+        # statement is named after is not in use. That is worth being able to
+        # read off /health rather than inferring from a log line.
+        "vision": vision_state(),
         "prompt_version": PROMPT_VERSION,
     }
 

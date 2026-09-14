@@ -8,7 +8,8 @@ A model shown `[PASSWORD]` with no explanation reads it as literal text, or as
 an empty field, or as an error — and each misreading produces a different wrong
 action. The template states plainly that these mark information that is present
 on the screen but deliberately hidden, and that the black rectangles in the
-image are our redactions rather than part of the page.
+image are our redactions rather than part of the page — but only when an image
+is actually attached, which is what `with_frame` decides.
 
 The second is that everything describing the page is attacker-controlled. Labels
 and text come from whatever site the user is on, and a page can contain the
@@ -38,7 +39,7 @@ from schemas import ALLOWED_ACTIONS, AnalyzeRequest, RedactedDomEntry
 # API_SPEC.md Section 8 requires the template be re-validated against the
 # regression suite when the schema changes; the version is what makes "which
 # template produced this behaviour?" answerable after the fact.
-PROMPT_VERSION = "1.2.0"
+PROMPT_VERSION = "1.3.0"
 
 # Every token the client can emit, with the reading the model should give it.
 # Kept in step with extension/src/lib/redaction/placeholders.ts by
@@ -73,12 +74,53 @@ def _token_glossary() -> str:
     return "\n".join(f"  {token} - {meaning}" for token, meaning in TOKEN_MEANINGS.items())
 
 
-def _system_prompt() -> str:
+def _frame_section(with_frame: bool) -> str:
+    """What to say about the picture, including when there is not one.
+
+    The direction matters as much as the presence. A model handed an image and
+    no instruction about it will happily read an elementId off the pixels, and
+    the adapter would then reject an action the model was confident about. So
+    the description is named as authoritative for elements and the image is
+    named for what a description cannot carry — which is also the division of
+    labour the client itself uses (CLAUDE.md, hard constraint 2: DOM signals are
+    primary, the visual model is supplementary).
+    """
+    if not with_frame:
+        return """You are shown NO screenshot for this screen. Decide from the PAGE CONTEXT
+description alone. Where the description is not enough to be sure, say so
+rather than assuming anything about layout, position or appearance."""
+
+    return """You are also shown a screenshot of the same screen. It has solid black
+rectangles painted over the redacted regions. Those rectangles are our
+redactions. They are not part of the page, not missing images, not elements you
+can act on, and not something to comment on.
+
+PAGE CONTEXT is authoritative about elements. Every elementId you may name is
+there, and an element you can see in the image but cannot find in PAGE CONTEXT
+is one you may not act on, however clear it looks.
+
+The screenshot is for what a description cannot carry: how the page is laid
+out, which control belongs to which field, whether something is visually
+disabled, greyed out or covered by a dialog, and text that is drawn into an
+image or a canvas rather than written in the markup. Use it to choose between
+elements the description makes look alike, and to notice a dialog or banner
+that must be dealt with first."""
+
+
+def _system_prompt(with_frame: bool) -> str:
     """Assembled in a function so the glossary comes from TOKEN_MEANINGS itself.
 
     Writing the tokens out twice — once in the dictionary and once in prose —
     is how a template drifts from the code that produces the tokens, and the
     failure is silent: the model simply stops understanding one of them.
+
+    `with_frame` exists because the template used to describe a screenshot
+    unconditionally, while the adapter attached one only when
+    `SHIELD_MODEL_VISION` was set. A text-only request therefore carried three
+    sentences about an image the model had never been given — which is not a
+    harmless extra instruction. It invites the model to reason about a picture
+    it cannot see, and the honest answer to "what is in the black rectangles"
+    when there are no rectangles is unavailable rather than absent.
     """
     return f"""You decide the single next action for a browser assistant.
 
@@ -98,9 +140,7 @@ cannot. Each element also carries "filled", which says whether that field
 actually held content when the screen was captured. That is the distinction the
 token itself hides, and usually the one your decision turns on.
 
-The screenshot has solid black rectangles painted over the same regions. Those
-are the redactions. They are not part of the page, not missing images, and not
-elements you can act on.
+{_frame_section(with_frame)}
 
 Never try to reconstruct, guess, or ask for the content behind a token. If an
 action needs a secret value, use exactly "{CREDENTIAL_REFERENCE}" and the user's
@@ -158,7 +198,10 @@ Rules for the action:
 """
 
 
-SYSTEM_PROMPT = _system_prompt()
+# Both are built at import so a change that breaks one is a startup failure
+# rather than something discovered on the first request that happens to use it.
+SYSTEM_PROMPT_WITH_FRAME = _system_prompt(with_frame=True)
+SYSTEM_PROMPT_TEXT_ONLY = _system_prompt(with_frame=False)
 
 
 @dataclass
@@ -199,7 +242,7 @@ def _describe(entry: RedactedDomEntry) -> dict[str, object]:
     }
 
 
-def build_prompt(request: AnalyzeRequest) -> BuiltPrompt:
+def build_prompt(request: AnalyzeRequest, with_frame: bool = True) -> BuiltPrompt:
     """Build the prompt for one request.
 
     The page description is JSON-encoded rather than formatted into readable
@@ -210,7 +253,10 @@ def build_prompt(request: AnalyzeRequest) -> BuiltPrompt:
     string, which is exactly what it is.
 
     The screenshot is not included here. It is a separate image part of the
-    request, attached by whichever model adapter sends this.
+    request, attached by whichever model adapter sends this — which is why
+    `with_frame` is passed in rather than inferred: this module builds the words
+    and the adapter decides what travels beside them, and the two disagreeing is
+    the defect this argument exists to prevent.
     """
     elements = [_describe(entry) for entry in request.redacted_dom_summary]
 
@@ -230,7 +276,7 @@ def build_prompt(request: AnalyzeRequest) -> BuiltPrompt:
     )
 
     return BuiltPrompt(
-        system=SYSTEM_PROMPT,
+        system=SYSTEM_PROMPT_WITH_FRAME if with_frame else SYSTEM_PROMPT_TEXT_ONLY,
         user=user,
         version=PROMPT_VERSION,
         element_count=len(elements),

@@ -15,9 +15,9 @@ python -m venv .venv
 
 Then `curl http://127.0.0.1:8787/health`.
 
-Run the checks with `.venv/Scripts/python test_reasoner.py` and
-`.venv/Scripts/python test_prompt.py` — 37 in total. No pytest, no network, no
-key: they run anywhere the server runs.
+Run the checks with `.venv/Scripts/python test_reasoner.py` (82) and
+`.venv/Scripts/python test_prompt.py` (53) — 135 in total. No pytest, no
+network, no key: they run anywhere the server runs.
 
 ## Connecting a reasoning model
 
@@ -27,14 +27,75 @@ same chat-completions shape, so the adapter targets that shape and reads
 everything else from the environment:
 
 ```bash
-export SHIELD_MODEL_ENDPOINT=https://<provider>/v1/chat/completions
-export SHIELD_MODEL_NAME=<the provider's model id>
+export SHIELD_MODEL_ENDPOINT=https://openrouter.ai/api/v1/chat/completions
+export SHIELD_MODEL_NAME=qwen/qwen2.5-vl-32b-instruct:free
 export SHIELD_MODEL_KEY=<your key>
-export SHIELD_MODEL_VISION=1     # only if that model can read images
+export SHIELD_MODEL_VISION=0     # only to force text-only; on by default
 ```
 
 `GET /health` reports which path a request will take, so "is the model wired
-up?" is answerable without sending one.
+up?" is answerable without sending one. It also reports `vision`, which is
+`on`, `off`, or `refused` — the last meaning the configured model rejected an
+image and is being sent text only.
+
+### The model, and why this one
+
+Open weights, because the problem statement requires it. **Qwen2.5-VL-32B-
+Instruct**, Apache 2.0, hosted free on OpenRouter for the demo.
+
+The licence is the first filter and it has already cost us one candidate:
+DECISIONS.md 186 rejected OmniParser's icon detector over AGPL-3.0 inherited
+from Ultralytics. Apache 2.0 is the same standard applied to the server side.
+Llama 4 Scout is the obvious alternative and is genuinely strong at this, but
+the Llama 4 Community Licence carries an acceptable-use policy and a naming
+requirement, which is a different thing from open.
+
+### Running it offline, on the same weights
+
+The problem statement says "offline deployable", and that has to be more than a
+sentence. Nothing about this server assumes a cloud: the adapter speaks
+chat-completions to whatever `SHIELD_MODEL_ENDPOINT` points at.
+
+With Ollama, which is the shortest path on a laptop:
+
+```bash
+ollama pull qwen2.5vl:7b        # 6.0 GB, Q4_K_M
+export SHIELD_MODEL_ENDPOINT=http://127.0.0.1:11434/v1/chat/completions
+export SHIELD_MODEL_NAME=qwen2.5vl:7b
+export SHIELD_MODEL_KEY=ollama  # not checked locally, but the adapter sends one
+```
+
+With vLLM, for a machine that can hold the 32B:
+
+```bash
+vllm serve Qwen/Qwen2.5-VL-32B-Instruct --port 8000
+export SHIELD_MODEL_ENDPOINT=http://127.0.0.1:8000/v1/chat/completions
+export SHIELD_MODEL_NAME=Qwen/Qwen2.5-VL-32B-Instruct
+```
+
+The honest part: the cloud demo runs the 32B and the laptop path runs the 7B.
+Same family, same licence, same wire format, same prompt — a smaller model, and
+we should say so rather than implying one binary runs everywhere. Ollama serves
+the 7B on CPU at roughly 3–8 tokens/second, which is usable for a single action
+per screen and not for anything faster.
+
+### The frame is sent by default
+
+It did not use to be. Text-only free tiers are commoner and the DOM summary
+alone handles the form tasks in scope, so the frame was opt-in — which meant the
+capability the problem statement is named after was built, redacted, sealed,
+verified, and then usually left behind.
+
+Turning it on by default cannot be allowed to break a text-only configuration,
+so if the provider rejects a request carrying an image the adapter retries that
+same request without it, answers from the model anyway, and remembers for the
+life of the process. `/health` then reads `"vision": "refused"`.
+
+The template is told which case it is in. It used to describe a screenshot in
+every request regardless, so a text-only call carried three sentences about
+black rectangles the model had never been shown — not harmless, since it invites
+reasoning about a picture that is not there. `build_prompt(request, with_frame)`
+now decides both together.
 
 With none of these set the server runs the rule-based path, which is the default
 and the demo's contingency. With them set, any failure — an unreachable
