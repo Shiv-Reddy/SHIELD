@@ -35,6 +35,7 @@ const PIXEL_STD = 128;
 export type { ExecutionBackend } from '../lib/settings';
 
 import type { ExecutionBackend } from '../lib/settings';
+import { describeMemory, sampleMemory } from '../lib/resource';
 
 export interface FaceDetectorInfo {
   backend: ExecutionBackend;
@@ -352,6 +353,13 @@ export async function ensureFaceDetector(
   } else {
     console.info(`[shield] model init ${detail} / ${budget}ms`);
   }
+
+  // The one moment worth a memory reading: the session is built and the module
+  // compiled, so this is the resident cost of having a model at all rather than
+  // the cost of using it. The figure covers the JS heap only - the WASM module
+  // itself is not on it - which is why RESOURCES.md pairs it with a task
+  // manager reading rather than quoting it alone.
+  console.info(describeMemory('offscreen, model ready', sampleMemory()));
 
   return info;
 }
