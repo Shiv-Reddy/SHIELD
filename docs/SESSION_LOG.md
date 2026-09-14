@@ -7,7 +7,7 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-10
+## Current state — 2026-09-13
 
 **Core is complete.** Phases 1–3 closed. Every module A–G built and verified in
 Chrome against the live backend. Metrics 2 and 3 now have numbers over a corpus
@@ -15,9 +15,9 @@ that was not written to flatter them.
 
 | Measure | Value |
 |---|---|
-| Client tests | 269 |
+| Client tests | 277 |
 | Reasoner checks | 82 |
-| Prompt checks | 35 |
+| Prompt checks | 53 |
 | One full pass | ≈150ms, every stage inside budget |
 | Capture / DOM / inference / redaction | 39ms / 1.5–6.5ms / 40–49ms / 37–75ms |
 | Face detection | 6 of 8; reliable 110px+, marginal at 80px (0.312 vs 0.3) |
@@ -125,32 +125,46 @@ every run for as long as it is true.
 
 ## Next session starts with
 
-**Verifying the screen reader in Chrome, then measuring it.** Scan a page with
-text in a canvas or an iframe and check the console line
-`[shield] screen read: N agreed, N seen only in pixels ...`, then confirm the
-pixel-only text is actually covered on the next run. After that, the agreement
-rate on ≥10 real pages is the metric-1 evidence, and the dom-only column decides
-whether the frame needs upscaling before recognition.
+**A browser.** Everything that can be built without one, in T1.1 and T1.2, is
+built. Both remaining boxes in each are a measurement nobody has taken.
 
-**Then T1.1: the real-page share.** The capture path exists and nothing has
-been driven through it. Load the extension with `SHIELD_DEV=1`, open the capture
-panel on logged-out or synthetic-data pages, save the maps into
-`extension/benchmark/captured/`, add `about` and `sensitive` by hand, and re-run
-`npm run benchmark`. An unlabelled file is skipped and named, never scored.
-Expect the numbers to move again; that is the corpus working.
+1. **The agreement rate on ≥10 real pages** — the metric-1 evidence, and the
+   last thing standing between T1.2 and done. The counters are now
+   trustworthy: readings are placed in the document, merged per reader, and
+   compared once, so a page walked in more stops no longer scores differently
+   (DECISIONS.md 193). The dom-only column decides whether the frame needs
+   upscaling. Scan a page with text in a canvas or an iframe and read the
+   `[shield] screen read:` console line.
+2. **Face pixel truth**, which needs a recorded Chrome run — the boxes cannot be
+   committed because `face-a.jpg` and `face-b.png` are not. This is the only
+   T1.1 box still open.
+3. **Harder real pages.** The 12 captured so far are logged-out login forms,
+   which is the easy case — every label on them was found and every one of the
+   28 misses is still on a synthetic page. What the corpus has never seen from
+   outside is a statement, a bill, a search result or a photographed document,
+   which is where prose names, addresses and amounts live. Capturing those is
+   what would actually move the number (DECISIONS.md 200).
 
-Face pixel truth is the other open half, and it needs a recorded Chrome run —
-the boxes cannot be committed because `face-a.jpg` and `face-b.png` are not.
+**T1.3 needs a key and a disk, not a design.** The open-weights VLM is pinned
+(Qwen2.5-VL-32B-Instruct, Apache 2.0, free on OpenRouter), the redacted frame is
+attached by default, and the offline path is written down. What is left is
+setting `SHIELD_MODEL_KEY` and watching a live call actually use the picture,
+and running `ollama pull qwen2.5vl:7b` once to prove the offline claim.
 
-Then T1.2, the local screen-understanding model — 25% of the score and the
-capability the problem statement is named after.
+**Closed this session:** `sent/sent.html` verified in Chrome twice, and the
+real-page share went from zero to 12 of 50 — the blocker T1.1 had carried since
+it was written.
 
-**Uncommitted:** the sent-frame record — `src/sent/`, the `frame` field on
-`Transmission`, `tests/evidence.test.ts`, the popup button, the vite input, and
-DECISIONS 189–192. Also the whole vision layer — `src/lib/vision/screen-text.ts`,
-`src/lib/vision/agreement.ts`, `tests/vision.test.ts`, the `READ_SCREEN` message
-and its offscreen handler, the scan-path wiring in `service-worker.ts`, the
-`screen` field on `ScanSummary`, and the DECISIONS/TASKS/SESSION_LOG edits.
+**Uncommitted:** twelve captured pages in `extension/benchmark/captured/` and
+the regenerated `docs/BENCHMARK.md`. Also the agreement merge — `mergeSightings` in
+`src/lib/vision/agreement.ts`, the scan-path rework in `service-worker.ts`, the
+corrected `ScanSummary.screen` comment, eight tests in `tests/vision.test.ts`.
+And T1.3 — `server/prompt.py` (frame-aware template, version 1.3.0),
+`server/model_reasoner.py` (vision by default, `ProviderRejectedRequest`, the
+text-only retry and its latch, `vision_state`), `server/main.py` (`vision` on
+`/health`), 18 checks in `server/test_prompt.py`, `server/README.md`, and
+DECISIONS 193–201 with the TASKS/SESSION_LOG edits.
+
 `ppt.md` at the repository root is a scratch file for the idea deck and is not
 meant to be committed. Do not commit until explicitly told to, and use the
 identity given at that time.
@@ -190,6 +204,8 @@ identity given at that time.
 | 26 | Task list rebuilt around the five scored metrics. Benchmark instrument, corpus and first baseline for metrics 2 and 3 |
 | 27 | Corpus grown 4 pages to 38; pixel ground truth and a pixel scoring path; dev-only element-map export; identifier explanation fixed |
 | 28 | Vision layer evaluated and amended: whole-frame text regions and a DOM-versus-pixels comparison, no new model or licence |
+| 29 | Agreement counted per page instead of per stop; open-weights VLM pinned and the redacted frame sent by default |
+| 30 | First real pages in the corpus — 12 of 50, captured from live sites; the operator's own email and PAN caught before they reached a commit |
 
 ---
 
@@ -222,7 +238,21 @@ identity given at that time.
    reached the trust overlay as though it were evidence. On the one surface
    whose value is being read literally, a true action with a false caption is
    its own kind of failure.
-9. **A measuring instrument flatters itself unless tested.** The first scorer
+9. **A capability can be built, verified, and then not used.** The redacted
+   frame was captured, painted, sealed, checked by three independent barriers
+   and attached to the payload — and then left off the wire by an environment
+   variable that defaulted to off, on reasoning that was locally correct and
+   answered the wrong question. Nothing failed and nothing was logged. The
+   prompt meanwhile described the screenshot in every request regardless, so
+   the two halves had disagreed for as long as both existed.
+10. **The review step in a privacy tool is not ceremony.** The first real
+   capture carried the operator's own email address and PAN into files bound
+   for a public repository, in among a dozen obviously-fake values. Nothing
+   failed and nothing warned; it was caught only because reading every value
+   before committing is a written step. The password sentinel meanwhile held
+   on five real bank login pages, including an ATM PIN field — the automated
+   guarantee worked and the human one was the one that nearly slipped.
+11. **A measuring instrument flatters itself unless tested.** The first scorer
    averaged per-page ratios and dropped pages that scored zero, so total failure
    on a page raised the corpus score. It was caught by a test written against
    the scorer, not against the detector. A benchmark nobody has checked is worse

@@ -13,18 +13,17 @@ next.
 | # | Metric | Weight | State |
 |---|---|---|---|
 | 1 | Accuracy of visual context from screen | 25% | Pixel text regions built; **agreement rate not yet measured on a real page** |
-| 2 | Recall & precision of PII detection | 20% | **Measured.** 81.3% / 83.0% over 38 pages |
-| 3 | Precision of redaction | 20% | **Measured.** 83.4% precision, 56.5% coverage |
+| 2 | Recall & precision of PII detection | 20% | **Measured.** 83.5% / 83.5% over 50 pages, 12 of them real |
+| 3 | Precision of redaction | 20% | **Measured.** 83.9% precision, 60.4% coverage |
 | 4 | Client-side resource utilization | 20% | **Unmeasured.** Latency only |
 | 5 | End-to-end task latency | 15% | Measured, ~150ms/pass, inside budget |
 
 Two facts follow from this table and drive everything below.
 
-**Metrics 2 and 3 now have numbers; metric 1 still does not.** The corpus that
-produced them was written entirely by this project, which the report says on
-every run — a measurement against our own description of a page is worth less
-than one against somebody else's page, and that gap is the remaining work in
-T1.1.
+**Metrics 2 and 3 now have numbers; metric 1 still does not.** The corpus is no
+longer entirely our own - 12 of 50 pages were captured from real sites. The
+labels on them are still ours, so the gap narrowed rather than closed
+(DECISIONS.md 200).
 
 **The PS is named after our weakest component.** "On-device Visual Perception."
 Our screen understanding is the DOM scanner; the vision model is a 1.1MB face
@@ -48,7 +47,8 @@ indefensible answer to metric 1.
 | Trust UI | Overlay, payload inspector (with the frame that was sent), latency panel, manual marking, audit log |
 | Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
 | Scan record | Redacted picture of every screen examined, kept local |
-| Tests | 269 client, 82 reasoner, 35 prompt |
+| Tests | 277 client, 82 reasoner, 53 prompt |
+| Benchmark corpus | 50 pages, 170 labels — 32 synthetic, **12 real**, 6 fixture |
 
 Phases 1–3 (login autofill, multi-field signup, faces) are closed.
 
@@ -82,24 +82,34 @@ Not more tests. A measuring instrument.
 - [x] **Pixel ground truth** for OCR — boxes on the two committed sample ID
       cards, in the document's own pixels, scored through a new `scorePixels`
       path that takes regions with no element.
-- [ ] **A real-page share.** Still **zero**. Every page was written here, and
-      the runner prints that on every run for as long as it is true. The
-      capture path exists; nobody has driven a browser through it yet.
+- [x] **A real-page share.** **12 of 50 pages** are now captured from sites
+      nobody here wrote - income tax, UIDAI, EPFO, GST, Parivahan, SBI, HDFC,
+      Axis, HDFC Life, Jio, plus Wikipedia and Hacker News as controls. All 20
+      labels on them were found and both controls stayed clean. Read
+      DECISIONS.md 200 before quoting that: the pages are real, the labels are
+      ours, and logged-out login forms are the easy case.
 - [ ] **Face pixel truth.** Not committed and not invented: the boxes would
       describe `face-a.jpg` and `face-b.png`, which are deliberately absent
       from this repository. Needs a recorded Chrome run.
 
 **Baseline moved, and the movement is the point:**
 
-| Measure | 4 pages / 19 labels | 38 pages / 150 labels |
-|---|---|---|
-| Recall | 89.5% | **81.3%** |
-| Precision | 94.4% | **83.0%** |
-| F1 | 91.9% | **82.2%** |
-| Category accuracy | 94.1% | **88.5%** |
-| Redaction coverage | 87.6% | **56.5%** |
-| Redaction precision | 94.5% | **83.4%** |
-| Misses / over-flags | 2 / 1 | **28 / 25** |
+| Measure | 4 pages / 19 | 38 pages / 150 | 50 pages / 170, 12 real |
+|---|---|---|---|
+| Recall | 89.5% | 81.3% | **83.5%** |
+| Precision | 94.4% | 83.0% | **83.5%** |
+| F1 | 91.9% | 82.2% | **83.5%** |
+| Category accuracy | 94.1% | 88.5% | **83.8%** |
+| Redaction coverage | 87.6% | 56.5% | **60.4%** |
+| Redaction precision | 94.5% | 83.4% | **83.9%** |
+| Misses / over-flags | 2 / 1 | 28 / 25 | **28 / 28** |
+
+The real pages raised recall and lowered category accuracy. Both are the same
+fact: a logged-out login form is easy to *find* things on and easy to disagree
+about the *kind* of thing found, and the disagreements are ours - a bank
+username labelled `id_number` here and called something else by the detector.
+No miss on this run comes from a real page; all 28 are still synthetic, which
+is where the prose, the statements and the photographed documents are.
 
 Nothing was tuned. The old figures described four pages, three of which were
 written to exercise this code; the new ones describe a corpus that was not.
@@ -165,16 +175,32 @@ sees nothing.
 ### T1.3 Open-weights server model, vision path on
 **Explicit PS requirement.**
 
-- [ ] Pin an open-weights VLM (Llama Vision / Qwen-VL class), cloud-hosted for
-      SIH, and record the choice
-- [ ] `SHIELD_MODEL_VISION` on by default — the PS is about *visual* context
-      reaching the server; today the frame is often not sent at all
-- [ ] Document the offline deployment path (vLLM or Ollama, same weights).
-      The PS says "offline deployable"; that has to be more than a claim
-- [ ] Verify the redacted frame is actually used in the model's reasoning
+- [x] **Pinned: Qwen2.5-VL-32B-Instruct, Apache 2.0**, hosted free on
+      OpenRouter. DECISIONS.md 195. The licence was the first filter, the same
+      standard 186 applied to OmniParser — Llama 4 Scout is strong here and its
+      Community Licence is not open.
+- [x] **`SHIELD_MODEL_VISION` on by default.** The frame was captured,
+      redacted, sealed, verified and then usually left behind. A model that
+      cannot see now costs one rejected request rather than the feature: a 4xx
+      on an image request is retried without it, answers anyway, and latches.
+      `/health` reports `on` / `off` / `refused`.
+- [x] **Offline path documented and specified** — `ollama pull qwen2.5vl:7b`
+      (6.0GB, Q4_K_M) or `vllm serve Qwen/Qwen2.5-VL-32B-Instruct`, one
+      environment variable either way. Stated plainly that the laptop runs the
+      7B and the cloud demo the 32B: same family, same licence, same wire
+      format, smaller model.
+- [ ] **Run it offline once.** Written down, not yet executed — needs an
+      `ollama pull` on a machine with the disk for it.
+- [ ] **Verify the redacted frame is actually used in the model's reasoning.**
+      The template now describes the image only when one is attached
+      (DECISIONS.md 198) and 18 checks cover the wiring, but no live call has
+      been made: that needs a key.
 
 **Done when:** the demo runs on an open-weights VLM that receives the redacted
 frame, and the offline path is documented and tried once.
+
+**What is left is a key and a disk, not a design.** The adapter, the template
+and the checks are in place; both remaining boxes need someone to run it.
 
 ---
 
@@ -183,11 +209,44 @@ frame, and the offline path is documented and tried once.
 ### T2.1 Firefox
 **The PS names it: "popular browsers (chrome, Firefox)".**
 
-- [ ] Verify whether Firefox MV3 event pages have DOM access — if so the
-      offscreen document is unnecessary there and this is *simpler*, not harder
-- [ ] Verify WebGPU availability and the WASM fallback path in Firefox
-- [ ] Port, then run the full fixture set on both browsers
-- [ ] Record what differs in DECISIONS.md
+- [x] **Event pages have DOM access — confirmed, and it makes this simpler.**
+      Firefox MV3 runs an event page, not a service worker. The offscreen
+      document exists only because a Chrome service worker cannot host
+      WebAssembly or WebGPU, so Firefox needs less machinery, not more.
+- [x] **The namespace risk does not exist.** Firefox returns promises from
+      `chrome.*` under MV3, so every `await chrome.…` in the client ports
+      unchanged. No compatibility shim. This was the one that would have made
+      the port expensive.
+- [x] **WebGPU is available.** Default from Firefox 141 on Windows, 145 on
+      Apple Silicon; Linux and Android still in progress. The machine here runs
+      155. Absence degrades to the WASM path, so it is a speed question.
+- [x] **A Firefox build target exists** — `npm run build:firefox` generates
+      `dist-firefox/` with a manifest derived from Chrome's, so the two cannot
+      drift and a Firefox build cannot break Chrome. DECISIONS.md 203.
+- [x] **Loaded in Firefox, and almost everything worked first try.** The event
+      page ran with `type: module` — the predicted failure did not happen — the
+      content script injected under `activeTab`, the DOM map read 418 elements
+      and measured the page at 9.4 screens, and the popup rendered in full.
+      Only the vision path failed, with the message written for it.
+- [x] **Iframe vision host built, tried, and reverted.** It loads ONNX and
+      captures a frame, then hangs the extension: a same-origin iframe shares
+      an event loop with its parent, and single-threaded WASM inference starves
+      the event page that has to receive the reply. Firefox reports
+      `Content process isn't responsive` and DevTools will not attach.
+      DECISIONS.md 207.
+- [ ] **Inference on a thread that is not the message loop.** The actual
+      remaining work, and the only thing between here and a working Firefox
+      build. A real Worker, or the dispatcher extraction of 204.
+- [ ] **Confirm whether WebGPU is reachable from a Firefox extension page.**
+      Every observed run fell back to single-threaded WASM and the reason was
+      never captured — the background console could not be opened, because the
+      process it lives in was the one that had hung.
+- [ ] Run the full fixture set on both browsers
+
+**PARKED — DECISIONS.md 208.** Everything up to inference is proven working on
+Firefox. What is left is a threading redesign on a browser that is not the
+demo, and T2.2 below is 20% of the score with no numbers at all. The build
+target stays so the next person starts from something that loads.
 
 **Done when:** the login and signup demos pass on Firefox and Chrome.
 

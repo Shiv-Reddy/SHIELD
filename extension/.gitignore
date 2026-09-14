@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-firefox/
 public/icons/*.png
 # The SVGs are committed. They are plain text, fully reviewable, and they are
 # what the deck, the README and anything outside the extension actually use —

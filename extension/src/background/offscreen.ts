@@ -10,6 +10,16 @@
 const OFFSCREEN_PATH = 'offscreen/offscreen.html';
 
 /**
+ * Whether this browser has an offscreen API at all.
+ *
+ * Chrome-only. Firefox MV3 runs an event page, which is a real DOM document and
+ * therefore needs no offscreen document - but it does still need somewhere to
+ * run inference that is not the thread handling messages. Holding the host in
+ * an iframe was tried and reverted: DECISIONS.md 207.
+ */
+export const HAS_OFFSCREEN = typeof chrome !== 'undefined' && chrome.offscreen !== undefined;
+
+/**
  * Concurrency latch.
  *
  * Two runs starting close together would both see "no document" and both call
@@ -33,6 +43,13 @@ async function documentExists(): Promise<boolean> {
  * Web cannot run in a service worker at all (microsoft/onnxruntime#20876).
  */
 export async function ensureOffscreenDocument(): Promise<void> {
+  if (!HAS_OFFSCREEN) {
+    throw new Error(
+      'This browser has no offscreen documents. Shield runs its vision model ' +
+        'in one on Chrome; the Firefox path is not built yet.',
+    );
+  }
+
   if (await documentExists()) return;
   if (creating) return creating;
 
@@ -62,7 +79,16 @@ export async function ensureOffscreenDocument(): Promise<void> {
  * The cost is that the next run pays session startup again, so this is called
  * when a run ends rather than between steps of one task.
  */
+/**
+ * Tear the host down.
+ *
+ * Has no callers. Disposal is the host's own idle timer, chosen because an MV3
+ * service worker is evicted when idle and cannot be relied on to run one. Kept
+ * because it is the correct way to do it the moment anything knows when a run
+ * is truly over.
+ */
 export async function closeOffscreenDocument(): Promise<void> {
+  if (!HAS_OFFSCREEN) return;
   if (!(await documentExists())) return;
   await chrome.offscreen.closeDocument();
 }
