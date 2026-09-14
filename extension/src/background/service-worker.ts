@@ -1906,6 +1906,22 @@ async function scanPage(): Promise<void> {
         `${stoppedEarly ? ' (stopped early)' : ''}; nothing was transmitted`,
     );
 
+    // The metric-1 figure, for the PAGE. Each stop already logged its own
+    // numbers, and those must not be added up - overlapping stops read the same
+    // text twice (DECISIONS.md 193). Without this line the only merged figure
+    // lives in the scan record, which means the number the rubric actually asks
+    // for cannot be read off a console while testing.
+    if (screenRead) {
+      const merged = summariseScreenRead(screenRead);
+      const total = merged.agreed + merged.pixelOnly + merged.domOnly;
+      const rate = total > 0 ? ((merged.agreed / total) * 100).toFixed(1) : '100.0';
+      console.info(
+        `[shield] page agreement ${rate}% — ${merged.agreed} agreed, ` +
+          `${merged.pixelOnly} pixels only (${merged.hidden} hidden), ` +
+          `${merged.domOnly} markup only`,
+      );
+    }
+
     await sendToTab(tabId, {
       type: MSG.SHOW_SCAN,
       findings: all,

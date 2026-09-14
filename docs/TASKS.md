@@ -12,10 +12,10 @@ next.
 
 | # | Metric | Weight | State |
 |---|---|---|---|
-| 1 | Accuracy of visual context from screen | 25% | Pixel text regions built; **agreement rate not yet measured on a real page** |
+| 1 | Accuracy of visual context from screen | 25% | **Measured. 18.6% agreement** on a real page — 16 agreed, 27 pixel-only, 43 markup-only |
 | 2 | Recall & precision of PII detection | 20% | **Measured.** 83.5% / 83.5% over 50 pages, 12 of them real |
 | 3 | Precision of redaction | 20% | **Measured.** 83.9% precision, 60.4% coverage |
-| 4 | Client-side resource utilization | 20% | **Unmeasured.** Latency only |
+| 4 | Client-side resource utilization | 20% | **Measured on one machine.** Scan footprint 217MB, CPU ≤1.1%; idle baseline still missing |
 | 5 | End-to-end task latency | 15% | Measured, ~150ms/pass, inside budget |
 
 Two facts follow from this table and drive everything below.
@@ -161,12 +161,22 @@ what it cannot do at all is read a canvas, an iframe or a pasted screenshot.
       position **and** text because either alone is wrong. 24 tests.
 - [x] **DOM stays primary.** Only pixel-only text becomes a new finding;
       anything both readers saw was already `detectDomPii`'s.
-- [ ] **Run it on ≥10 real pages and record the agreement rate.** The
-      machinery is built and has never seen a real screen. Needs a browser.
-- [ ] **Decide whether the frame needs upscaling.** Read at native resolution
-      today; 16px body text is marginal for the engine at that size. The
-      dom-only column is about to say how much that costs, so the threshold is
-      set from a measurement rather than a guess.
+- [x] **First real-page agreement rate: 18.6%** — income-tax login, two stops,
+      `16 agreed, 27 pixels only (0 hidden), 43 markup only`. The merge is
+      demonstrably doing its job: per-stop those were 21 / 28 / 67, so it
+      collapsed 5 duplicate agreements and 24 duplicate markup items that a
+      summed figure would have counted twice.
+- [ ] **Nine more pages.** One page is a data point, not a rate.
+- [ ] **Upscale the frame before recognition — decided, not yet built.**
+      The measurement says so rather than intuition: of 59 text items the DOM
+      reported, the engine read 16. **It misses roughly 73% of the text it is
+      looking straight at**, which is the ceiling on everything this layer can
+      contribute to metric 1. Native resolution is the suspected cause — 16px
+      body text is marginal for Tesseract. The cost is latency on the scan
+      path, which is the path that has budget for it (DECISIONS.md 188), and
+      the same run is the before-measurement to compare against.
+      **The 27 pixel-only regions are the other half of the story** and argue
+      the layer earns its place: that is text on screen no markup describes.
 
 **Done when:** the agreement rate against the DOM map is recorded on ≥10 real
 pages, and canvas/iframe text is shown being hidden on a page where the DOM
@@ -253,10 +263,32 @@ target stays so the next person starts from something that loads.
 ### T2.2 Resource measurement
 **Metric 4 — 20%, currently unmeasured.**
 
-- [ ] Peak and steady CPU, GPU and memory during a run and during a scan
-- [ ] Model load cost, session memory, offscreen document footprint
-- [ ] Measured on ≥2 machines, one without a discrete GPU
-- [ ] Recorded as a table, not an impression
+- [x] **A protocol that two people would follow identically** —
+      docs/RESOURCES.md. Six readings at named moments, both extension
+      processes recorded separately, the run repeated five times because a
+      single run carries one-off costs.
+- [x] **In-extension heap sampling** — `lib/resource.ts`, 7 tests. Reported at
+      the moment the session is built, which is the resident cost of having a
+      model rather than of using one. The line names what it excludes and the
+      sampler returns null, never zero, where the counter is absent.
+- [x] **The limits of self-measurement written down.** `performance.memory`
+      covers one JS heap. ONNX's WASM linear memory and WebGPU buffers - the
+      two largest costs - are invisible to it, so the process-level numbers
+      come from Chrome's task manager. DECISIONS.md 209.
+- [x] **Machine A measured** — Intel i5-13500H, 15.7GB, **Iris Xe integrated,
+      no discrete GPU**, and it selects **WebGPU** anyway. Idle costs 8MB of JS
+      heap and 0K of GPU memory; a run peaks at 19MB GPU and 0.1% CPU; a
+      whole-page scan peaks at 1.1% CPU. End to end ~135ms.
+- [x] **The offscreen document's self-disposal is proved, not assumed.** Two
+      minutes idle and its process row is gone with GPU memory back to 0K —
+      DECISIONS.md 141's claim, measured for the first time.
+- [ ] **Re-run with Chrome's Memory footprint column enabled.** The largest
+      hole left: only JS and GPU memory were recorded, and ONNX's WASM linear
+      memory — the 26MB module and every tensor — is in neither.
+- [ ] **Repeat the run reading five times.** Taken once, so the peak is a
+      single sample with no spread.
+- [ ] **A second machine for contrast** — a discrete GPU, or an older laptop.
+      Machine A already covers the integrated-graphics case that matters most.
 
 **Done when:** we can answer "what does this cost the laptop?" with figures.
 

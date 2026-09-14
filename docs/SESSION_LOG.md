@@ -7,19 +7,28 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-13
+## Current state — 2026-09-14
 
-**Core is complete.** Phases 1–3 closed. Every module A–G built and verified in
-Chrome against the live backend. Metrics 2 and 3 now have numbers over a corpus
-that was not written to flatter them.
+**Core is complete, and for the first time every one of the five scored metrics
+has a number against it.** Phases 1–3 closed. Every module A–G built and
+verified in Chrome against the live backend.
+
+| Metric | Weight | Measured |
+|---|---|---|
+| 1 — visual context from screen | 25% | **18.6% agreement**, one real page |
+| 2 — PII recall / precision | 20% | **83.5% / 83.5%**, 50 pages, 12 real |
+| 3 — redaction precision | 20% | **83.9%**, coverage 60.4% |
+| 4 — client resource use | 20% | **Scan 217MB, CPU ≤2.1%**, one machine |
+| 5 — end-to-end latency | 15% | **~135ms**, every stage inside budget |
 
 | Measure | Value |
 |---|---|
-| Client tests | 277 |
+| Client tests | 284 |
 | Reasoner checks | 82 |
 | Prompt checks | 53 |
-| One full pass | ≈150ms, every stage inside budget |
-| Capture / DOM / inference / redaction | 39ms / 1.5–6.5ms / 40–49ms / 37–75ms |
+| One full pass | 27.4ms capture · 4.4ms DOM · 52.0ms inference · 40.2ms redaction · 10.5ms network |
+| Backend on an integrated-graphics laptop | **WebGPU**, 31.7ms inference |
+| CPU fallback, proved by self-test | 135ms init, 17ms inference |
 | Face detection | 6 of 8; reliable 110px+, marginal at 80px (0.312 vs 0.3) |
 
 **Benchmark — the corpus grew from 4 pages to 38 and every number moved:**
@@ -125,49 +134,34 @@ every run for as long as it is true.
 
 ## Next session starts with
 
-**A browser.** Everything that can be built without one, in T1.1 and T1.2, is
-built. Both remaining boxes in each are a measurement nobody has taken.
+Every metric has a number. Everything below is turning a data point into a
+result, or a known weakness into a fixed one.
 
-1. **The agreement rate on ≥10 real pages** — the metric-1 evidence, and the
-   last thing standing between T1.2 and done. The counters are now
-   trustworthy: readings are placed in the document, merged per reader, and
-   compared once, so a page walked in more stops no longer scores differently
-   (DECISIONS.md 193). The dom-only column decides whether the frame needs
-   upscaling. Scan a page with text in a canvas or an iframe and read the
-   `[shield] screen read:` console line.
-2. **Face pixel truth**, which needs a recorded Chrome run — the boxes cannot be
-   committed because `face-a.jpg` and `face-b.png` are not. This is the only
-   T1.1 box still open.
-3. **Harder real pages.** The 12 captured so far are logged-out login forms,
-   which is the easy case — every label on them was found and every one of the
-   28 misses is still on a synthetic page. What the corpus has never seen from
-   outside is a statement, a bill, a search result or a photographed document,
-   which is where prose names, addresses and amounts live. Capturing those is
-   what would actually move the number (DECISIONS.md 200).
+1. **Upscale the frame before recognition.** Decided on evidence, not built.
+   Of 59 text items the DOM reported on a real page, the engine read 16 — it
+   misses roughly 73% of what it is looking straight at, and that is the
+   ceiling on metric 1. Costs latency on the scan path, which is the path with
+   budget for it (DECISIONS.md 188). The 18.6% run is the before-measurement.
+2. **Nine more pages for the agreement rate.** One page is a data point.
+3. **Five scans in a row, watching the memory footprint.** The one open
+   question in RESOURCES.md: the footprint stayed at 215MB after the vision
+   host disposed of itself and GPU memory returned to 0K. Ordinary allocator
+   retention and a leak look identical from one reading; only repetition tells
+   them apart.
+4. **Face pixel truth**, the last open box in T1.1. Needs a recorded Chrome run
+   — the boxes cannot be committed because `face-a.jpg` and `face-b.png` are
+   not.
+5. **T2.3, the generalisation sweep**, which is at 0 of 4 and is the one tier-2
+   item with no work behind it at all. The problem statement says the finale's
+   pages are unknown, so this is the item that most directly answers "will it
+   work on a page you have never seen".
 
-**T1.3 needs a key and a disk, not a design.** The open-weights VLM is pinned
-(Qwen2.5-VL-32B-Instruct, Apache 2.0, free on OpenRouter), the redacted frame is
-attached by default, and the offline path is written down. What is left is
-setting `SHIELD_MODEL_KEY` and watching a live call actually use the picture,
-and running `ollama pull qwen2.5vl:7b` once to prove the offline claim.
+**Parked deliberately:** Firefox (DECISIONS.md 207–208). Everything up to
+inference works there; what is left is a threading redesign on a browser that
+is not the demo.
 
-**Closed this session:** `sent/sent.html` verified in Chrome twice, and the
-real-page share went from zero to 12 of 50 — the blocker T1.1 had carried since
-it was written.
-
-**Uncommitted:** twelve captured pages in `extension/benchmark/captured/` and
-the regenerated `docs/BENCHMARK.md`. Also the agreement merge — `mergeSightings` in
-`src/lib/vision/agreement.ts`, the scan-path rework in `service-worker.ts`, the
-corrected `ScanSummary.screen` comment, eight tests in `tests/vision.test.ts`.
-And T1.3 — `server/prompt.py` (frame-aware template, version 1.3.0),
-`server/model_reasoner.py` (vision by default, `ProviderRejectedRequest`, the
-text-only retry and its latch, `vision_state`), `server/main.py` (`vision` on
-`/health`), 18 checks in `server/test_prompt.py`, `server/README.md`, and
-DECISIONS 193–201 with the TASKS/SESSION_LOG edits.
-
-`ppt.md` at the repository root is a scratch file for the idea deck and is not
-meant to be committed. Do not commit until explicitly told to, and use the
-identity given at that time.
+**Needs a key, not a design:** T1.3's last two boxes — one live call proving
+the model uses the picture, and one `ollama pull` proving the offline claim.
 
 ---
 
@@ -206,6 +200,7 @@ identity given at that time.
 | 28 | Vision layer evaluated and amended: whole-frame text regions and a DOM-versus-pixels comparison, no new model or licence |
 | 29 | Agreement counted per page instead of per stop; open-weights VLM pinned and the redacted frame sent by default |
 | 30 | First real pages in the corpus — 12 of 50, captured from live sites; the operator's own email and PAN caught before they reached a commit |
+| 31 | Firefox port built, tried and parked; resource use measured for the first time; metric 1 measured at 18.6% on a real page |
 
 ---
 
@@ -252,7 +247,14 @@ identity given at that time.
    before committing is a written step. The password sentinel meanwhile held
    on five real bank login pages, including an ATM PIN field — the automated
    guarantee worked and the human one was the one that nearly slipped.
-11. **A measuring instrument flatters itself unless tested.** The first scorer
+11. **A measurement can contradict the one before it, and the honest move is to
+   publish both.** The process footprint fell to 122MB after one run and stayed
+   at 215MB after another, with the vision host disposed of in both. Different
+   processes, so not strictly comparable — and the temptation is to quote the
+   flattering figure. RESOURCES.md states both and names the single test that
+   would settle it, because a resource table is read as measured fact and a
+   number chosen for how it sounds is worse than an admitted gap.
+12. **A measuring instrument flatters itself unless tested.** The first scorer
    averaged per-page ratios and dropped pages that scored zero, so total failure
    on a page raised the corpus score. It was caught by a test written against
    the scorer, not against the detector. A benchmark nobody has checked is worse
