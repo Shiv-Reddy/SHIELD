@@ -108,17 +108,81 @@ function overlapRatio(a: Rect, b: Rect): number {
  * legitimately contain a short label plus its value.
  */
 export function textMatches(a: string, b: string): boolean {
-  const normal = (text: string) =>
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim();
-
-  const left = normal(a);
-  const right = normal(b);
+  const left = normalise(a);
+  const right = normalise(b);
   if (left.length === 0 || right.length === 0) return false;
 
   return left === right || left.includes(right) || right.includes(left);
+}
+
+/** Case, punctuation and spacing dropped, so a misread comma is not a difference. */
+function normalise(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/**
+ * How much two sightings must overlap to be one piece of screen seen twice.
+ *
+ * Far stricter than `OVERLAP`, and for a different question. That constant asks
+ * whether two READERS are describing the same thing, where a line box and a
+ * border box legitimately differ. This asks whether ONE reader saw the same
+ * thing at two scroll positions, where the document coordinates should be all
+ * but identical. The same 0.6 `coverage.ts` uses to collapse a finding seen
+ * from two stops.
+ */
+const SAME_SIGHTING_OVERLAP = 0.6;
+
+/**
+ * Collapse one reader's repeated sightings of the same text, in DOCUMENT space.
+ *
+ * WHY THIS EXISTS
+ *
+ * A scan's stops deliberately overlap, so that nothing falls between two
+ * screens. That means the same paragraph is read at two consecutive stops, and
+ * a per-stop verdict summed across the walk counts it twice — in whichever
+ * column it landed in each time. Worse, the columns inflate unevenly: text near
+ * a viewport edge is clipped at one stop and whole at the next, so it can be
+ * agreed once and dom-only once, and one piece of screen becomes two
+ * disagreements plus an agreement.
+ *
+ * So the readings are merged first and compared once, rather than compared per
+ * stop and the verdicts added up. That also resolves the edge case for free: a
+ * line the engine read at one stop and the markup described at another is one
+ * item both readers saw, which is what agreement means.
+ *
+ * MATCHING IS EXACT TEXT HERE, NOT `textMatches`
+ *
+ * This is one reader looking at one thing twice, so the string should be the
+ * same string. Containment would additionally collapse a label into the
+ * container that holds it — one piece of screen by some readings, two by
+ * others — and that is a different question which this fix has no business
+ * answering silently.
+ *
+ * `elementId` on a kept DOM item is from whichever stop saw it first. Ids are
+ * reassigned at every extraction (`e0`, `e1`, ...) and mean nothing across
+ * stops; only the counts are used downstream.
+ */
+export function mergeSightings<T extends { text: string; position: Rect }>(
+  sightings: readonly T[],
+): T[] {
+  const kept: T[] = [];
+
+  for (const sighting of sightings) {
+    const text = normalise(sighting.text);
+    if (text.length === 0) continue;
+
+    const seen = kept.some(
+      (existing) =>
+        normalise(existing.text) === text &&
+        overlapRatio(existing.position, sighting.position) >= SAME_SIGHTING_OVERLAP,
+    );
+    if (!seen) kept.push(sighting);
+  }
+
+  return kept;
 }
 
 /**

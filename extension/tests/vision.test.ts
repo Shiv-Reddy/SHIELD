@@ -16,6 +16,7 @@ import { screenTextRegions } from '../src/lib/vision/screen-text';
 import {
   compareReadings,
   domTextItems,
+  mergeSightings,
   textMatches,
   type DomTextItem,
 } from '../src/lib/vision/agreement';
@@ -278,4 +279,103 @@ test('an element keeps its own box, so position can be compared', () => {
   ]);
 
   assert.deepEqual(item?.position, { x: 40, y: 80, width: 10, height: 12 });
+});
+
+/**
+ * Merging sightings across a walk.
+ *
+ * A scan's stops overlap on purpose, so the same text is read at two of them.
+ * These are the ways summing per-stop verdicts reports a number that is not
+ * about the page.
+ */
+
+const seen = (text: string, x: number, y: number, width = 60, height = 12) => ({
+  text,
+  position: { x, y, width, height },
+});
+
+test('the same text at the same place is one sighting, not two', () => {
+  const merged = mergeSightings([seen('Account balance', 20, 400), seen('Account balance', 20, 400)]);
+
+  assert.equal(merged.length, 1);
+});
+
+test('the same words somewhere else on the page are two sightings', () => {
+  // Document coordinates, so a repeated heading further down is a second
+  // occurrence and collapsing it would under-report the page.
+  const merged = mergeSightings([seen('Total', 20, 400), seen('Total', 20, 1800)]);
+
+  assert.equal(merged.length, 2);
+});
+
+test('two different lines in one place stay two sightings', () => {
+  const merged = mergeSightings([seen('Ravi Kumar', 20, 400), seen('Bengaluru', 20, 400)]);
+
+  assert.equal(merged.length, 2);
+});
+
+test('a box nudged by a pixel is still the same sighting', () => {
+  // The engine re-reads the same line at the next stop from a crop that starts
+  // a pixel off. Demanding identical boxes would count it twice.
+  const merged = mergeSightings([seen('Ravi Kumar', 20, 400), seen('Ravi Kumar', 21, 401)]);
+
+  assert.equal(merged.length, 1);
+});
+
+test('a label is not absorbed into the container that holds it', () => {
+  // `textMatches` would collapse these by containment. The merge is one reader
+  // looking at one thing twice, and whether a label and its container are one
+  // piece of screen is a different question this must not answer silently.
+  const merged = mergeSightings([
+    seen('Aadhaar number 2345 6789 0123', 20, 400, 300, 40),
+    seen('Aadhaar number', 20, 400, 120, 14),
+  ]);
+
+  assert.equal(merged.length, 2);
+});
+
+test('an empty sighting is dropped rather than merged', () => {
+  assert.deepEqual(mergeSightings([seen('   ', 20, 400)]), []);
+});
+
+test('text clipped at one stop and whole at the next is agreed, not both', () => {
+  // The defect this exists to fix. Compared per stop, the engine misses the
+  // clipped line and reads the whole one, so the page reports 1 agreed AND
+  // 1 dom-only for a single piece of screen. Merged first, it reports 1 agreed.
+  const dom: DomTextItem[] = [
+    { elementId: 'e4', text: 'Ravi Kumar', position: { x: 20, y: 400, width: 80, height: 14 } },
+    { elementId: 'e1', text: 'Ravi Kumar', position: { x: 20, y: 400, width: 80, height: 14 } },
+  ];
+  const pixels = [
+    // Read only at the stop where it was not against the viewport edge.
+    { text: 'Ravi Kumar', position: { x: 20, y: 400, width: 78, height: 13 }, words: 2 },
+  ];
+
+  const report = compareReadings(mergeSightings(dom), mergeSightings(pixels));
+
+  assert.equal(report.agreed.length, 1);
+  assert.equal(report.domOnly.length, 0);
+  assert.equal(report.pixelOnly.length, 0);
+  assert.equal(report.agreement, 1);
+});
+
+test('a page read twice scores what it would have scored once', () => {
+  // Two stops, identical readings. The agreement rate is a property of the
+  // page, so walking it in more steps must not change it.
+  const dom: DomTextItem[] = [
+    { elementId: 'e0', text: 'Ravi Kumar', position: { x: 20, y: 400, width: 80, height: 14 } },
+    { elementId: 'e1', text: 'Tiny print', position: { x: 20, y: 460, width: 80, height: 8 } },
+  ];
+  const pixels = [{ text: 'Ravi Kumar', position: { x: 20, y: 400, width: 78, height: 13 }, words: 2 }];
+
+  const once = compareReadings(dom, pixels);
+  const twice = compareReadings(
+    mergeSightings([...dom, ...dom]),
+    mergeSightings([...pixels, ...pixels]),
+  );
+
+  assert.equal(twice.agreed.length, once.agreed.length);
+  assert.equal(twice.domOnly.length, once.domOnly.length);
+  assert.equal(twice.pixelOnly.length, once.pixelOnly.length);
+  assert.equal(twice.agreement, once.agreement);
 });

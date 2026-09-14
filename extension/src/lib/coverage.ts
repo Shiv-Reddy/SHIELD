@@ -431,7 +431,12 @@ export interface ScanSummary {
   counts: { category: SensitiveCategory; count: number }[];
   total: number;
   /**
-   * What the DOM walk and the pixel reader each saw, summed over every stop.
+   * What the DOM walk and the pixel reader each saw over the whole page.
+   *
+   * Merged, never summed. Stops overlap by design so that nothing falls
+   * between two screens, which means the same text is read at two of them;
+   * adding per-stop verdicts up counts one piece of screen twice, and counts
+   * it into different columns depending on where the viewport edge fell.
    *
    * This is the metric-1 evidence: two independent readers of the same screen,
    * and the two ways they disagree. `pixelOnly` is text that is on screen and

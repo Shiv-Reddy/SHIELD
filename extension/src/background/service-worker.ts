@@ -52,7 +52,13 @@ import {
   unreadableImageRegions,
 } from '../lib/pii/image-candidates';
 import { ocrRegions } from '../lib/pii/ocr-regions';
-import { compareReadings, domTextItems } from '../lib/vision/agreement';
+import {
+  compareReadings,
+  domTextItems,
+  mergeSightings,
+  type DomTextItem,
+} from '../lib/vision/agreement';
+import type { ScreenTextRegion } from '../lib/vision/screen-text';
 import { buildManifest, redactDomElements } from '../lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../lib/redaction/payload';
 import { recordTransmission } from '../lib/redaction/evidence';
@@ -1192,17 +1198,61 @@ function sleep(ms: number): Promise<void> {
  * A failed read is reported and nothing is invented. It never returns an empty
  * list dressed up as "the screen is clean".
  */
+/** A sighting placed in the document, which is all the merge needs. */
+interface SeenText {
+  text: string;
+  position: Rect;
+}
+
+/**
+ * The page's figures, from every sighting the walk collected.
+ *
+ * One comparison over the union of what each reader saw, rather than a
+ * comparison per stop with the columns added up. The difference is not
+ * cosmetic: overlapping stops read the same text twice, so the summed version
+ * inflates every column, and unevenly — which makes the ratio it produces
+ * unusable as the metric-1 number it is supposed to be.
+ *
+ * `hidden` is merged against itself for the same reason, and is a count of
+ * distinct pieces of hidden screen text rather than of painted rectangles.
+ */
+function summariseScreenRead(read: {
+  dom: readonly DomTextItem[];
+  pixels: readonly ScreenTextRegion[];
+  hidden: readonly SeenText[];
+}): { agreed: number; pixelOnly: number; domOnly: number; hidden: number } {
+  const report = compareReadings(mergeSightings(read.dom), mergeSightings(read.pixels));
+
+  return {
+    agreed: report.agreed.length,
+    pixelOnly: report.pixelOnly.length,
+    domOnly: report.domOnly.length,
+    hidden: mergeSightings(read.hidden).length,
+  };
+}
+
+/**
+ * One screen, read both ways, in VIEWPORT pixels.
+ *
+ * Readings rather than a verdict, because a scan's stops overlap and the same
+ * text is read at two of them. Comparing per stop and adding the columns up
+ * counts one piece of screen twice — see `mergeSightings`. The caller places
+ * these in the document and compares once, at the end of the walk.
+ */
+interface ScreenReading {
+  /** Sensitive pixel-only text, ready to redact. Empty when the read failed. */
+  regions: SensitiveRegion[];
+  /** False when the engine could not read this screen at all. */
+  read: boolean;
+  dom: DomTextItem[];
+  pixels: ScreenTextRegion[];
+}
+
 async function screenTextFindings(
   frame: RawFrame,
   elements: readonly DomElement[],
   viewport: { width: number; height: number },
-  record: (counted: {
-    agreed: number;
-    pixelOnly: number;
-    domOnly: number;
-    hidden: number;
-  }) => void,
-): Promise<SensitiveRegion[]> {
+): Promise<ScreenReading> {
   const reading = await readOffscreenScreen({
     dataUrl: frame.dataUrl,
     viewportWidth: viewport.width,
@@ -1211,10 +1261,11 @@ async function screenTextFindings(
 
   if (!reading.ok) {
     console.warn(`[shield] the screen could not be read: ${reading.message}`);
-    return [];
+    return { regions: [], read: false, dom: [], pixels: [] };
   }
 
-  const report = compareReadings(domTextItems(elements), reading.regions);
+  const dom = domTextItems(elements);
+  const report = compareReadings(dom, reading.regions);
   const regions: SensitiveRegion[] = [];
 
   report.pixelOnly.forEach((region, index) => {
@@ -1237,20 +1288,15 @@ async function screenTextFindings(
     });
   });
 
-  record({
-    agreed: report.agreed.length,
-    pixelOnly: report.pixelOnly.length,
-    domOnly: report.domOnly.length,
-    hidden: regions.length,
-  });
-
+  // This screen's own figures. Truthful about the screen; deliberately NOT
+  // summed by the caller, which reports the page instead.
   console.info(
     `[shield] screen read: ${report.agreed.length} agreed, ` +
       `${report.pixelOnly.length} seen only in pixels (${regions.length} hidden), ` +
       `${report.domOnly.length} seen only in markup`,
   );
 
-  return regions;
+  return { regions, read: true, dom, pixels: reading.regions };
 }
 
 /**
@@ -1629,9 +1675,22 @@ async function scanPage(): Promise<void> {
     let stoppedEarly = plan.truncated;
     let previousLanding: number | null = null;
 
-    // Summed across stops. Left undefined until a screen is actually read, so
-    // "never read" stays distinguishable from "read and found nothing".
-    let screenAgreement: { agreed: number; pixelOnly: number; domOnly: number; hidden: number }
+    /**
+     * Every sighting from every stop, in DOCUMENT space, compared once at the
+     * end.
+     *
+     * Not a running total. Stops overlap by design so that nothing falls
+     * between two screens, which means the same text is genuinely read twice
+     * and a summed column counts it twice. Worse, the columns inflate
+     * unevenly: text clipped at one viewport edge and whole at the next can be
+     * dom-only once and agreed once, turning one piece of screen into two
+     * entries in a ratio.
+     *
+     * Left undefined until a screen is actually read, so "never read" stays
+     * distinguishable from "read and found nothing".
+     */
+    let screenRead:
+      | { dom: DomTextItem[]; pixels: ScreenTextRegion[]; hidden: SeenText[] }
       | undefined;
 
     for (const [index, stop] of plan.stops.entries()) {
@@ -1688,19 +1747,36 @@ async function scanPage(): Promise<void> {
           });
         }
 
+        const screen = await screenTextFindings(frame, domMap.elements, viewport);
+
         const regions: SensitiveRegion[] = [
           ...detectDomPii(domMap.elements),
           ...faceRegions(analysis.detection.faces, analysis.frame),
           ...(await ocrImageRegions(frame, domMap.elements, analysis.frame)),
-          ...(await screenTextFindings(frame, domMap.elements, viewport, (counted) => {
-            screenAgreement = {
-              agreed: (screenAgreement?.agreed ?? 0) + counted.agreed,
-              pixelOnly: (screenAgreement?.pixelOnly ?? 0) + counted.pixelOnly,
-              domOnly: (screenAgreement?.domOnly ?? 0) + counted.domOnly,
-              hidden: (screenAgreement?.hidden ?? 0) + counted.hidden,
-            };
-          })),
+          ...screen.regions,
         ];
+
+        if (screen.read) {
+          const place = <T extends { position: Rect }>(item: T): T => ({
+            ...item,
+            position: {
+              x: item.position.x + landed.scrollX,
+              y: item.position.y + landed.scrollY,
+              width: item.position.width,
+              height: item.position.height,
+            },
+          });
+
+          screenRead ??= { dom: [], pixels: [], hidden: [] };
+          screenRead.dom.push(...screen.dom.map(place));
+          screenRead.pixels.push(...screen.pixels.map(place));
+          // Kept as text so the same hidden line found at two stops collapses
+          // the same way its sighting does. Counting the painted regions
+          // instead would count it twice.
+          screenRead.hidden.push(
+            ...screen.regions.map((region) => place({ text: region.reason, position: region.position })),
+          );
+        }
 
         // Kept, not painted. What is sensitive on this screen is not fully known
         // until every screen has been read — see the note on `captured`.
@@ -1758,7 +1834,7 @@ async function scanPage(): Promise<void> {
       documentHeight: origin.documentHeight,
       viewportHeight: origin.viewportHeight,
       truncated: stoppedEarly,
-      ...(screenAgreement ? { screen: screenAgreement } : {}),
+      ...(screenRead ? { screen: summariseScreenRead(screenRead) } : {}),
       counts: countByCategory(all),
       total: all.length,
     };
