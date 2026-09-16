@@ -15,8 +15,8 @@ next.
 | 1 | Accuracy of visual context from screen | 25% | **Measured. 22.8% agreement** on one real page, after the 2.0x upscale — 18 agreed, 22 pixel-only, 39 markup-only (was 18.6% before it). Still one page |
 | 2 | Recall & precision of PII detection | 20% | **Measured.** 83.5% / 83.5% over 50 pages, 12 of them real |
 | 3 | Precision of redaction | 20% | **Measured.** 83.9% precision, 60.4% coverage |
-| 4 | Client-side resource utilization | 20% | **Measured on one machine.** Scan peak ~285MB at 2.0x (was 217MB before the upscale), run peak ~144MB, CPU ≤1.1%. **Five scans back to back do not climb — not a leak.** Settled-after value still missing |
-| 5 | End-to-end task latency | 15% | Measured, ~150ms/pass, inside budget |
+| 4 | Client-side resource utilization | 20% | **Measured on one machine, Chrome only.** Scan peak ~285MB at 2.0x (was 217MB before the upscale), run peak ~144MB, CPU ≤1.1%. **Five scans back to back do not climb — not a leak.** Settled-after value missing; nothing measured on Firefox |
+| 5 | End-to-end task latency | 15% | **Measured on both browsers.** Chrome ~150ms/pass; Firefox 364ms warm (228ms inference), ~10s on the first run while the session builds. Both inside budget once warm |
 
 Two facts follow from this table and drive everything below.
 
@@ -307,12 +307,81 @@ and the checks are in place; both remaining boxes need someone to run it.
       carries every chunk with an event-page background and no `offscreen`
       permission. **It has still never been run on Firefox** — that is the next
       line, and 207 is the standing lesson about the gap between the two.
-- [ ] **Load it in Firefox and run one task end to end.** The one thing no
-      amount of building can substitute for. Watch for: whether ORT selects
-      WebGPU in a Firefox worker (`SessionFacts.webgpuError` now carries the
-      reason it did not, which 208 could never capture); whether the event page
-      stays responsive during inference, which is the entire point of 207; and
-      whether the idle disposal actually releases the session.
+- [x] **Run in Firefox — the vision path works there.** DECISIONS.md 220.
+      2026-09-17, income-tax login. The event page hosts it, the Worker spawns,
+      ORT initialises, and **it selects WebGPU** — closing the 208 question that
+      every Firefox run fell back to WASM for reasons never captured. The event
+      page **stayed responsive throughout**: popup animating, DevTools
+      attached, logs streaming. 207's hang did not recur, which is the first
+      test rather than argument that the Worker fixed what it was built for.
+- [x] **Double-build race fixed.** The same run exposed `ensureFaceDetector`
+      checking `engine && info` and then awaiting with no latch, so the popup's
+      PREPARE and the run both built — two Workers, two ORT sessions, two
+      WebGPU device requests on one GPU. Chrome hid it behind a ~1s init;
+      Firefox's 35s made the overlap certain. Same shared-promise latch
+      `background/offscreen.ts` uses.
+- [x] **Firefox keeps WebGPU. The seconds were one-time, not per-frame.**
+      DECISIONS.md 222. 35s was two sessions contending; one clean session is
+      ~10s of build and shader compilation, and steady-state inference is
+      228ms. "Prefer WebGPU, fall back to WASM" stays browser-independent, and
+      no `forceBackend` comparison was needed to settle it.
+- [x] **A task completes end to end on Firefox.** 2026-09-17, income-tax
+      login, after the latch fix. Every stage ran and the payload sealed:
+
+      | Stage | Firefox | Budget |
+      |---|---|---|
+      | Screen capture | 42ms | 100ms |
+      | DOM scan | 16ms | 100ms |
+      | Local inference | **12023ms** | 500ms |
+      | Redaction | 23ms | 200ms |
+      | Server round trip | 308ms | 1000ms |
+
+      1 sensitive region found (`id_number`, DOM, 0.6), redacted, replaced with
+      `[ID_NUMBER]`, seal verified. Detection behaves identically to Chrome.
+      **The 12s stage is one-time model init, not per-frame cost:** the same
+      line reports `inference on webgpu in the worker in 184.0ms`. The latch
+      fix also confirms 220's caveat — 35s was two sessions contending, and one
+      clean session is ~11.8s.
+      **Firefox inference is 184ms against Chrome's 34ms**, ~5x, and still
+      inside the 500ms stage budget once init is excluded.
+- [x] **Second run on Firefox: 364ms end to end. It is demoable.** 2026-09-17,
+      same session, same page:
+
+      | Stage | Run 1 | Run 2 | Budget |
+      |---|---|---|---|
+      | Screen capture | 42ms | 44ms | 100ms |
+      | DOM scan | 16ms | 11ms | 100ms |
+      | Local inference | 12023ms | **249ms** | 500ms |
+      | Redaction | 23ms | 50ms | 200ms |
+      | Server round trip | 308ms | 10ms | 1000ms |
+
+      Model inference itself: **228ms**, against Chrome's 34ms — about 6.7x,
+      and inside the 500ms budget with room. The 12s on run 1 was one-time
+      session build and shader compilation, exactly as 220 predicted; it is not
+      a per-frame cost and does not recur while the session lives.
+- [x] **CPU fallback proven on Firefox — 19ms inference, 272ms init.** The
+      221 fix works: `CPU fallback verified` where the same run previously read
+      `CPU fallback BROKEN — no available backend found`. **FR-27 now has
+      evidence on both browsers**, which is the standing judge question about
+      machines with no GPU answered with a measurement rather than an
+      assurance. Firefox's WASM init (272ms) is notably *faster* than Chrome's
+      recorded 135ms-init/17ms-inference figure is slower — both are trivial
+      next to the 10s WebGPU build, which is the asymmetry the item below is
+      about.
+- [ ] **Decide Firefox's idle disposal window. The trade is not Chrome's.**
+      The vision host releases its session after 120s idle (DECISIONS.md 219),
+      which on Chrome costs ~1s to rebuild and on Firefox costs **~10s**. A
+      demo with a two-minute gap therefore pays ten seconds on Firefox for a
+      resource saving that is real but modest. Options are a longer window
+      there, warming on browser start rather than popup-open, or accepting it
+      and pre-warming before a demo. Needs a number for what the session
+      actually costs resident on Firefox before choosing — the task manager
+      protocol in docs/RESOURCES.md, run on Firefox.
+- [ ] **Re-prove the CPU fallback on Chrome under `forceInferenceHost: 'worker'`.**
+      Chrome's default document host shares a realm with the self-test, so it
+      never hit 221 and its cached verdict is honest. Under the worker host it
+      would have, and the cached "verified" record would have masked it. Clear
+      the record and re-run once to confirm the fix holds there too.
 - [x] **Chrome measured. WebGPU survives in the worker; the gate is met.**
       DECISIONS.md 218. One machine, integrated Intel, build 2026-09-16
       23:13:53, same page and task each run:

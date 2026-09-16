@@ -305,8 +305,8 @@ export async function dispatchVisionMessage(
   }
 
   if (message.type === MSG.RUN_SELF_TEST) {
-    const { modelUrl, inputName, shape } = modelDescriptor();
-    return runSelfTest(modelUrl, inputName, shape);
+    const { modelUrl, inputName, shape, wasmPaths } = modelDescriptor();
+    return runSelfTest(modelUrl, inputName, shape, wasmPaths);
   }
 
   if (message.type === MSG.RELOAD_MODEL) {

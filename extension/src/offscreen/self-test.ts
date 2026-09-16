@@ -37,10 +37,30 @@ export async function runSelfTest(
   modelUrl: string,
   inputName: string,
   shape: readonly number[],
+  wasmPaths: string,
 ): Promise<SelfTestResult> {
   let session: ort.InferenceSession | null = null;
 
   try {
+    // Pinned HERE rather than inherited, which is the defect this parameter
+    // exists to close. `configureRuntime` sets the same globals, and while the
+    // live session ran in this very context that was enough - the two shared
+    // one `ort` module instance and therefore one `ort.env`. The moment
+    // inference moved to a Worker (DECISIONS.md 216) they stopped sharing a
+    // realm: the Worker configured its own copy and this one kept ORT's
+    // default, which resolves the loader relative to the importing script and
+    // finds nothing. Observed on Firefox 2026-09-17 as "CPU fallback BROKEN -
+    // no available backend found", pointing at chunks/ instead of ort/.
+    //
+    // Left unset, ORT also reaches for a CDN, which must never happen here.
+    // The docblock above already says this test must prove the fallback can be
+    // built FROM SCRATCH; depending on another module's side effect was the
+    // one way it was not doing that.
+    ort.env.wasm.wasmPaths = wasmPaths;
+    // Matches the live session: no SharedArrayBuffer, so no COOP/COEP headers
+    // an extension page cannot set anyway.
+    ort.env.wasm.numThreads = 1;
+
     const initStarted = performance.now();
     session = await ort.InferenceSession.create(modelUrl, {
       executionProviders: ['wasm'],

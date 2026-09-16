@@ -20,6 +20,9 @@ import {
 
 const MODEL_PATH = 'models/ultraface-rfb-320.onnx';
 
+/** Where `tools/copy-ort-assets.mjs` puts ORT's loader and its .wasm binary. */
+const ORT_ASSET_PATH = 'ort/';
+
 /** The one real input. See the note below on why this is hardcoded. */
 const INPUT_NAME = 'input';
 
@@ -249,6 +252,9 @@ function clampUnit(value: number): number {
 let engine: InferenceEngine | null = null;
 let info: FaceDetectorInfo | null = null;
 
+/** The in-flight build, shared so two callers cannot each start one. */
+let building: Promise<FaceDetectorInfo> | null = null;
+
 /**
  * Which host to use, and the override that exists so Chrome can be measured.
  *
@@ -301,6 +307,33 @@ export async function ensureFaceDetector(
 ): Promise<FaceDetectorInfo> {
   if (engine && info) return info;
 
+  // Concurrency latch, and it is not theoretical: the popup's PREPARE warms the
+  // model while the user types, then the run asks for it again. Between the
+  // check above and the assignment below there is an `await`, so both callers
+  // passed and both built - two Workers, two ORT sessions, two WebGPU device
+  // requests competing for one GPU.
+  //
+  // Chrome hid this for months because its init is ~1s and the two calls rarely
+  // overlapped. Firefox does not hide it: init measured 35s there, which makes
+  // the overlap certain rather than unlikely. Observed 2026-09-17 as two
+  // `shader warm-up` lines and two `model init` lines in one run.
+  //
+  // Same shape as the `creating` latch in background/offscreen.ts, for the same
+  // reason: share the in-flight promise instead of racing it.
+  building ??= buildFaceDetector(forceBackend, forceHost, contextHost).finally(() => {
+    // Cleared on failure too, so a run that failed to build a session does not
+    // poison every later attempt with the same rejected promise.
+    building = null;
+  });
+
+  return building;
+}
+
+async function buildFaceDetector(
+  forceBackend: ExecutionBackend | null,
+  forceHost: InferenceHost | null,
+  contextHost: InferenceHost,
+): Promise<FaceDetectorInfo> {
   if (forceBackend) {
     console.warn(`[shield] backend forced to '${forceBackend}' by local settings`);
   }
@@ -320,7 +353,7 @@ export async function ensureFaceDetector(
     // Left unset, ORT resolves its binary relative to the script bundle and,
     // failing that, reaches for a CDN — which must never happen here. See
     // tools/copy-ort-assets.mjs.
-    wasmPaths: chrome.runtime.getURL('ort/'),
+    wasmPaths: chrome.runtime.getURL(ORT_ASSET_PATH),
     forceBackend,
     inputName: INPUT_NAME,
     inputShape: [1, 3, INPUT_HEIGHT, INPUT_WIDTH],
@@ -504,11 +537,15 @@ export function modelDescriptor(): {
   modelUrl: string;
   inputName: string;
   shape: readonly number[];
+  wasmPaths: string;
 } {
   return {
     modelUrl: chrome.runtime.getURL(MODEL_PATH),
     inputName: INPUT_NAME,
     shape: [1, 3, INPUT_HEIGHT, INPUT_WIDTH],
+    // Carried rather than left to the self-test to rediscover. Where ORT's
+    // binaries live is one fact, and two copies of it drift.
+    wasmPaths: chrome.runtime.getURL(ORT_ASSET_PATH),
   };
 }
 
@@ -517,6 +554,10 @@ export async function disposeFaceDetector(): Promise<void> {
   const current = engine;
   engine = null;
   info = null;
+  // Dropped as well, or a build still in flight would resolve after this and
+  // reinstate the session that was just disposed of - the reload path asks for
+  // exactly that sequence.
+  building = null;
   // Awaited so the GPU resources are actually released before a new session is
   // built; overlapping two sessions is how you get an out-of-memory failure on
   // a modest GPU. On the worker host this also terminates the thread, which is
