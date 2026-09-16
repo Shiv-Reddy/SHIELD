@@ -12,10 +12,10 @@ next.
 
 | # | Metric | Weight | State |
 |---|---|---|---|
-| 1 | Accuracy of visual context from screen | 25% | **Measured. 18.6% agreement** on a real page — 16 agreed, 27 pixel-only, 43 markup-only |
+| 1 | Accuracy of visual context from screen | 25% | **Measured. 22.8% agreement** on one real page, after the 2.0x upscale — 18 agreed, 22 pixel-only, 39 markup-only (was 18.6% before it). Still one page |
 | 2 | Recall & precision of PII detection | 20% | **Measured.** 83.5% / 83.5% over 50 pages, 12 of them real |
 | 3 | Precision of redaction | 20% | **Measured.** 83.9% precision, 60.4% coverage |
-| 4 | Client-side resource utilization | 20% | **Measured on one machine.** Scan footprint 217MB, CPU ≤1.1%; idle baseline still missing |
+| 4 | Client-side resource utilization | 20% | **Measured on one machine.** Scan peak ~285MB at 2.0x (was 217MB before the upscale), run peak ~144MB, CPU ≤1.1%. **Five scans back to back do not climb — not a leak.** Settled-after value still missing |
 | 5 | End-to-end task latency | 15% | Measured, ~150ms/pass, inside budget |
 
 Two facts follow from this table and drive everything below.
@@ -47,7 +47,7 @@ indefensible answer to metric 1.
 | Trust UI | Overlay, payload inspector (with the frame that was sent), latency panel, manual marking, audit log |
 | Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
 | Scan record | Redacted picture of every screen examined, kept local |
-| Tests | 294 client, 82 reasoner, 53 prompt |
+| Tests | 296 client, 82 reasoner, 53 prompt |
 | Benchmark corpus | 50 pages, 170 labels — 32 synthetic, **12 real**, 6 fixture |
 
 Phases 1–3 (login autofill, multi-field signup, faces) are closed.
@@ -183,13 +183,26 @@ what it cannot do at all is read a canvas, an iframe or a pasted screenshot.
       whole, never shrunk.
       **The 27 pixel-only regions are the other half of the story** and argue
       the layer earns its place: that is text on screen no markup describes.
-- [ ] **The after-measurement. Needs a Chrome run, and nothing here can fake
-      it.** Every screen-read line now prints the magnification it used, so a
-      reading is attributable; the figure to beat is **18.6%** page agreement
-      and **16 of 59** items read. Until somebody scans the income-tax login
-      again and reads that line, this change is a reasoned expectation and not
-      a result — and it may cost more latency than it buys, which is exactly
-      what the number is for. Record both the new rate and the scan latency.
+- [x] **The after-measurement: 18.6% -> 22.8%.** Income-tax login, two stops,
+      same page, build 2026-09-16 23:13:53, read at 2.0x (1920x945 ->
+      3840x1890). Merged: `18 agreed, 22 pixels only (0 hidden), 39 markup
+      only`; per-stop 12/9/35 and 10/15/27.
+      **What moved, stated against the before-figure rather than alone.** DOM
+      items matched went from **16 of 59** to **18 of 57** — 27.1% to 31.6% of
+      what the markup reports. Markup-only, the text the engine was looking
+      straight at and could not read, fell 43 -> 39. Pixel-only fell 27 -> 22.
+      So the doubling bought about **four points of agreement**, which is real
+      and smaller than hoped: the engine still misses roughly two thirds of the
+      DOM's text, so resolution was *a* cause and not *the* cause, and a
+      further factor should not be reached for without a new measurement
+      (DECISIONS.md 212 already says the ceiling is on pixels, not on appetite).
+      **The latency it cost is not free and is not yet properly recorded.** The
+      two captures are 3857ms apart, so a stop costs roughly four seconds
+      end to end at 2.0x. There is no before-figure for scan wall-clock to
+      compare it against — that column was never recorded at 18.6% — so the
+      trade is evidenced on quality and merely bounded on cost. This lands on
+      the scan path, which transmits nothing and has seconds to spend
+      (DECISIONS.md 188); it would not be acceptable on the run path.
 
 **Done when:** the agreement rate against the DOM map is recorded on ≥10 real
 pages, and canvas/iframe text is shown being hidden on a page where the DOM
@@ -257,19 +270,93 @@ and the checks are in place; both remaining boxes need someone to run it.
       the event page that has to receive the reply. Firefox reports
       `Content process isn't responsive` and DevTools will not attach.
       DECISIONS.md 207.
-- [ ] **Inference on a thread that is not the message loop.** The actual
-      remaining work, and the only thing between here and a working Firefox
-      build. A real Worker, or the dispatcher extraction of 204.
+- [x] **Inference on a thread that is not the message loop — built.**
+      DECISIONS.md 216. A dedicated Worker, on both browsers. The dispatcher
+      extraction of 204 was the alternative and was not taken: it unblocks the
+      reply but still runs inference on the event page's own thread, so the
+      extension freezes for the duration.
+      `offscreen/inference-session.ts` holds the ORT work **once**, and both
+      hosts call it — two copies of backend selection would drift silently, and
+      the symptom would be Chrome picking WebGPU while Firefox quietly picked
+      WASM for a reason nobody wrote down. `offscreen/inference.ts` puts the
+      two hosts behind one interface and `face-detector.ts` cannot tell them
+      apart, so the detection policy does not fork per browser.
+      **The worker is never given a frame.** The host decodes the capture,
+      draws it to 320x240 and normalises it, and transfers only the resulting
+      float array — so that context cannot leak a screenshot because it is
+      never handed one, and "the offscreen document is the only context that
+      decodes a frame" (DECISIONS.md 45) stays true as written.
+      `SessionFacts.webgpuError` now carries *why* WebGPU was declined, which
+      is the question DECISIONS.md 208 could not answer because the console
+      that would have said belonged to the process that had hung.
+- [x] **Firefox event page wired to the worker — built, not yet run there.**
+      DECISIONS.md 219. `offscreen/dispatch.ts` holds the vision path; each
+      browser's entry point supplies only wiring. `offscreen/offscreen.ts` is
+      down to a listener and an idle timer (86kB -> 1.8kB);
+      `background/vision-host.ts` is the branch — `sendMessage` on Chrome,
+      in-process dispatch on Firefox, which passes `'worker'` the way the
+      offscreen document passes `'document'` (DECISIONS.md 217).
+      **Chrome's bundle graph is verified unchanged in shape:**
+      `dist/service-worker.js` statically imports six chunks, none of them
+      `dispatch` or `inference-session`, and reaches the dispatcher only
+      through `import("./chunks/dispatch.js")` behind `HAS_OFFSCREEN`. A static
+      import would have put ~94kB of engine into the one context that cannot
+      run it. The seven offscreen helpers left `lib/messages.ts` for the same
+      reason: the popup and content script import that file.
+      296 tests pass, `tsc --noEmit` clean, both build passes, `dist-firefox/`
+      carries every chunk with an event-page background and no `offscreen`
+      permission. **It has still never been run on Firefox** — that is the next
+      line, and 207 is the standing lesson about the gap between the two.
+- [ ] **Load it in Firefox and run one task end to end.** The one thing no
+      amount of building can substitute for. Watch for: whether ORT selects
+      WebGPU in a Firefox worker (`SessionFacts.webgpuError` now carries the
+      reason it did not, which 208 could never capture); whether the event page
+      stays responsive during inference, which is the entire point of 207; and
+      whether the idle disposal actually releases the session.
+- [x] **Chrome measured. WebGPU survives in the worker; the gate is met.**
+      DECISIONS.md 218. One machine, integrated Intel, build 2026-09-16
+      23:13:53, same page and task each run:
+
+      | Host | Model inference | `local inference` stage |
+      |---|---|---|
+      | document | **34.0ms** | 51.2ms |
+      | worker (forced) | **37.8ms** | 73.7ms |
+      | worker (unforced, see below) | 31.8ms | 55.2ms |
+
+      **All three selected WebGPU**, as did the 14th's 31.7ms document run.
+      216's abandon condition was a *silent drop to WASM*; it did not happen.
+      The worker cannot be called slower — the spread within the worker alone
+      (31.8 to 37.8) is wider than the gap between hosts, at n=1 per cell — but
+      the stage around it does cost something real, which is the extra thread
+      hop and its two transfers. Everything sits inside a 500ms budget.
+      **Chrome therefore keeps the document host** (218): a small measurable
+      cost, no benefit on a browser that has offscreen documents.
+      The unforced worker row is the bug of DECISIONS.md 217, not a setting:
+      `chooseHost` probed `chrome.offscreen` from inside the offscreen
+      document, where that API is not exposed, so Chrome silently defaulted to
+      the worker. Fixed — a context now declares what it is — and `forcedHost`
+      is reported alongside `host` so a default can never again be mistaken for
+      a measurement.
+- [x] **Disposal fixed in the same change** — DECISIONS.md 206, 219. Firefox's
+      event page cannot close itself, so it drops the *session* on the same
+      120s idle timer Chrome's document uses to close itself — releasing the
+      same 25MB WASM module and the same GPU buffers while the page keeps
+      running. `closeOffscreenDocument` still has no callers on either browser
+      and that is still correct: Chrome's document disposes of itself, which is
+      the only context that can, since an MV3 service worker is evicted when
+      idle and cannot be relied on to run a timer.
 - [ ] **Confirm whether WebGPU is reachable from a Firefox extension page.**
       Every observed run fell back to single-threaded WASM and the reason was
       never captured — the background console could not be opened, because the
       process it lives in was the one that had hung.
 - [ ] Run the full fixture set on both browsers
 
-**PARKED — DECISIONS.md 208.** Everything up to inference is proven working on
-Firefox. What is left is a threading redesign on a browser that is not the
-demo, and T2.2 below is 20% of the score with no numbers at all. The build
-target stays so the next person starts from something that loads.
+**UN-PARKED — DECISIONS.md 215 supersedes 208.** 208 parked this by weighing a
+threading redesign against T2.2 sitting at 20% with no numbers at all. Both
+sides of that comparison have moved: T2.2 now has figures on a real machine,
+and 207 narrowed the Firefox work from "unknown" to one diagnosed defect with a
+named fix. **Chrome stays the primary demo** (214); this is additive to it and
+must not cost it.
 
 **Done when:** the login and signup demos pass on Firefox and Chrome.
 

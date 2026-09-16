@@ -23,7 +23,7 @@ verified in Chrome against the live backend.
 
 | Measure | Value |
 |---|---|
-| Client tests | 294 |
+| Client tests | 296 |
 | Reasoner checks | 82 |
 | Prompt checks | 53 |
 | One full pass | 27.4ms capture · 4.4ms DOM · 52.0ms inference · 40.2ms redaction · 10.5ms network |
@@ -134,31 +134,44 @@ every run for as long as it is true.
 
 ## Next session starts with
 
-**Everything left is a Chrome run.** Session 32 built the two things that could
-be built without a browser and stopped at the point where the next step is
-somebody watching a console. Nothing below is blocked on a design.
+**Session 34 closed three of the six items below by running them.** What is
+left splits cleanly: one thing nobody can do without Firefox, and a pile of
+corpus work that needs only patience.
 
-1. **The after-measurement for the frame upscale.** The frame is now doubled
-   before recognition and every screen-read line prints the magnification it
-   used, so a reading is attributable. **Scan the income-tax login again.** The
-   figures to beat are **18.6%** page agreement and **16 of 59** items read.
-   Record the new rate *and* the scan wall-clock — this change may cost more
-   latency than it buys, and that is exactly what the number is for. Until
-   somebody does this, the change is a reasoned expectation, not a result.
-2. **Nine more pages for the agreement rate.** One page is a data point.
-3. **Five scans in a row, watching the memory footprint.** Now doubly worth
-   doing: the open question in RESOURCES.md was already whether 215MB is
-   allocator retention or a leak, and the upscale adds a transient canvas of up
-   to 36MB to every stop. If the footprint climbs, this session is a suspect.
-4. **The generalisation sweep's 20 sites.** The protocol is written
+1. **Load the extension in Firefox and run one task end to end.** The largest
+   single unknown in the project, and the one thing no amount of building
+   substitutes for. Everything is built (DECISIONS.md 219): `dist-firefox/`
+   carries every chunk, the event page owns the vision path in-process, and
+   inference runs on a dedicated Worker. **None of it has ever executed on
+   Firefox.** 207 is the standing lesson about precisely this gap — the last
+   architecture reasoned through without running it hung the browser.
+   Watch three things: whether ORT selects WebGPU there (`SessionFacts.webgpuError`
+   now carries the reason when it does not, which 208 could never capture);
+   whether the event page stays responsive *during* inference, which is the
+   entire point of the Worker; and whether the idle timer actually releases the
+   session after 120s.
+2. **Nine more pages for the agreement rate.** 22.8% is one page. One page is a
+   data point, not a rate, and this is 25% of the score.
+3. **The generalisation sweep's 20 sites.** The protocol is written
    (docs/GENERALISATION.md) and the table is committed empty. Observe-only,
    logged out, sensitive list written down *before* reading Shield's output.
    Start with the regional-language portal — the audit predicts the rule path
    declines there, and a predicted failure that does not happen is as
    interesting as one that does.
-5. **Face pixel truth**, the last open box in T1.1. Needs a recorded Chrome run
+4. **Face pixel truth**, the last open box in T1.1. Needs a recorded Chrome run
    — the boxes cannot be committed because `face-a.jpg` and `face-b.png` are
    not.
+5. **The settled-after figure for memory.** Five scans established it does not
+   climb, which was the leak question and is now answered. The protocol also
+   asks for the value the footprint *returns to*, and only the peak was taken.
+   It does not change the verdict; it is the difference between a footprint
+   that recovers and one that merely stops growing.
+
+**Closed this session, with numbers rather than reasoning:** the upscale
+after-measurement (18.6% -> 22.8%), the five-scan memory test (not a leak; the
+217MB -> ~285MB rise is the upscale's canvas, and the arithmetic matches), and
+the Chrome host comparison (WebGPU survives in the worker; Chrome keeps the
+document host anyway — DECISIONS.md 218).
 
 **Two limits found by reading the source, not running it** (T2.3, audit):
 submit and consent wording is English-only, so the no-key rule path declines
@@ -212,6 +225,7 @@ the model uses the picture, and one `ollama pull` proving the offline claim.
 | 30 | First real pages in the corpus — 12 of 50, captured from live sites; the operator's own email and PAN caught before they reached a commit |
 | 31 | Firefox port built, tried and parked; resource use measured for the first time; metric 1 measured at 18.6% on a real page |
 | 32 | Frame doubled before recognition, on the scan path, with a tested pixel ceiling; generalisation protocol written and the fixture-path audit done — none exists, and it found two limits the sweep would not have |
+| 33 | DECISIONS.md given a supersession convention and an index of what is no longer in force; Chrome-only reversed and Firefox un-parked (214–216); inference moved behind a two-host seam with the Worker built |
 
 ---
 

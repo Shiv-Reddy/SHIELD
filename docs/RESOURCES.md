@@ -146,11 +146,41 @@ flattering one:
 **What is established.** GPU memory is genuinely released; the host does
 dispose of itself; the JS heap returns to single-figure megabytes.
 
-**What is not.** Whether the process footprint returns to a baseline, and
-whether repeated scans push it past 215MB. The first is allocator behaviour and
-is common; the second would be a leak. **Only one test separates them: run five
-scans in a row and watch whether the footprint climbs.** Until somebody does
-that, this file should not claim either.
+**What was not, and now is: it is not a leak.** The test named here was run on
+2026-09-16, build 23:13:53 - five whole-page scans back to back, then five
+task runs back to back, on the same page:
+
+| Repeated action, 5x | Peak footprint |
+|---|---|
+| Whole-page scan | **280,000-290,000K** |
+| Task run | **~144,000K** |
+
+The peak stayed inside a ~10MB band across all five scans rather than climbing.
+That is the distinction this section was waiting on: a scan that retained its
+working set would have added roughly 70MB per pass and finished somewhere past
+500MB. It did not, so **repeated scans do not push the footprint up without
+bound, and the second possibility - a leak - is ruled out.** The first -
+allocator retention, freed inside the process but not returned to the OS - is
+what the readings show, and it is ordinary.
+
+**The rise from 217MB to ~285MB is the upscale, and it was predicted.** These
+scans ran at 2.0x (DECISIONS.md 212), so each stop draws a 3840x1890 canvas:
+3840 x 1890 x 4 bytes = **29.0MB**, and this page takes two stops. Roughly 58MB
+of canvas plus the engine's own copy accounts for the ~65-70MB increase almost
+exactly. The cost is transient and lands on the scan path, which transmits
+nothing; the run path does no full-frame recognition and peaks at 144MB, half
+the scan figure, which is the same split showing up from the other side.
+
+**What is still not established.** The steady value the footprint settles to
+after repeated scans. The protocol above asks for the peak *and* the value it
+returns to, and only the peak was recorded. That figure would separate "held
+briefly" from "held for the life of the host" - it does not change the leak
+verdict, but it is the difference between a footprint that recovers and one
+that merely stops growing.
+
+For scale, unchanged by any of this: the income-tax tab alone measured
+290,460K in the same session. Shield at its heaviest still costs about what
+one ordinary web page costs.
 
 **Stage latency, one run** (against the budgets in ARCHITECTURE.md 6):
 
