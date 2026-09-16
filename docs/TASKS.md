@@ -414,10 +414,11 @@ and the checks are in place; both remaining boxes need someone to run it.
       and that is still correct: Chrome's document disposes of itself, which is
       the only context that can, since an MV3 service worker is evicted when
       idle and cannot be relied on to run a timer.
-- [ ] **Confirm whether WebGPU is reachable from a Firefox extension page.**
-      Every observed run fell back to single-threaded WASM and the reason was
-      never captured — the background console could not be opened, because the
-      process it lives in was the one that had hung.
+- [x] **WebGPU is reachable from a Firefox extension page — confirmed.**
+      DECISIONS.md 220, 222. `inference on webgpu in the worker in 228.0ms`.
+      The earlier "always falls back to WASM" was never a WebGPU finding: the
+      reason could not be captured because the console belonged to the process
+      that had hung, which 207 then explained and the Worker fixed.
 - [ ] Run the full fixture set on both browsers
 
 **UN-PARKED — DECISIONS.md 215 supersedes 208.** 208 parked this by weighing a
@@ -451,11 +452,16 @@ must not cost it.
 - [x] **The offscreen document's self-disposal is proved, not assumed.** Two
       minutes idle and its process row is gone with GPU memory back to 0K —
       DECISIONS.md 141's claim, measured for the first time.
-- [ ] **Re-run with Chrome's Memory footprint column enabled.** The largest
-      hole left: only JS and GPU memory were recorded, and ONNX's WASM linear
-      memory — the 26MB module and every tensor — is in neither.
-- [ ] **Repeat the run reading five times.** Taken once, so the peak is a
-      single sample with no spread.
+- [x] **Re-run with Chrome's Memory footprint column enabled.** Done, and it
+      was the right call: the JS heap was reporting ~8% of what Shield actually
+      occupies, the other ~198MB being ONNX's WASM linear memory, which no
+      page-visible counter reports. docs/RESOURCES.md carries the table.
+- [ ] **The same figures on Firefox.** Nothing has been measured there at all,
+      and the disposal-window decision above cannot be made without it: a 10s
+      rebuild is only worth avoiding if the resident session is cheap.
+- [x] **Repeated five times, both paths.** 2026-09-16: five task runs peak at
+      ~144MB, five whole-page scans at 280-290MB, and neither climbs across the
+      five — which is what answered the leak question in docs/RESOURCES.md.
 - [ ] **A second machine for contrast** — a discrete GPU, or an older laptop.
       Machine A already covers the integrated-graphics case that matters most.
 
