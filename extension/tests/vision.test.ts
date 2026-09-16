@@ -20,6 +20,12 @@ import {
   textMatches,
   type DomTextItem,
 } from '../src/lib/vision/agreement';
+import {
+  MAX_RECOGNITION_PIXELS,
+  MIN_RECOGNITION_WIDTH,
+  SCREEN_RECOGNITION_SCALE,
+  recognitionSizing,
+} from '../src/lib/vision/recognition-scale';
 import type { DomElement } from '../src/lib/types';
 import type { OcrWord } from '../src/lib/pii/ocr-regions';
 
@@ -378,4 +384,136 @@ test('a page read twice scores what it would have scored once', () => {
   assert.equal(twice.domOnly.length, once.domOnly.length);
   assert.equal(twice.pixelOnly.length, once.pixelOnly.length);
   assert.equal(twice.agreement, once.agreement);
+});
+
+// --- Recognition sizing --------------------------------------------------------
+//
+// The arithmetic that decides how much text the engine can read and how much
+// memory a scan peaks at. Every test here is a way it could quietly do the
+// wrong thing: read less than it does today, or allocate more than the resource
+// metric can afford.
+
+test('the whole frame is doubled before recognition', () => {
+  const sizing = recognitionSizing(1536, 864, {
+    minWidth: MIN_RECOGNITION_WIDTH,
+    scale: SCREEN_RECOGNITION_SCALE,
+  });
+
+  assert.equal(sizing.scale, 2);
+  assert.equal(sizing.width, 3072);
+  assert.equal(sizing.height, 1728);
+  assert.equal(sizing.capped, false);
+});
+
+test('a 1920x1080 frame still gets the full doubling', () => {
+  // The commonest laptop viewport there is. If the ceiling clipped this one,
+  // it would be clipping the ordinary case rather than the extreme one.
+  const sizing = recognitionSizing(1920, 1080, {
+    minWidth: MIN_RECOGNITION_WIDTH,
+    scale: SCREEN_RECOGNITION_SCALE,
+  });
+
+  assert.equal(sizing.scale, 2);
+  assert.equal(sizing.capped, false);
+});
+
+test('a small crop is lifted to the minimum width, not merely doubled', () => {
+  // An identifier inside a photograph. The width floor is what matters here and
+  // it is far more than the frame multiplier would give.
+  const sizing = recognitionSizing(200, 120, { minWidth: MIN_RECOGNITION_WIDTH });
+
+  assert.equal(sizing.scale, 5);
+  assert.equal(sizing.width, 1000);
+  assert.equal(sizing.height, 600);
+});
+
+test('the larger of the two floors wins', () => {
+  // 300px wide: the width floor asks for 3.33x and the frame multiplier for 2x.
+  const sizing = recognitionSizing(300, 200, { minWidth: 1000, scale: 2 });
+  assert.ok(Math.abs(sizing.scale - 1000 / 300) < 1e-9);
+
+  // 900px wide: the width floor asks for 1.11x, so the multiplier wins.
+  const wider = recognitionSizing(900, 600, { minWidth: 1000, scale: 2 });
+  assert.equal(wider.scale, 2);
+});
+
+test('the pixel ceiling tapers the factor rather than refusing it', () => {
+  // A 4K frame. Doubling would be 33 megapixels and a 132MB canvas, which is a
+  // resource-metric regression dressed up as an accuracy improvement. It is
+  // still enlarged — just by what the budget allows.
+  const sizing = recognitionSizing(3840, 2160, {
+    minWidth: MIN_RECOGNITION_WIDTH,
+    scale: SCREEN_RECOGNITION_SCALE,
+  });
+
+  assert.equal(sizing.capped, true);
+  assert.ok(sizing.scale < 2, 'should not have been allowed the full doubling');
+  assert.ok(sizing.scale > 1, 'should still have been enlarged');
+  assert.ok(
+    sizing.width * sizing.height <= MAX_RECOGNITION_PIXELS + 1,
+    `${sizing.width}x${sizing.height} exceeds the ceiling`,
+  );
+});
+
+test('the ceiling bounds what is added, never what was already there', () => {
+  // A source past the ceiling on its own is read whole. The ceiling exists to
+  // stop us allocating more than the budget, not to make the engine read less
+  // of a screen than it was handed.
+  const sizing = recognitionSizing(6000, 4000, {
+    minWidth: MIN_RECOGNITION_WIDTH,
+    scale: SCREEN_RECOGNITION_SCALE,
+  });
+
+  assert.equal(sizing.scale, 1);
+  assert.ok(sizing.width * sizing.height > MAX_RECOGNITION_PIXELS);
+});
+
+test('a frame already past the ceiling is read at its own size, never shrunk', () => {
+  // The failure that would be invisible: quietly downscaling the largest
+  // screens so the engine reads LESS than it did before this change existed.
+  const sizing = recognitionSizing(6000, 4000, { scale: SCREEN_RECOGNITION_SCALE });
+
+  assert.equal(sizing.scale, 1);
+  assert.equal(sizing.width, 6000);
+  assert.equal(sizing.height, 4000);
+  assert.equal(sizing.capped, true, 'the ceiling did decide this, and should say so');
+});
+
+test('no request means no enlargement', () => {
+  const sizing = recognitionSizing(800, 600);
+  assert.equal(sizing.scale, 1);
+  assert.equal(sizing.capped, false);
+});
+
+test('an empty rectangle produces no scale rather than a plausible one', () => {
+  for (const [w, h] of [[0, 100], [100, 0], [-5, 20]] as const) {
+    const sizing = recognitionSizing(w, h, { minWidth: 1000, scale: 2 });
+    assert.equal(sizing.width, 0, `${w}x${h}`);
+    assert.equal(sizing.height, 0, `${w}x${h}`);
+    assert.equal(sizing.scale, 1, `${w}x${h}`);
+  }
+});
+
+test('enlarging the frame does not move where a region lands on the page', () => {
+  // The defect that would make this whole change worse than useless: word boxes
+  // come back in the ENLARGED space, so a caller converting with the frame's
+  // own size would put every region at half its true coordinate.
+  const native = screenTextRegions(
+    [word('Account', 100, 200, 40, 14), word('holder', 145, 201, 40, 14)],
+    { width: 1536, height: 864 },
+    { width: 1536, height: 864 },
+  );
+
+  // The same line, read on a frame enlarged 2x: every coordinate doubles.
+  const doubled = screenTextRegions(
+    [word('Account', 200, 400, 80, 28), word('holder', 290, 402, 80, 28)],
+    { width: 3072, height: 1728 },
+    { width: 1536, height: 864 },
+  );
+
+  assert.equal(native.length, 1);
+  assert.equal(doubled.length, 1);
+  assert.ok(Math.abs((doubled[0]?.position.x ?? 0) - (native[0]?.position.x ?? 0)) < 0.5);
+  assert.ok(Math.abs((doubled[0]?.position.y ?? 0) - (native[0]?.position.y ?? 0)) < 0.5);
+  assert.ok(Math.abs((doubled[0]?.position.width ?? 0) - (native[0]?.position.width ?? 0)) < 0.5);
 });

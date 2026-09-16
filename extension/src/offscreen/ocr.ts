@@ -27,6 +27,11 @@
 
 import { createWorker, type Worker } from 'tesseract.js';
 import type { OcrWord } from '../lib/pii/ocr-regions';
+import {
+  MIN_RECOGNITION_WIDTH,
+  recognitionSizing,
+  type RecognitionRequest,
+} from '../lib/vision/recognition-scale';
 
 /** Rectangle in FRAME (device) pixels, as the worker computed it. */
 export interface CropRequest {
@@ -38,23 +43,25 @@ export interface CropRequest {
 }
 
 export type OcrReadResult =
-  | { ok: true; elementId: string; words: OcrWord[]; cropWidth: number; cropHeight: number }
+  | {
+      ok: true;
+      elementId: string;
+      words: OcrWord[];
+      /**
+       * The size the engine worked at, which is the source times `scale`.
+       * Every word box below is in THIS space, so a caller converting back to
+       * viewport coordinates must divide by these and not by the frame.
+       */
+      cropWidth: number;
+      cropHeight: number;
+      /** The factor applied before recognition. 1 means read at source size. */
+      scale: number;
+    }
   | { ok: false; elementId: string; message: string };
 
 let worker: Worker | null = null;
 let loadFailed = false;
 let loadError = '';
-
-/**
- * The smallest a crop is scaled to before recognition.
- *
- * Tesseract's accuracy collapses on small text, and an ID number inside a
- * photograph is small by the time it reaches us — the frame is already the
- * whole viewport. Upscaling costs a few milliseconds of canvas work and is the
- * difference between reading a card and reporting an empty page, which as
- * above is the answer that silently transmits it.
- */
-const MIN_RECOGNITION_WIDTH = 1000;
 
 /**
  * Build the engine, once.
@@ -98,13 +105,19 @@ async function ensureWorker(): Promise<Worker | null> {
 /**
  * Read one crop of the frame.
  *
- * The crop is upscaled if small, drawn to an OffscreenCanvas, and handed to the
- * engine. The blob never goes anywhere but into Tesseract, which is running in
- * a worker inside this extension.
+ * The crop is enlarged, drawn to an OffscreenCanvas, and handed to the engine.
+ * The blob never goes anywhere but into Tesseract, which is running in a worker
+ * inside this extension.
+ *
+ * `sizing` is what the caller wants the engine to work at. A crop wants a floor
+ * on its width, because an identifier inside a photograph is tiny; the whole
+ * frame wants a multiplier, because it is already wide and still too small to
+ * read. `recognition-scale.ts` owns the arithmetic and the pixel ceiling.
  */
 export async function readCrop(
   bitmap: ImageBitmap,
   crop: CropRequest,
+  sizing: RecognitionRequest = { minWidth: MIN_RECOGNITION_WIDTH },
 ): Promise<OcrReadResult> {
   const engine = await ensureWorker();
   if (!engine) {
@@ -128,9 +141,16 @@ export async function readCrop(
       return { ok: false, elementId: crop.elementId, message: 'crop outside the frame' };
     }
 
-    const scale = Math.max(1, MIN_RECOGNITION_WIDTH / sw);
-    const width = Math.round(sw * scale);
-    const height = Math.round(sh * scale);
+    const { width, height, scale, capped } = recognitionSizing(sw, sh, sizing);
+    if (capped) {
+      // Said out loud rather than absorbed. A frame large enough to hit the
+      // ceiling is read at less magnification than every other frame, so a
+      // reading that looks worse on one machine has a stated cause here
+      // instead of looking like the engine being unreliable.
+      console.info(
+        `[shield] recognition capped at ${scale.toFixed(2)}x for ${sw}x${sh} — pixel ceiling`,
+      );
+    }
 
     const canvas = new OffscreenCanvas(width, height);
     const context = canvas.getContext('2d');
@@ -162,7 +182,14 @@ export async function readCrop(
       }
     }
 
-    return { ok: true, elementId: crop.elementId, words, cropWidth: width, cropHeight: height };
+    return {
+      ok: true,
+      elementId: crop.elementId,
+      words,
+      cropWidth: width,
+      cropHeight: height,
+      scale,
+    };
   } catch (error) {
     // Reported as a failure, never as an empty read. The caller must be able to
     // tell "nothing identifying is in this image" from "this image was never

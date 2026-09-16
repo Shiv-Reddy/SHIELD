@@ -1290,8 +1290,14 @@ async function screenTextFindings(
 
   // This screen's own figures. Truthful about the screen; deliberately NOT
   // summed by the caller, which reports the page instead.
+  // The magnification is named on every line because it is the one thing that
+  // changed between the 18.6% recorded in TASKS.md T1.2 and whatever this run
+  // reports. A later reading without it is not comparable to anything.
   console.info(
-    `[shield] screen read: ${report.agreed.length} agreed, ` +
+    `[shield] screen read at ${reading.recognitionScale.toFixed(1)}x ` +
+      `(${reading.frameWidth}x${reading.frameHeight} → ` +
+      `${reading.recognisedWidth}x${reading.recognisedHeight}): ` +
+      `${report.agreed.length} agreed, ` +
       `${report.pixelOnly.length} seen only in pixels (${regions.length} hidden), ` +
       `${report.domOnly.length} seen only in markup`,
   );

@@ -26,6 +26,10 @@ import {
   modelDescriptor,
 } from './face-detector';
 import { redactFrame } from './redact';
+import {
+  MIN_RECOGNITION_WIDTH,
+  SCREEN_RECOGNITION_SCALE,
+} from '../lib/vision/recognition-scale';
 import { readCrop, type CropRequest, type OcrReadResult } from './ocr';
 import { runSelfTest } from './self-test';
 
@@ -157,19 +161,25 @@ async function readImages(
  * that rectangle. Writing a second path would mean two places where a crop
  * becomes a blob and two places to get the CSP pinning wrong.
  *
- * WHY IT IS NOT UPSCALED
+ * WHY IT IS UPSCALED, NOW THAT THERE IS A MEASUREMENT
  *
  * `readCrop` lifts a small crop to 1000px because an ID number inside a
  * photograph is tiny by the time the viewport has been captured. A frame is
- * already wider than that, so the scale is 1 and the frame is read at native
- * resolution. Body text at sixteen CSS pixels is marginal for the engine at
- * that size, and upscaling would help — at the cost of a canvas four times the
- * area, on a metric that scores resource use at 20%.
+ * already wider than that, so this path used to read at native resolution and
+ * said so, deliberately: upscaling costs a canvas four times the area on a
+ * metric that scores resource use at 20%, and the trade was left unmade until
+ * somebody could say what it bought.
  *
- * That trade is left unmade on purpose. `vision/agreement.ts` reports exactly
- * what the engine failed to read that the DOM did see, so the size of the
- * problem is about to be a measured number rather than a guess. Tuning first
- * and measuring afterwards is how a threshold becomes folklore.
+ * `vision/agreement.ts` then said. On a real page the engine read 16 of the 59
+ * text items the DOM reported — it missed roughly 73% of the text it was
+ * looking straight at, which is the ceiling on everything this layer can
+ * contribute to metric 1. So the frame is now doubled before recognition, and
+ * the cost lands on the scan path, which transmits nothing and has seconds to
+ * spend, rather than on a run budgeted at ~150ms (DECISIONS.md 188, 212).
+ *
+ * The factor and its pixel ceiling live in `vision/recognition-scale.ts`, which
+ * is tested. The before-figure to compare any later reading against is 18.6%
+ * page agreement, recorded in TASKS.md T1.2.
  */
 async function readScreen(
   dataUrl: string,
@@ -180,18 +190,26 @@ async function readScreen(
   try {
     bitmap = await createImageBitmap(dataUrlToBlob(dataUrl));
 
-    const reading = await readCrop(bitmap, {
-      elementId: 'screen',
-      x: 0,
-      y: 0,
-      width: bitmap.width,
-      height: bitmap.height,
-    });
+    const reading = await readCrop(
+      bitmap,
+      {
+        elementId: 'screen',
+        x: 0,
+        y: 0,
+        width: bitmap.width,
+        height: bitmap.height,
+      },
+      { minWidth: MIN_RECOGNITION_WIDTH, scale: SCREEN_RECOGNITION_SCALE },
+    );
 
     if (!reading.ok) return { ok: false, message: reading.message };
 
     return {
       ok: true,
+      // The word boxes are in the ENLARGED space, and `cropWidth`/`cropHeight`
+      // describe that space. Passing the bitmap's own size here instead would
+      // put every region at half its true coordinate — the exact shape of
+      // defect this conversion is centralised to prevent.
       regions: screenTextRegions(
         reading.words,
         { width: reading.cropWidth, height: reading.cropHeight },
@@ -199,6 +217,9 @@ async function readScreen(
       ),
       frameWidth: bitmap.width,
       frameHeight: bitmap.height,
+      recognisedWidth: reading.cropWidth,
+      recognisedHeight: reading.cropHeight,
+      recognitionScale: reading.scale,
       words: reading.words.length,
     };
   } finally {

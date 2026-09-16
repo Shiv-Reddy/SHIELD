@@ -535,9 +535,18 @@ export type ReadScreenReply =
   | {
       ok: true;
       regions: ScreenTextRegion[];
-      /** What the engine actually worked on, for the record. */
+      /** The captured frame, in its own device pixels. */
       frameWidth: number;
       frameHeight: number;
+      /**
+       * What the engine actually worked on. Larger than the frame, because the
+       * scan path enlarges it before recognition — see
+       * `vision/recognition-scale.ts` and DECISIONS.md 212.
+       */
+      recognisedWidth: number;
+      recognisedHeight: number;
+      /** Recognised size over frame size. 1 means read at capture resolution. */
+      recognitionScale: number;
       /** Every word read, before grouping. Counted, never logged. */
       words: number;
     }

@@ -47,7 +47,7 @@ indefensible answer to metric 1.
 | Trust UI | Overlay, payload inspector (with the frame that was sent), latency panel, manual marking, audit log |
 | Whole-page scan | Walks the document, transmits nothing, findings carried into runs |
 | Scan record | Redacted picture of every screen examined, kept local |
-| Tests | 277 client, 82 reasoner, 53 prompt |
+| Tests | 294 client, 82 reasoner, 53 prompt |
 | Benchmark corpus | 50 pages, 170 labels — 32 synthetic, **12 real**, 6 fixture |
 
 Phases 1–3 (login autofill, multi-field signup, faces) are closed.
@@ -167,16 +167,29 @@ what it cannot do at all is read a canvas, an iframe or a pasted screenshot.
       collapsed 5 duplicate agreements and 24 duplicate markup items that a
       summed figure would have counted twice.
 - [ ] **Nine more pages.** One page is a data point, not a rate.
-- [ ] **Upscale the frame before recognition — decided, not yet built.**
-      The measurement says so rather than intuition: of 59 text items the DOM
-      reported, the engine read 16. **It misses roughly 73% of the text it is
+- [x] **Upscale the frame before recognition — built.** DECISIONS.md 212.
+      The measurement said so rather than intuition: of 59 text items the DOM
+      reported, the engine read 16. **It missed roughly 73% of the text it was
       looking straight at**, which is the ceiling on everything this layer can
-      contribute to metric 1. Native resolution is the suspected cause — 16px
-      body text is marginal for Tesseract. The cost is latency on the scan
-      path, which is the path that has budget for it (DECISIONS.md 188), and
-      the same run is the before-measurement to compare against.
+      contribute to metric 1. Native resolution was the suspected cause — 16px
+      body text is marginal for Tesseract, reaching it at a capital height of
+      about eleven pixels.
+      The frame is now **doubled** before recognition, on the scan path only,
+      which is the path that has budget for it (DECISIONS.md 188). The
+      arithmetic and its 9-megapixel ceiling live in
+      `lib/vision/recognition-scale.ts` — a pure module with 10 tests, rather
+      than inside `ocr.ts`, which needs a browser and a 2.7MB engine to run at
+      all. The ceiling bounds what is *added*: a frame already past it is read
+      whole, never shrunk.
       **The 27 pixel-only regions are the other half of the story** and argue
       the layer earns its place: that is text on screen no markup describes.
+- [ ] **The after-measurement. Needs a Chrome run, and nothing here can fake
+      it.** Every screen-read line now prints the magnification it used, so a
+      reading is attributable; the figure to beat is **18.6%** page agreement
+      and **16 of 59** items read. Until somebody scans the income-tax login
+      again and reads that line, this change is a reasoned expectation and not
+      a result — and it may cost more latency than it buys, which is exactly
+      what the number is for. Record both the new rate and the scan latency.
 
 **Done when:** the agreement rate against the DOM map is recorded on ≥10 real
 pages, and canvas/iframe text is shown being hidden on a page where the DOM
