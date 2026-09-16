@@ -7,7 +7,7 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-14
+## Current state — 2026-09-16
 
 **Core is complete, and for the first time every one of the five scored metrics
 has a number against it.** Phases 1–3 closed. Every module A–G built and
@@ -23,7 +23,7 @@ verified in Chrome against the live backend.
 
 | Measure | Value |
 |---|---|
-| Client tests | 284 |
+| Client tests | 294 |
 | Reasoner checks | 82 |
 | Prompt checks | 53 |
 | One full pass | 27.4ms capture · 4.4ms DOM · 52.0ms inference · 40.2ms redaction · 10.5ms network |
@@ -134,27 +134,37 @@ every run for as long as it is true.
 
 ## Next session starts with
 
-Every metric has a number. Everything below is turning a data point into a
-result, or a known weakness into a fixed one.
+**Everything left is a Chrome run.** Session 32 built the two things that could
+be built without a browser and stopped at the point where the next step is
+somebody watching a console. Nothing below is blocked on a design.
 
-1. **Upscale the frame before recognition.** Decided on evidence, not built.
-   Of 59 text items the DOM reported on a real page, the engine read 16 — it
-   misses roughly 73% of what it is looking straight at, and that is the
-   ceiling on metric 1. Costs latency on the scan path, which is the path with
-   budget for it (DECISIONS.md 188). The 18.6% run is the before-measurement.
+1. **The after-measurement for the frame upscale.** The frame is now doubled
+   before recognition and every screen-read line prints the magnification it
+   used, so a reading is attributable. **Scan the income-tax login again.** The
+   figures to beat are **18.6%** page agreement and **16 of 59** items read.
+   Record the new rate *and* the scan wall-clock — this change may cost more
+   latency than it buys, and that is exactly what the number is for. Until
+   somebody does this, the change is a reasoned expectation, not a result.
 2. **Nine more pages for the agreement rate.** One page is a data point.
-3. **Five scans in a row, watching the memory footprint.** The one open
-   question in RESOURCES.md: the footprint stayed at 215MB after the vision
-   host disposed of itself and GPU memory returned to 0K. Ordinary allocator
-   retention and a leak look identical from one reading; only repetition tells
-   them apart.
-4. **Face pixel truth**, the last open box in T1.1. Needs a recorded Chrome run
+3. **Five scans in a row, watching the memory footprint.** Now doubly worth
+   doing: the open question in RESOURCES.md was already whether 215MB is
+   allocator retention or a leak, and the upscale adds a transient canvas of up
+   to 36MB to every stop. If the footprint climbs, this session is a suspect.
+4. **The generalisation sweep's 20 sites.** The protocol is written
+   (docs/GENERALISATION.md) and the table is committed empty. Observe-only,
+   logged out, sensitive list written down *before* reading Shield's output.
+   Start with the regional-language portal — the audit predicts the rule path
+   declines there, and a predicted failure that does not happen is as
+   interesting as one that does.
+5. **Face pixel truth**, the last open box in T1.1. Needs a recorded Chrome run
    — the boxes cannot be committed because `face-a.jpg` and `face-b.png` are
    not.
-5. **T2.3, the generalisation sweep**, which is at 0 of 4 and is the one tier-2
-   item with no work behind it at all. The problem statement says the finale's
-   pages are unknown, so this is the item that most directly answers "will it
-   work on a page you have never seen".
+
+**Two limits found by reading the source, not running it** (T2.3, audit):
+submit and consent wording is English-only, so the no-key rule path declines
+rather than acting on a Devanagari portal; and checkbox state crosses the trust
+boundary as the two literal strings `checked` / `unchecked`, so a change on one
+side breaks consent handling on the other silently. Neither is fixed.
 
 **Parked deliberately:** Firefox (DECISIONS.md 207–208). Everything up to
 inference works there; what is left is a threading redesign on a browser that
@@ -201,6 +211,7 @@ the model uses the picture, and one `ollama pull` proving the offline claim.
 | 29 | Agreement counted per page instead of per stop; open-weights VLM pinned and the redacted frame sent by default |
 | 30 | First real pages in the corpus — 12 of 50, captured from live sites; the operator's own email and PAN caught before they reached a commit |
 | 31 | Firefox port built, tried and parked; resource use measured for the first time; metric 1 measured at 18.6% on a real page |
+| 32 | Frame doubled before recognition, on the scan path, with a tested pixel ceiling; generalisation protocol written and the fixture-path audit done — none exists, and it found two limits the sweep would not have |
 
 ---
 

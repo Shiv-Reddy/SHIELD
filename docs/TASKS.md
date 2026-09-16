@@ -308,12 +308,35 @@ target stays so the next person starts from something that loads.
 ### T2.3 Generalisation sweep
 **"Use cases for evaluation will be provided during finale" — the pages are unknown.**
 
-- [ ] ≥20 real, unmodified sites. Pass/fail and failure mode recorded per site
-- [ ] Confirm no fixture-specific code path exists anywhere
+- [x] **A protocol two people would follow identically** — docs/GENERALISATION.md.
+      Observe-only on every site we do not own, logged out, the sensitive list
+      written down **before** Shield's output is read, and four outcomes
+      recorded separately (read / detect / redact / act) because a page can
+      read perfectly and detect nothing.
+- [x] **Confirm no fixture-specific code path exists anywhere.** Done by
+      reading the source, not by running it. **None exists.** No hardcoded
+      hostnames, no element ids, no PSP or bank list behind the UPI rule, and
+      `_form_kind` classifies from fields rather than from button wording —
+      the button version was a fixture-shaped assumption and a real page
+      already caught it.
+      One fixture-aware path does exist and is named rather than buried:
+      `isLocalFixture` gates two `console.info` calls and nothing else, in the
+      safe direction — a real page gets *less* printed. If it is ever consulted
+      where something is detected, hidden or clicked, the audit is void.
+      **Two real limits the audit surfaced, neither of which the sweep would
+      have found:** submit and consent wording is English-only, so a
+      Devanagari portal makes the rule path decline rather than act (safe, but
+      it will not act); and checkbox state travels as the two literal strings
+      `checked` / `unchecked` across the trust boundary, so a change on one
+      side breaks consent handling on the other with nothing failing loudly.
+- [ ] ≥20 real, unmodified sites. Pass/fail and failure mode recorded per site.
+      **The table is committed empty** (the reasoning of DECISIONS.md 210) and
+      needs somebody with Chrome open.
 - [ ] At least 3 task types beyond login (search, form fill, navigation)
 - [ ] Every failure either fixed or written down as a known limit
 
-**Done when:** the sweep is repeatable and its results are in the repo.
+**Done when:** the sweep is repeatable and its results are in the repo. The
+protocol and the audit are done; the rows are not.
 
 ---
 
