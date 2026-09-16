@@ -17,16 +17,20 @@ it, and returns one allowlisted action the extension executes locally.
 
 ## 3. Goals
 
-**Hackathon** — prove the loop works, measurably, on real pages:
+**Hackathon** — prove the loop works, measurably, on real pages, on both
+browsers the problem statement names:
 capture → local detect → redact → send sanitized → act.
 
 **Full product** — generalize across arbitrary sites, org-configurable policy,
-persistent audit, multi-browser.
+persistent audit.
 
 ## 4. Non-Goals (now)
 
-Mobile. Multi-browser. Cloud training on user data. Any paid API. Storing
-credentials. Arbitrary server-supplied instructions.
+Mobile. Cloud training on user data. Any paid API. Storing credentials.
+Arbitrary server-supplied instructions.
+
+Multi-browser was a non-goal and is no longer one: the problem statement names
+Chrome and Firefox, and DECISIONS.md 214 supersedes the Chrome-only choice.
 
 ## 5. Success Metrics — official SIH weighting
 
@@ -50,10 +54,11 @@ Optimize latency **after** correctness, never instead of it.
 
 ## 7. Scope
 
-**In scope now:** Chrome MV3, login autofill, multi-field signup, face
-redaction, manual marking, trust UI, local inference with CPU fallback.
+**In scope now:** Chrome MV3 (primary), Firefox MV3, login autofill,
+multi-field signup, face redaction, manual marking, trust UI, local inference
+with CPU fallback.
 
-**Architected for, not built:** multi-browser, Web Store publishing, enterprise
+**Architected for, not built:** Web Store publishing, enterprise
 policy console, full PII taxonomy, adaptive model sizing, third-party security
 review, audit export, analytics, model update pipeline.
 
@@ -134,7 +139,7 @@ Status: ✅ built · ⬜ planned (see docs/TASKS.md) · ✂ deliberately cut
 | Performance | One pass in a few seconds; currently ≈150ms |
 | Security | No raw sensitive data leaves the client, any code path |
 | Accessibility | Keyboard-navigable, readable contrast |
-| Compatibility | Chrome (and Edge, as Chromium). Firefox is a port |
+| Compatibility | Chrome (primary, and Edge as the same Chromium bundle) and Firefox. DECISIONS.md 214 |
 | Availability (full product) | 99%+ backend uptime |
 
 ## 11. UI Requirements

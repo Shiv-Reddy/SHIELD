@@ -9,8 +9,8 @@ overhead the hackathon timeline can't absorb.
 ### Client (Browser Extension)
 | Layer | Choice |
 |---|---|
-| Browser target | Google Chrome only |
-| Extension framework | Chrome WebExtensions API, Manifest V3 |
+| Browser target | Chrome (primary demo) and Firefox; Edge runs the Chrome bundle. DECISIONS.md 214 |
+| Extension framework | WebExtensions API, Manifest V3. `npm run build:firefox` generates the Firefox manifest from Chrome's so the two cannot drift (DECISIONS.md 203) |
 | Language | JavaScript or TypeScript |
 | Local AI inference | ONNX Runtime Web + Transformers.js |
 | Acceleration | WebGPU, with WebAssembly/CPU fallback |
@@ -85,7 +85,6 @@ overhead the hackathon timeline can't absorb.
 
 ## 4. Explicitly Not Using (Hackathon Phase)
 
-- Firefox/Edge extension APIs
 - Any paid LLM/VLM API by default (exploring free options first — see DECISIONS.md)
 - Cloud GPU training pipelines (no model training required, only inference
   with pre-trained models)

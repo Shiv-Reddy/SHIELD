@@ -22,7 +22,11 @@ Smart India Hackathon 2026, SIH26171 (ISRO, Smart Automation).
 
 ## Locked Decisions
 
-- Chrome only (MV3). Edge works as a Chromium target; Firefox is a port, not a flag.
+- Chrome and Firefox are both supported targets (MV3), because the problem
+  statement names both. **Chrome is the primary demo and the reference
+  implementation** — where they disagree, Chrome's behaviour is preserved, and
+  a change that breaks Chrome to serve Firefox is not taken. Edge runs the same
+  Chromium bundle. See DECISIONS.md 214–216.
 - Server model: free-tier, provider-agnostic. Nothing paid committed.
 - Primary demo: login autofill. Must be perfect.
 - Full scope is documented; the BUILD follows docs/TASKS.md, which is the only
