@@ -26,6 +26,7 @@ import {
   SCREEN_RECOGNITION_SCALE,
   recognitionSizing,
 } from '../src/lib/vision/recognition-scale';
+import { defaultHostFor } from '../src/lib/settings';
 import type { DomElement } from '../src/lib/types';
 import type { OcrWord } from '../src/lib/pii/ocr-regions';
 
@@ -516,4 +517,23 @@ test('enlarging the frame does not move where a region lands on the page', () =>
   assert.ok(Math.abs((doubled[0]?.position.x ?? 0) - (native[0]?.position.x ?? 0)) < 0.5);
   assert.ok(Math.abs((doubled[0]?.position.y ?? 0) - (native[0]?.position.y ?? 0)) < 0.5);
   assert.ok(Math.abs((doubled[0]?.position.width ?? 0) - (native[0]?.position.width ?? 0)) < 0.5);
+});
+
+// --- Which host inference runs in ----------------------------------------------
+//
+// One rule, and it decides whether Firefox works at all. Tested here rather
+// than beside the engines because that module imports ONNX Runtime, which does
+// not load under Node — and this is not the part of the change to leave
+// unchecked.
+
+test('a browser with offscreen documents keeps running inference in the document', () => {
+  // Chrome. DECISIONS.md 214 makes it the reference implementation and 216
+  // refuses to move it to a worker before the before-and-after is measured, so
+  // this default must not drift.
+  assert.equal(defaultHostFor(true), 'document');
+});
+
+test('a browser without offscreen documents runs inference in a worker', () => {
+  // Firefox, where the document path starves the event page (DECISIONS.md 207).
+  assert.equal(defaultHostFor(false), 'worker');
 });

@@ -8,6 +8,31 @@
 export type ExecutionBackend = 'webgpu' | 'wasm';
 
 /**
+ * Where inference runs.
+ *
+ * `document` is ORT in the offscreen document, which is what Chrome has always
+ * done. `worker` is ORT in a dedicated Worker, which Firefox requires because
+ * the document path starves its event page (DECISIONS.md 207).
+ */
+export type InferenceHost = 'document' | 'worker';
+
+/**
+ * Which host a browser needs, absent an override.
+ *
+ * Decided on whether the offscreen API exists, which is the same runtime test
+ * DECISIONS.md 205 chose and for the same reason: it asks about the capability
+ * that actually differs rather than sniffing a user-agent string. Chrome has
+ * offscreen documents; Firefox does not, and runs an event page instead.
+ *
+ * Lives here rather than beside the engines so it can be tested. The engine
+ * module imports ONNX Runtime, which does not load under Node — and a rule
+ * this load-bearing should not be the one part of the change nobody can check.
+ */
+export function defaultHostFor(hasOffscreenApi: boolean): InferenceHost {
+  return hasOffscreenApi ? 'document' : 'worker';
+}
+
+/**
  * Where the backend lives.
  *
  * Local by default. A hackathon build that silently points at somebody's hosted
@@ -33,6 +58,21 @@ export interface ShieldSettings {
    *   chrome.storage.local.remove('forceBackend')          // back to automatic
    */
   forceBackend: ExecutionBackend | null;
+  /**
+   * Force an inference host instead of choosing one per browser.
+   *
+   * Exists for the same reason `forceBackend` does, and for a sharper one.
+   * DECISIONS.md 216 makes the worker Chrome's default only once somebody has
+   * measured whether ORT still selects WebGPU inside a worker — Chrome picks
+   * WebGPU today at 31.7ms inference, and a silent drop to WASM would be a
+   * latency regression on the demo browser. That measurement needs both hosts
+   * reachable on ONE browser, which is this key.
+   *
+   * Set from any extension console:
+   *   chrome.storage.local.set({ forceInferenceHost: 'worker' })
+   *   chrome.storage.local.remove('forceInferenceHost')   // back to automatic
+   */
+  forceInferenceHost: InferenceHost | null;
   /**
    * Run the whole pipeline but never touch the page.
    *
@@ -61,6 +101,7 @@ export interface ShieldSettings {
 const DEFAULTS: ShieldSettings = {
   endpoint: DEFAULT_ENDPOINT,
   forceBackend: null,
+  forceInferenceHost: null,
   observeOnly: false,
 };
 
@@ -90,12 +131,19 @@ export async function readSettings(): Promise<ShieldSettings> {
     // settings interface deliberately is not.
     const stored = await chrome.storage.local.get([
       'forceBackend',
+      'forceInferenceHost',
       'endpoint',
       'observeOnly',
     ]);
     const forceBackend =
       stored['forceBackend'] === 'webgpu' || stored['forceBackend'] === 'wasm'
         ? stored['forceBackend']
+        : null;
+    // Anything unrecognised means automatic. A typo must not pin the host to
+    // something that does not exist and then look like a broken pipeline.
+    const forceInferenceHost =
+      stored['forceInferenceHost'] === 'document' || stored['forceInferenceHost'] === 'worker'
+        ? stored['forceInferenceHost']
         : null;
     const endpoint =
       typeof stored['endpoint'] === 'string' && stored['endpoint'].length > 0
@@ -106,7 +154,7 @@ export async function readSettings(): Promise<ShieldSettings> {
     // would look exactly like the pipeline being broken.
     const observeOnly = stored['observeOnly'] === true;
 
-    return { endpoint, forceBackend, observeOnly };
+    return { endpoint, forceBackend, forceInferenceHost, observeOnly };
   } catch (error) {
     // A settings read must never be able to break inference — but silently
     // returning defaults is how a backend override appears to do nothing.

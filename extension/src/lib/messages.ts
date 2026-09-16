@@ -449,11 +449,27 @@ export interface AnalyseFrameMessage {
   viewportHeight: number;
   /** Backend override, resolved by the worker. Null means prefer WebGPU. */
   forceBackend: 'webgpu' | 'wasm' | null;
+  /**
+   * Inference-host override. Null means choose per browser.
+   *
+   * Travels beside `forceBackend` because they are the same kind of thing: a
+   * diagnostic pin that makes an otherwise-unreachable path testable on the
+   * machine in front of you. DECISIONS.md 216.
+   */
+  forceInferenceHost: 'document' | 'worker' | null;
 }
 
 export interface WarmUpMessage {
   type: typeof MSG.WARM_UP;
   forceBackend: 'webgpu' | 'wasm' | null;
+  /**
+   * Inference-host override. Null means choose per browser.
+   *
+   * Travels beside `forceBackend` because they are the same kind of thing: a
+   * diagnostic pin that makes an otherwise-unreachable path testable on the
+   * machine in front of you. DECISIONS.md 216.
+   */
+  forceInferenceHost: 'document' | 'worker' | null;
 }
 
 /**
@@ -489,6 +505,14 @@ export interface SelfTestRunResult {
 export interface ReloadModelMessage {
   type: typeof MSG.RELOAD_MODEL;
   forceBackend: 'webgpu' | 'wasm' | null;
+  /**
+   * Inference-host override. Null means choose per browser.
+   *
+   * Travels beside `forceBackend` because they are the same kind of thing: a
+   * diagnostic pin that makes an otherwise-unreachable path testable on the
+   * machine in front of you. DECISIONS.md 216.
+   */
+  forceInferenceHost: 'document' | 'worker' | null;
 }
 
 /**
@@ -617,6 +641,23 @@ export type AnalyseFrameResult =
       fellBack: boolean;
       /** Set when a local override pinned the backend, for diagnostics. */
       forced: 'webgpu' | 'wasm' | null;
+      /**
+       * Where inference ran — the offscreen document, or a dedicated Worker.
+       *
+       * Reported rather than assumed from the browser, because DECISIONS.md 216
+       * gates the worker becoming Chrome's default on comparing the two hosts
+       * on the SAME browser. A measurement whose host is inferred is not one.
+       */
+      host: 'document' | 'worker';
+      /**
+       * Set when a local override pinned the host.
+       *
+       * Reported for the same reason `host` is. A run that says `worker` with
+       * this null is the browser's own default and a finding; one with this set
+       * is somebody taking a measurement. Conflating the two is how a silent
+       * default change reads as a deliberate one.
+       */
+      forcedHost: 'document' | 'worker' | null;
       frame: FrameGeometry;
       detection: RawDetectionSummary;
     }
@@ -652,94 +693,17 @@ export async function sendToWorker<TResult>(
   }
 }
 
-/**
- * Send a message to the offscreen document and await its reply.
+/*
+ * The offscreen-calling helpers used to live here and now live in
+ * `background/vision-host.ts`.
  *
- * Unlike the tab and popup helpers, a failure here is NOT swallowed: the
- * offscreen document is the inference host, and silently treating a dead one as
- * "no result" would let the pipeline continue as though the frame contained
- * nothing sensitive. Fail loudly, per ARCHITECTURE.md Section 9.
+ * They each had exactly one caller — the service worker — and Firefox needs
+ * them to branch: there is no offscreen document there, so the same work is
+ * dispatched in-process instead of sent across a context boundary. That branch
+ * reaches ONNX Runtime, and this file is imported by the popup and the content
+ * script, which would then have carried the engine for no reason. The message
+ * TYPES stay here, which is the part the other bundles actually use.
  */
-export async function sendToOffscreen(
-  message: AnalyseFrameMessage,
-): Promise<AnalyseFrameResult> {
-  return (await chrome.runtime.sendMessage(message)) as AnalyseFrameResult;
-}
-
-/**
- * Ask the offscreen document to load the model, without waiting for it.
- *
- * Deliberately fire-and-forget: this is an optimisation, and a failure here must
- * never break a run. If warming fails the model simply loads lazily on the first
- * real frame, exactly as it did before.
- */
-export function warmOffscreen(forceBackend: 'webgpu' | 'wasm' | null): void {
-  void chrome.runtime
-    .sendMessage({ type: MSG.WARM_UP, forceBackend })
-    .catch(() => undefined);
-}
-
-/** Ask the offscreen document to rebuild its session on the given backend. */
-export async function reloadOffscreenModel(
-  forceBackend: 'webgpu' | 'wasm' | null,
-): Promise<void> {
-  await chrome.runtime.sendMessage({ type: MSG.RELOAD_MODEL, forceBackend });
-}
-
-/**
- * Ask the offscreen document to paint the sensitive regions out of a frame.
- *
- * Failures are not swallowed. Treating a failed redaction as "no regions to
- * hide" would ship the raw frame, so this must throw and stop the run
- * (ARCHITECTURE.md Section 9, fail closed).
- */
-export async function redactOffscreenFrame(
-  message: Omit<RedactFrameMessage, 'type'>,
-): Promise<RedactFrameReply> {
-  return (await chrome.runtime.sendMessage({
-    type: MSG.REDACT_FRAME,
-    ...message,
-  })) as RedactFrameReply;
-}
-
-/**
- * Ask the offscreen document to read the given image crops.
- *
- * Failures are NOT swallowed here, unlike the tab and popup helpers. A thrown
- * message would otherwise surface as "no text found", and the caller treats
- * that as a clean image — transmitting a document nothing ever read.
- */
-export async function readOffscreenImages(
-  message: Omit<ReadImagesMessage, 'type'>,
-): Promise<ReadImagesReply> {
-  return (await chrome.runtime.sendMessage({
-    type: MSG.READ_IMAGES,
-    ...message,
-  })) as ReadImagesReply;
-}
-
-/**
- * Ask the offscreen document to read the whole screen.
- *
- * Failures are not swallowed, for the same reason `readOffscreenImages` does
- * not swallow them: an empty reading and a failed one look identical to a
- * caller, and only one of them means the screen is clean.
- */
-export async function readOffscreenScreen(
-  message: Omit<ReadScreenMessage, 'type'>,
-): Promise<ReadScreenReply> {
-  return (await chrome.runtime.sendMessage({
-    type: MSG.READ_SCREEN,
-    ...message,
-  })) as ReadScreenReply;
-}
-
-/** Ask the offscreen document to prove the CPU fallback and report back. */
-export async function runOffscreenSelfTest(): Promise<SelfTestRunResult> {
-  return (await chrome.runtime.sendMessage({
-    type: MSG.RUN_SELF_TEST,
-  })) as SelfTestRunResult;
-}
 
 /** Send a message to the content script in a specific tab and await its reply. */
 export async function sendToTab<TResult>(

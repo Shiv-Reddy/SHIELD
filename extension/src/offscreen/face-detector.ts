@@ -9,10 +9,14 @@
  * rather than a README.
  */
 
-import * as ort from 'onnxruntime-web/webgpu';
-
 import { LATENCY_BUDGET_MS } from '../lib/timing';
 import { decodeBox, getPriors } from './priors';
+import {
+  createEngine,
+  defaultHostFor,
+  type InferenceEngine,
+  type InferenceHost,
+} from './inference';
 
 const MODEL_PATH = 'models/ultraface-rfb-320.onnx';
 
@@ -45,6 +49,24 @@ export interface FaceDetectorInfo {
   fellBack: boolean;
   /** Set when a local override pinned the backend, for diagnostics. */
   forced: ExecutionBackend | null;
+  /**
+   * Where inference actually ran — the document, or a dedicated Worker.
+   *
+   * Reported rather than inferred from the browser, because the whole point of
+   * DECISIONS.md 216 is that the two can be compared on the SAME browser. A
+   * measurement whose host is assumed is not a measurement.
+   */
+  host: InferenceHost;
+  /** Set when a local override pinned the host, so a reading cannot be misread. */
+  forcedHost: InferenceHost | null;
+  /**
+   * Why WebGPU was declined, when it was.
+   *
+   * The open question in DECISIONS.md 208: every observed Firefox run fell back
+   * to WASM and the reason was never captured, because the console that would
+   * have said belonged to the process that had hung.
+   */
+  webgpuError: string | null;
 }
 
 /**
@@ -224,106 +246,40 @@ function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-let session: ort.InferenceSession | null = null;
+let engine: InferenceEngine | null = null;
 let info: FaceDetectorInfo | null = null;
 
 /**
- * Configure ORT before any session is created.
+ * Which host to use, and the override that exists so Chrome can be measured.
  *
- * `wasmPaths` points at the extension's own copy. Left unset, ORT resolves the
- * binary relative to the script bundle and, failing that, reaches for a CDN —
- * which must never happen here (see tools/copy-ort-assets.mjs).
+ * WHY THE DEFAULT IS DECLARED BY THE CALLER AND NOT DETECTED HERE
  *
- * `numThreads = 1` avoids needing SharedArrayBuffer, which would require the
- * document to be cross-origin isolated. An offscreen document cannot set COOP
- * and COEP response headers, so multi-threading is not available to us at all;
- * asking for it yields a confusing init failure rather than a graceful fallback.
+ * It was detected here, with `chrome.offscreen !== undefined`, and that was
+ * wrong in a way worth leaving written down. `chrome.offscreen` is the API for
+ * CREATING an offscreen document; it is exposed to the service worker, not to
+ * the offscreen document itself. So the probe ran in the one context that
+ * cannot answer it, read `undefined`, concluded the browser had no offscreen
+ * documents, and silently defaulted Chrome to the worker — from inside an
+ * offscreen document, which is the living proof of the opposite.
+ *
+ * A context knows what it is. The offscreen document passes `document` because
+ * it IS one; Firefox's event page will pass `worker` because there is nothing
+ * else for it to be. `defaultHostFor` still does the capability mapping, but it
+ * is fed by `HAS_OFFSCREEN` in background/offscreen.ts, which runs where the
+ * API actually lives.
+ *
+ * `forceInferenceHost` is read here rather than passed in because it is a
+ * diagnostic override in exactly the sense `forceBackend` is, and the same
+ * argument applies: the fallback path is otherwise untestable on the browser
+ * where the default path works. DECISIONS.md 216 gates the worker becoming
+ * Chrome's default on a before-and-after measurement, and this key is how that
+ * measurement is taken.
+ *
+ *   chrome.storage.local.set({ forceInferenceHost: 'worker' })
+ *   chrome.storage.local.remove('forceInferenceHost')
  */
-function configureRuntime(): void {
-  ort.env.wasm.wasmPaths = chrome.runtime.getURL('ort/');
-  ort.env.wasm.numThreads = 1;
-  // ORT logs a great deal at default verbosity; keep the console readable so
-  // Shield's own diagnostics stay findable.
-  ort.env.logLevel = 'warning';
-}
-
-/**
- * Build the inference session, preferring WebGPU and falling back to CPU WASM.
- *
- * PRD.md FR-27 requires the fallback to be automatic and the user to be told
- * that things may be slower — never a hard failure.
- */
-async function createSession(
-  forceBackend: ExecutionBackend | null,
-): Promise<FaceDetectorInfo> {
-  const modelUrl = chrome.runtime.getURL(MODEL_PATH);
-
-  if (forceBackend) {
-    console.warn(`[shield] backend forced to '${forceBackend}' by local settings`);
-  }
-
-  // WebGPU is skipped entirely when CPU is forced, so the fallback path can be
-  // exercised on hardware where WebGPU works perfectly well.
-  if (forceBackend !== 'wasm') {
-    const started = performance.now();
-    try {
-      session = await ort.InferenceSession.create(modelUrl, {
-        executionProviders: ['webgpu'],
-        graphOptimizationLevel: 'all',
-      });
-      return {
-        backend: 'webgpu',
-        initMs: performance.now() - started,
-        fellBack: false,
-        forced: forceBackend,
-      };
-    } catch (error) {
-      // Not an error condition: PRD.md FR-27 requires this to be automatic and
-      // silent-to-the-pipeline, with the user merely told things may be slower.
-      console.warn('[shield] WebGPU unavailable, falling back to CPU:', error);
-    }
-  }
-
-  const wasmStarted = performance.now();
-  session = await ort.InferenceSession.create(modelUrl, {
-    executionProviders: ['wasm'],
-    graphOptimizationLevel: 'all',
-  });
-  return {
-    backend: 'wasm',
-    initMs: performance.now() - wasmStarted,
-    // A forced fallback is a deliberate test, not a capability problem, so it
-    // must not tell the user their machine lacks WebGPU.
-    fellBack: forceBackend !== 'wasm',
-    forced: forceBackend,
-  };
-}
-
-/**
- * Run one throwaway inference over a blank tensor.
- *
- * WebGPU compiles its shaders lazily, on the first inference rather than at
- * session creation. Measured cost: the first real inference took 2122ms while
- * every later one took 84ms — a 25x gap paid by whichever frame happened to be
- * first, which in a demo is the frame someone is watching.
- *
- * Doing it here moves that cost into model initialisation, where it is expected
- * and already budgeted, and makes the first frame the user actually cares about
- * as fast as the rest. The input is zeroes: only shader compilation matters, not
- * the result, which is discarded.
- */
-async function warmUp(): Promise<number> {
-  if (!session) return 0;
-
-  const blank = new ort.Tensor(
-    'float32',
-    new Float32Array(INPUT_WIDTH * INPUT_HEIGHT * 3),
-    [1, 3, INPUT_HEIGHT, INPUT_WIDTH],
-  );
-
-  const started = performance.now();
-  await session.run({ [INPUT_NAME]: blank });
-  return performance.now() - started;
+function chooseHost(forced: InferenceHost | null, contextHost: InferenceHost): InferenceHost {
+  return forced ?? contextHost;
 }
 
 /**
@@ -333,21 +289,70 @@ async function warmUp(): Promise<number> {
  * storage here. This document is an executor: policy and persistence belong to
  * the service worker, which is the context whose access to `chrome.storage` is
  * not in question.
+ *
+ * The HOST override is the one exception, and `chooseHost` says why: it selects
+ * between two implementations of this very function rather than configuring
+ * one, so there is nothing for the service worker to hold a policy about.
  */
 export async function ensureFaceDetector(
   forceBackend: ExecutionBackend | null = null,
+  forceHost: InferenceHost | null = null,
+  contextHost: InferenceHost = 'document',
 ): Promise<FaceDetectorInfo> {
-  if (session && info) return info;
+  if (engine && info) return info;
 
-  configureRuntime();
-  info = await createSession(forceBackend);
+  if (forceBackend) {
+    console.warn(`[shield] backend forced to '${forceBackend}' by local settings`);
+  }
 
-  const warmMs = await warmUp();
-  info = { ...info, initMs: info.initMs + warmMs };
-  console.info(`[shield] shader warm-up ${warmMs.toFixed(0)}ms`);
+  const host = chooseHost(forceHost, contextHost);
+  if (forceHost) {
+    console.warn(`[shield] inference host forced to '${forceHost}' by local settings`);
+  }
+
+  // Both URLs are looked up here and passed in. A dedicated Worker spawned from
+  // an extension page does not reliably get the `chrome` namespace, so the only
+  // context that can resolve these is this one.
+  engine = createEngine(host, chrome.runtime.getURL('inference-worker.js'));
+
+  const facts = await engine.open({
+    modelUrl: chrome.runtime.getURL(MODEL_PATH),
+    // Left unset, ORT resolves its binary relative to the script bundle and,
+    // failing that, reaches for a CDN — which must never happen here. See
+    // tools/copy-ort-assets.mjs.
+    wasmPaths: chrome.runtime.getURL('ort/'),
+    forceBackend,
+    inputName: INPUT_NAME,
+    inputShape: [1, 3, INPUT_HEIGHT, INPUT_WIDTH],
+  });
+
+  // Session build and shader warm-up are summed into one figure, because the
+  // budget in ARCHITECTURE.md 6 is about what the first frame waits for, and
+  // both are paid before it. They are reported apart as well: conflating them
+  // is how the 2122ms first inference stayed hidden.
+  info = {
+    backend: facts.backend,
+    initMs: facts.initMs + facts.warmUpMs,
+    fellBack: facts.fellBack,
+    forced: facts.forced,
+    host,
+    forcedHost: forceHost,
+    webgpuError: facts.webgpuError,
+  };
+
+  console.info(`[shield] shader warm-up ${facts.warmUpMs.toFixed(0)}ms`);
+
+  // Said out loud on the host, because on the worker path this is the only
+  // console anybody will read — and because it is the reason DECISIONS.md 208
+  // could not be closed.
+  if (facts.webgpuError) {
+    console.warn(
+      `[shield] WebGPU unavailable on the '${host}' host, using CPU: ${facts.webgpuError}`,
+    );
+  }
 
   const budget = LATENCY_BUDGET_MS.modelInit;
-  const detail = `${info.initMs.toFixed(0)}ms on ${info.backend}`;
+  const detail = `${info.initMs.toFixed(0)}ms on ${info.backend} in the ${host}`;
   if (info.initMs > budget) {
     console.warn(`[shield] model init ${detail} (budget ${budget}ms)`);
   } else {
@@ -372,7 +377,7 @@ export async function ensureFaceDetector(
  * distribution it never saw. Box coordinates come back normalised to 0..1, so
  * mapping them onto the original frame is a straightforward multiply either way.
  */
-function preprocess(bitmap: ImageBitmap): ort.Tensor {
+function preprocess(bitmap: ImageBitmap): { data: Float32Array; dims: number[] } {
   const canvas = new OffscreenCanvas(INPUT_WIDTH, INPUT_HEIGHT);
   const context = canvas.getContext('2d', { willReadFrequently: true });
   if (!context) throw new Error('Could not create a 2D context for preprocessing.');
@@ -392,7 +397,10 @@ function preprocess(bitmap: ImageBitmap): ort.Tensor {
     tensor[pixels * 2 + i] = ((data[offset + 2] ?? 0) - PIXEL_MEAN) / PIXEL_STD;
   }
 
-  return new ort.Tensor('float32', tensor, [1, 3, INPUT_HEIGHT, INPUT_WIDTH]);
+  // Plain floats rather than an ort tensor, because this array may be about
+  // to be TRANSFERRED to a worker and an ort.Tensor is not transferable. The
+  // worker builds the tensor on the far side from the same numbers.
+  return { data: tensor, dims: [1, 3, INPUT_HEIGHT, INPUT_WIDTH] };
 }
 
 /**
@@ -404,26 +412,16 @@ function preprocess(bitmap: ImageBitmap): ort.Tensor {
  * here so the detection policy lives in one testable place.
  */
 export async function detectFaces(bitmap: ImageBitmap): Promise<RawDetectionSummary> {
-  if (!session) throw new Error('Face detector used before it was loaded.');
+  if (!engine) throw new Error('Face detector used before it was loaded.');
 
   const input = preprocess(bitmap);
 
-  // The feed is built explicitly rather than from `session.inputNames`. This
-  // model was exported by PyTorch 1.2, which lists every initializer in
-  // graph.input — inputNames returns around a hundred entries, all but one of
-  // which already resolve from initializers. Iterating them would build a feed
-  // the session rejects.
-  const started = performance.now();
-  const outputs = await session.run({ [INPUT_NAME]: input });
-  const inferenceMs = performance.now() - started;
-
-  const scores = outputs['scores'];
-  const boxes = outputs['boxes'];
-  if (!scores || !boxes) {
-    throw new Error(
-      `Model returned unexpected outputs: ${Object.keys(outputs).join(', ')}`,
-    );
-  }
+  // On the worker host this transfers the input and blocks on a reply from a
+  // real thread; on the document host it is a direct call. Neither this
+  // function nor anything below it can tell the difference, which is the point
+  // of the seam — the pre- and post-processing are the detection policy and
+  // they must not fork per browser.
+  const { scores, boxes, inferenceMs } = await engine.run(input.data, input.dims);
 
   // scores is [1, N, 2]: index 0 is background, index 1 is the face class.
   // boxes is [1, N, 4]: x1, y1, x2, y2.
@@ -516,11 +514,12 @@ export function modelDescriptor(): {
 
 /** Release the session, so the next `ensureFaceDetector` builds a fresh one. */
 export async function disposeFaceDetector(): Promise<void> {
-  const current = session;
-  session = null;
+  const current = engine;
+  engine = null;
   info = null;
   // Awaited so the GPU resources are actually released before a new session is
   // built; overlapping two sessions is how you get an out-of-memory failure on
-  // a modest GPU.
-  await current?.release();
+  // a modest GPU. On the worker host this also terminates the thread, which is
+  // the only way its WASM arena is ever given back.
+  await current?.close();
 }

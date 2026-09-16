@@ -43,11 +43,12 @@ async function documentExists(): Promise<boolean> {
  * Web cannot run in a service worker at all (microsoft/onnxruntime#20876).
  */
 export async function ensureOffscreenDocument(): Promise<void> {
+  // A guard against a programming error, not a browser message any more.
+  // `ensureVisionHost` is the entry point everything uses and it never reaches
+  // here without an offscreen API; Firefox hosts the vision path on its own
+  // event page instead (background/vision-host.ts).
   if (!HAS_OFFSCREEN) {
-    throw new Error(
-      'This browser has no offscreen documents. Shield runs its vision model ' +
-        'in one on Chrome; the Firefox path is not built yet.',
-    );
+    throw new Error('ensureOffscreenDocument called on a browser with no offscreen API');
   }
 
   if (await documentExists()) return;

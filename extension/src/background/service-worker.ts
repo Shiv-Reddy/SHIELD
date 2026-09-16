@@ -13,7 +13,16 @@
  */
 
 import { captureViewport } from './capture';
-import { ensureOffscreenDocument } from './offscreen';
+import {
+  ensureVisionHost,
+  sendToOffscreen,
+  redactOffscreenFrame,
+  readOffscreenImages,
+  readOffscreenScreen,
+  warmOffscreen,
+  reloadOffscreenModel,
+  runOffscreenSelfTest,
+} from './vision-host';
 import {
   MSG,
   broadcast,
@@ -23,14 +32,7 @@ import {
   type PingResult,
   type ExtractDomResult,
   type ScrollToResult,
-  sendToOffscreen,
-  redactOffscreenFrame,
-  readOffscreenImages,
-  readOffscreenScreen,
   type OcrReadResult,
-  warmOffscreen,
-  reloadOffscreenModel,
-  runOffscreenSelfTest,
 } from '../lib/messages';
 import {
   countByCategory,
@@ -821,11 +823,11 @@ async function runStep(
     // disallowed on ServiceWorkerGlobalScope, and both its WASM and WebGPU
     // backends are unavailable (microsoft/onnxruntime#20876).
     setStatus('detecting');
-    await ensureOffscreenDocument();
+    await ensureVisionHost();
 
     // Resolved here, outside the timed block, so a storage read is not counted
     // against the inference budget it has nothing to do with.
-    const { forceBackend } = await readSettings();
+    const { forceBackend, forceInferenceHost } = await readSettings();
 
     const analysis = record(
       await timed('inference', 'local inference', () =>
@@ -835,6 +837,7 @@ async function runStep(
           viewportWidth: viewport.width,
           viewportHeight: viewport.height,
           forceBackend,
+          forceInferenceHost,
         }),
       ),
     );
@@ -843,14 +846,15 @@ async function runStep(
       throw new Error(`Local analysis failed: ${analysis.message}`);
     }
 
-    const { backend, fellBack, forced, frame: geometry, detection } = analysis;
+    const { backend, fellBack, forced, host, forcedHost, frame: geometry, detection } = analysis;
     snapshot.geometry = geometry;
     setState({ backend, fellBack });
 
     console.info(
       `[shield] ${geometry.width}x${geometry.height} device px ` +
         `(scale ${geometry.scaleX.toFixed(3)}x${geometry.scaleY.toFixed(3)}), ` +
-        `inference on ${backend}${forced ? ' (forced)' : ''} in ` +
+        `inference on ${backend}${forced ? ' (forced)' : ''} in the ${host}` +
+        `${forcedHost ? ' (forced)' : ''} in ` +
         `${detection.inferenceMs.toFixed(1)}ms — ` +
         `${detection.priors} priors, peak face score ${detection.maxScore.toFixed(3)}, ` +
         `candidates ${detection.candidatesByCutoff.at30}/${detection.candidatesByCutoff.at50}/` +
@@ -1609,8 +1613,8 @@ async function scanPage(): Promise<void> {
     });
 
     await ensureContentScript(tabId);
-    await ensureOffscreenDocument();
-    const { forceBackend } = await readSettings();
+    await ensureVisionHost();
+    const { forceBackend, forceInferenceHost } = await readSettings();
 
     // Shield's own UI must not appear in the frames Shield examines. A previous
     // scan's boxes would be captured, read by OCR, and reported as findings of
@@ -1735,6 +1739,7 @@ async function scanPage(): Promise<void> {
           viewportWidth: viewport.width,
           viewportHeight: viewport.height,
           forceBackend,
+          forceInferenceHost,
         });
         if (!analysis.ok) throw new Error(analysis.message);
 
@@ -2034,9 +2039,11 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
       // The popup is open, so a run is likely moments away. Start the inference
       // host now and let it warm while the user types. Errors are swallowed:
       // this is purely an optimisation and must never block a run.
-      void ensureOffscreenDocument()
+      void ensureVisionHost()
         .then(readSettings)
-        .then(({ forceBackend }) => warmOffscreen(forceBackend))
+        .then(({ forceBackend, forceInferenceHost }) =>
+          warmOffscreen(forceBackend, forceInferenceHost),
+        )
         .catch(() => undefined);
       sendResponse({ accepted: true });
       return false;
@@ -2048,9 +2055,11 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
       // The session is rebuilt in place rather than by replacing the document:
       // closing and recreating races, leaving the old session — and the old
       // backend — alive, which made the override appear to do nothing.
-      void ensureOffscreenDocument()
+      void ensureVisionHost()
         .then(readSettings)
-        .then(({ forceBackend }) => reloadOffscreenModel(forceBackend))
+        .then(({ forceBackend, forceInferenceHost }) =>
+          reloadOffscreenModel(forceBackend, forceInferenceHost),
+        )
         .catch(() => undefined);
       sendResponse({ accepted: true });
       return false;
