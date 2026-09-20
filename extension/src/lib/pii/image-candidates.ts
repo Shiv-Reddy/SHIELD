@@ -83,14 +83,27 @@ export interface ImageCandidate {
  * verdict has to be identical whether OCR is available, broken or absent —
  * it is the part of the design that cannot be allowed to depend on anything.
  */
-export function imageCandidates(elements: readonly DomElement[]): ImageCandidate[] {
+export function imageCandidates(
+  elements: readonly DomElement[],
+  /**
+   * The size floor, overridable.
+   *
+   * The shipped pair is the default and nothing in the product passes anything
+   * else. It is a parameter so the benchmark can sweep it — lowering it buys
+   * recall on small documents and costs both precision and one OCR crop's worth
+   * of latency per extra candidate, which is one of the two real
+   * latency/accuracy knobs Shield has (`benchmark/tradeoff.ts`). A sweep that
+   * reimplemented this geometry would measure the reimplementation.
+   */
+  floor: { width: number; height: number } = { width: MIN_WIDTH, height: MIN_HEIGHT },
+): ImageCandidate[] {
   const candidates: ImageCandidate[] = [];
 
   for (const element of elements) {
     if (element.elementType !== 'image') continue;
 
     const { width, height } = element.position;
-    if (width < MIN_WIDTH || height < MIN_HEIGHT) continue;
+    if (width < floor.width || height < floor.height) continue;
 
     const aspect = width / height;
     if (aspect < MIN_ASPECT || aspect > MAX_ASPECT) continue;
@@ -131,6 +144,45 @@ export function fullyVisible(
     candidate.y >= 0 &&
     candidate.x + candidate.width <= viewportWidth &&
     candidate.y + candidate.height <= viewportHeight
+  );
+}
+
+/**
+ * Which candidates this stop of a scan should actually send to OCR.
+ *
+ * A scan walks the document in overlapping looks (SCAN_OVERLAP), so a picture
+ * near a boundary is captured at two consecutive stops and, before this, was
+ * read twice. OCR is the most expensive thing a stop does, so that duplication
+ * is most of what a scan spends its time on.
+ *
+ * TWO EXCLUSIONS, AND WHY NEITHER WEAKENS THE GUARANTEE
+ *
+ *  1. ALREADY READ WHOLE. `readWhole` holds only candidates whose read both
+ *     covered the entire image and SUCCEEDED. A failed read is not in it, so a
+ *     failure is retried at the next stop and, failing everywhere, is covered
+ *     whole by `unreadableImageRegions` exactly as before. "Read" here never
+ *     means "attempted".
+ *
+ *  2. CLIPPED AT THIS STOP. A crop taken from this frame would hold only the
+ *     visible part, and reading half a card is the failure mode of
+ *     `fullyVisible`'s own comment — the half that was read comes back clean
+ *     and that reads as a verdict about the whole. Skipping it removes a
+ *     partial reading, not a protection: an image clipped at every stop is
+ *     never in `readWhole`, so `unexaminedImages` covers it whole at full
+ *     confidence, which is a stronger outcome than a half-read.
+ *
+ * Pure, so the saving is provable without a browser or an engine.
+ */
+export function candidatesToRead(
+  candidates: readonly ImageCandidate[],
+  viewportWidth: number,
+  viewportHeight: number,
+  readWhole: ReadonlySet<string>,
+): ImageCandidate[] {
+  return candidates.filter(
+    (candidate) =>
+      !readWhole.has(candidate.elementId) &&
+      fullyVisible(candidate, viewportWidth, viewportHeight),
   );
 }
 

@@ -27,6 +27,8 @@ import {
   recognitionSizing,
 } from '../src/lib/vision/recognition-scale';
 import { defaultHostFor } from '../src/lib/settings';
+import { captureEncoding } from '../src/background/capture';
+import { PSM, recognitionParameters, segmentationFor } from '../src/lib/vision/segmentation';
 import type { DomElement } from '../src/lib/types';
 import type { OcrWord } from '../src/lib/pii/ocr-regions';
 
@@ -536,4 +538,63 @@ test('a browser with offscreen documents keeps running inference in the document
 test('a browser without offscreen documents runs inference in a worker', () => {
   // Firefox, where the document path starves the event page (DECISIONS.md 207).
   assert.equal(defaultHostFor(false), 'worker');
+});
+
+// --- What each path asks Chrome for ------------------------------------------
+//
+// Both paths encode identically, and these tests exist to keep that a measured
+// equality rather than an unexamined one. The scan path ran on PNG for one
+// build on DECISIONS.md 29's argument that JPEG ringing costs recognition; the
+// measurement returned a reading identical to the JPEG run, item for item, and
+// 230 put it back. The seam stays so the re-test is one constant.
+
+test('the run path captures JPEG at high quality, inside its 100ms budget', () => {
+  assert.deepEqual(captureEncoding('run'), { format: 'jpeg', quality: 90 });
+});
+
+test('the scan path encodes the same way — lossless pixels did not help the engine', () => {
+  assert.deepEqual(captureEncoding('scan'), { format: 'jpeg', quality: 90 });
+});
+
+test('quality travels with the format, never on its own', () => {
+  // Chrome ignores `quality` unless the format is jpeg, so a pairing that came
+  // apart would read at the call site as though it meant something.
+  const encoding = captureEncoding('scan');
+  assert.equal(encoding.format === 'jpeg' && 'quality' in encoding, true);
+});
+
+// --- How the engine is told to segment ---------------------------------------
+//
+// Metric 1's only failing row is markup-only: text the engine looked straight
+// at and could not read, 2678 items against 762 agreed over ten pages. The
+// pixels have been exhausted as a lever — resolution bought four points (212),
+// encoding bought exactly zero (230) — and what has never been examined is
+// what the engine is TOLD. Tesseract defaults to full page layout analysis,
+// which is right for a scanned card and wrong for a browser viewport.
+//
+// These tests pin the rule, not the outcome. Whether sparse mode helps is a
+// question for a browser, and 230 is the standing lesson about assuming.
+
+test('a whole viewport is read as sparse text, not as a page layout', () => {
+  assert.equal(segmentationFor('screen'), PSM.SPARSE);
+});
+
+test('a crop keeps automatic layout analysis, because a card IS a document', () => {
+  // Changing both paths would conflate two questions and put metric 3's pixel
+  // figures at risk while chasing metric 1.
+  assert.equal(segmentationFor('crop'), PSM.AUTO);
+});
+
+test('the modes are Tesseract enum values, since a pure module cannot import it', () => {
+  // segmentation.ts must run under Node, so it carries the numbers rather than
+  // the engine's nominal enum. This is what keeps the two in step — if
+  // Tesseract ever renumbered, the cast at the engine boundary would silently
+  // send the wrong mode.
+  assert.equal(PSM.AUTO, '3');
+  assert.equal(PSM.SPARSE, '11');
+});
+
+test('parameters come back in the shape the engine takes', () => {
+  assert.deepEqual(recognitionParameters('screen'), { tessedit_pageseg_mode: '11' });
+  assert.deepEqual(recognitionParameters('crop'), { tessedit_pageseg_mode: '3' });
 });

@@ -8,6 +8,64 @@
 export type ExecutionBackend = 'webgpu' | 'wasm';
 
 /**
+ * How hard Shield looks — PRD.md FR-14.
+ *
+ * THE RANGE ONLY GOES UP, AND THAT IS THE DESIGN
+ *
+ * "Configurable aggressiveness" reads as a slider with a lax end, and Shield
+ * deliberately does not have one. Two rules make a lax end impossible rather
+ * than merely unwise: CLAUDE.md's constraint that when it is uncertain whether
+ * something is sensitive it is hidden, and `dom-rules.ts`'s rule that
+ * confidence never gates redaction. A level that let an identified password
+ * through, or that stopped hiding a field nobody could classify, would violate
+ * both. So `standard` IS the floor of this setting, and every other level adds
+ * to it.
+ *
+ * What is left to configure is the part that was always a judgement call: the
+ * GEOMETRIC threshold for which pictures are worth reading. That is a real
+ * knob with a measured curve behind it (`benchmark/tradeoff.ts`), not a
+ * confidence cutoff, and moving it cannot expose something a rule identified.
+ *
+ * The honest way to answer "can a user reduce redaction?" is no — and to be
+ * able to point at why.
+ */
+export type RedactionLevel = 'standard' | 'thorough' | 'maximum';
+
+/**
+ * The image candidate size floor per level, in CSS pixels.
+ *
+ * Every one of these is a row from the sweep in docs/BENCHMARK.md rather than a
+ * round number somebody liked, and the cost of each is known before it ships:
+ *
+ *   standard  140x80 - the shipped floor, measured to sit on the knee. Recall
+ *             90% at precision 69.2%. Below it recall does not improve on the
+ *             corpus and precision falls away.
+ *   thorough  100x57 - 1.23x the crops, precision 56.3%. Buys nothing on THIS
+ *             corpus and is offered because the corpus is 50 pages, not the
+ *             world: a smaller document than any we have labelled is exactly
+ *             what a level above the default is for.
+ *   maximum   40x23 - 2.54x the crops, precision 27.3%. Everything
+ *             document-shaped is read. For a page known to carry scanned
+ *             documents, where covering furniture is an acceptable price.
+ *
+ * `standard` is the default because the measurement says so, and the two
+ * levels above it are offered with their cost stated rather than as a vague
+ * promise of being safer.
+ */
+export const REDACTION_FLOORS: Readonly<
+  Record<RedactionLevel, { width: number; height: number }>
+> = {
+  standard: { width: 140, height: 80 },
+  thorough: { width: 100, height: 57 },
+  maximum: { width: 40, height: 23 },
+};
+
+/** Anything unrecognised is `standard`. A typo must never loosen redaction. */
+export function redactionLevelFrom(value: unknown): RedactionLevel {
+  return value === 'thorough' || value === 'maximum' ? value : 'standard';
+}
+
+/**
  * Where inference runs.
  *
  * `document` is ORT in the offscreen document, which is what Chrome has always
@@ -96,6 +154,14 @@ export interface ShieldSettings {
    * deliberately, for the runs where observing IS the job.
    */
   observeOnly: boolean;
+  /**
+   * How hard to look — FR-14. See `RedactionLevel`.
+   *
+   * Set from any extension console:
+   *   chrome.storage.local.set({ redactionLevel: 'thorough' })
+   *   chrome.storage.local.remove('redactionLevel')   // back to standard
+   */
+  redactionLevel: RedactionLevel;
 }
 
 const DEFAULTS: ShieldSettings = {
@@ -103,6 +169,7 @@ const DEFAULTS: ShieldSettings = {
   forceBackend: null,
   forceInferenceHost: null,
   observeOnly: false,
+  redactionLevel: 'standard',
 };
 
 /**
@@ -117,6 +184,11 @@ export async function setForceBackend(backend: ExecutionBackend | null): Promise
   } else {
     await chrome.storage.local.set({ forceBackend: backend });
   }
+}
+
+/** Set how hard Shield looks. `standard` is the floor; nothing goes below it. */
+export async function setRedactionLevel(level: RedactionLevel): Promise<void> {
+  await chrome.storage.local.set({ redactionLevel: level });
 }
 
 /** Turn observe-only mode on or off. */
@@ -134,6 +206,7 @@ export async function readSettings(): Promise<ShieldSettings> {
       'forceInferenceHost',
       'endpoint',
       'observeOnly',
+      'redactionLevel',
     ]);
     const forceBackend =
       stored['forceBackend'] === 'webgpu' || stored['forceBackend'] === 'wasm'
@@ -153,8 +226,11 @@ export async function readSettings(): Promise<ShieldSettings> {
     // half-written value must not be able to silently disable Shield, which
     // would look exactly like the pipeline being broken.
     const observeOnly = stored['observeOnly'] === true;
+    // Unrecognised means `standard`, which is the floor of the range. A
+    // corrupted value can therefore only ever fail towards hiding more.
+    const redactionLevel = redactionLevelFrom(stored['redactionLevel']);
 
-    return { endpoint, forceBackend, forceInferenceHost, observeOnly };
+    return { endpoint, forceBackend, forceInferenceHost, observeOnly, redactionLevel };
   } catch (error) {
     // A settings read must never be able to break inference — but silently
     // returning defaults is how a backend override appears to do nothing.
