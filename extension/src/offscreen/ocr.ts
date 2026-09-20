@@ -25,13 +25,17 @@
  * file that would be a privacy failure rather than a broken feature.
  */
 
-import { createWorker, type Worker } from 'tesseract.js';
+import { createWorker, type PSM, type Worker } from 'tesseract.js';
 import type { OcrWord } from '../lib/pii/ocr-regions';
 import {
   MIN_RECOGNITION_WIDTH,
   recognitionSizing,
   type RecognitionRequest,
 } from '../lib/vision/recognition-scale';
+import {
+  recognitionParameters,
+  type RecognitionSubject,
+} from '../lib/vision/segmentation';
 
 /** Rectangle in FRAME (device) pixels, as the worker computed it. */
 export interface CropRequest {
@@ -118,6 +122,16 @@ export async function readCrop(
   bitmap: ImageBitmap,
   crop: CropRequest,
   sizing: RecognitionRequest = { minWidth: MIN_RECOGNITION_WIDTH },
+  /**
+   * What is being read, which decides how the engine is told to segment it.
+   *
+   * Defaults to `crop` — Tesseract's own behaviour and what every caller got
+   * before this existed — so a caller that does not say lands on the
+   * document-shaped assumption rather than on a change it did not ask for.
+   * `segmentation.ts` explains why a viewport and a card want different
+   * answers.
+   */
+  subject: RecognitionSubject = 'crop',
 ): Promise<OcrReadResult> {
   const engine = await ensureWorker();
   if (!engine) {
@@ -162,6 +176,18 @@ export async function readCrop(
     context.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
 
     const blob = await canvas.convertToBlob({ type: 'image/png' });
+
+    // Set per call rather than once at worker creation: the two subjects share
+    // one engine instance and want different modes, so pinning it at build
+    // time would let whichever path ran first decide for the other.
+    //
+    // The cast is the engine boundary and belongs here. `segmentation.ts` is
+    // pure and must run under Node, so it cannot import Tesseract's nominal
+    // `PSM` enum; its values are that enum's values, and the test that pins
+    // them to '3' and '11' is what keeps the two in step.
+    const { tessedit_pageseg_mode } = recognitionParameters(subject);
+    await engine.setParameters({ tessedit_pageseg_mode: tessedit_pageseg_mode as PSM });
+
     const { data } = await engine.recognize(blob, {}, { blocks: true });
 
     const words: OcrWord[] = [];

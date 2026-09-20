@@ -212,6 +212,8 @@ async function readScreen(
         height: bitmap.height,
       },
       { minWidth: MIN_RECOGNITION_WIDTH, scale: SCREEN_RECOGNITION_SCALE },
+      // A viewport is not a document. See lib/vision/segmentation.ts.
+      'screen',
     );
 
     if (!reading.ok) return { ok: false, message: reading.message };

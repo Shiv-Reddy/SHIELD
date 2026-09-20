@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 import {
   MIN_HEIGHT,
   MIN_WIDTH,
+  candidatesToRead,
   imageCandidates,
   unreadableImageRegions,
 } from '../src/lib/pii/image-candidates';
@@ -46,6 +47,48 @@ function word(text: string, x: number, y: number, width = 40, height = 14): OcrW
 }
 
 // --- Candidate selection -----------------------------------------------------
+
+// --- What a scan stop actually sends to OCR ----------------------------------
+//
+// A scan makes overlapping looks, so before this the same picture went to the
+// engine two or three times for an identical answer. These tests pin the two
+// exclusions AND the two cases that must never be excluded, because the
+// dangerous mistake here is skipping something that was never actually read.
+
+const whole = { elementId: 'e1', x: 20, y: 100, width: 400, height: 250 };
+
+test('an image already read whole is not sent to the engine again', () => {
+  assert.deepEqual(candidatesToRead([whole], 1280, 800, new Set(['e1'])), []);
+});
+
+test('an image clipped by the viewport edge is not read at this stop', () => {
+  // Reading half a card yields a clean answer about the half that was read,
+  // and that reads as a verdict about the whole. The overlap gives it another
+  // chance; failing that, unexaminedImages covers it whole.
+  const clipped = { elementId: 'e1', x: 20, y: 700, width: 400, height: 250 };
+  assert.deepEqual(candidatesToRead([clipped], 1280, 800, new Set()), []);
+});
+
+test('an image not yet read and fully on screen IS read', () => {
+  assert.deepEqual(candidatesToRead([whole], 1280, 800, new Set()), [whole]);
+});
+
+test('a FAILED read is not remembered, so the next stop retries it', () => {
+  // The set the caller keeps holds successful reads only. This is the property
+  // that keeps "attempted" from ever looking like "read" — if a failure landed
+  // in it, one broken crop would silently become permission to transmit.
+  const afterAFailedStop = new Set<string>();
+  assert.deepEqual(candidatesToRead([whole], 1280, 800, afterAFailedStop), [whole]);
+});
+
+test('skipping is per image, not per stop', () => {
+  const second = { elementId: 'e2', x: 20, y: 400, width: 400, height: 250 };
+  assert.deepEqual(
+    candidatesToRead([whole, second], 1280, 800, new Set(['e1'])),
+    [second],
+  );
+});
+
 
 test('an image big enough to hold a document is a candidate', () => {
   assert.equal(imageCandidates([image('e1', 400, 250)]).length, 1);
