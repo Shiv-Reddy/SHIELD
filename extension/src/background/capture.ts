@@ -14,7 +14,8 @@
 import type { RawFrame, ViewportInfo } from '../lib/types';
 
 /**
- * JPEG rather than PNG, at high quality.
+ * JPEG rather than PNG, at high quality — on the run path. The scan path
+ * chooses separately, below.
  *
  * This was PNG, on the reasoning that the vision model reads these pixels
  * directly and JPEG ringing around text costs detection recall — which is
@@ -31,6 +32,40 @@ import type { RawFrame, ViewportInfo } from '../lib/types';
  */
 const CAPTURE_FORMAT = 'jpeg' as const;
 const CAPTURE_QUALITY = 90;
+
+/**
+ * Which path asked for the frame.
+ *
+ * BOTH PATHS ENCODE THE SAME WAY, AND THAT IS A MEASUREMENT RATHER THAN AN
+ * ACCIDENT
+ *
+ * The scan path was given PNG on the hypothesis that JPEG ringing around glyph
+ * edges was costing recognition — DECISIONS.md 29's original argument, which 70
+ * reverted only for the run path's 100ms budget, a budget the scan path does
+ * not have (188). It was measured on 2026-09-20 and the hypothesis is dead:
+ * the first stop of the income-tax login returned a reading IDENTICAL to the
+ * JPEG run, 12 agreed / 9 pixel-only / 35 markup-only, to the item. Lossless
+ * pixels do not help this engine read this text. DECISIONS.md 230.
+ *
+ * So the scan is back on JPEG and this seam is kept rather than deleted. It is
+ * what made the experiment one constant instead of a refactor, it is what will
+ * make the re-test one constant if a future recognition engine changes the
+ * answer, and — the reason it is kept above all — it stops the equality being
+ * read as nobody having thought about it. 29 and 70 came to disagree because
+ * one path's decision was silently applied to another's.
+ */
+export type CapturePurpose = 'run' | 'scan';
+
+/**
+ * Chrome ignores `quality` unless the format is `jpeg`, and passing it anyway
+ * would read as though it meant something. Returned as an object rather than
+ * branched at the call site so the choice has one name and one test.
+ */
+export function captureEncoding(
+  _purpose: CapturePurpose,
+): { format: 'jpeg'; quality: number } | { format: 'png' } {
+  return { format: CAPTURE_FORMAT, quality: CAPTURE_QUALITY };
+}
 
 /**
  * Chrome throttles captureVisibleTab to roughly two calls per second and
@@ -61,19 +96,14 @@ function isQuotaError(error: unknown): boolean {
 let lastCaptureFinishedAt = 0;
 
 /** Ask Chrome for one frame, retrying once if we hit the capture quota. */
-async function captureRaw(windowId: number): Promise<string> {
+async function captureRaw(windowId: number, purpose: CapturePurpose): Promise<string> {
+  const encoding = captureEncoding(purpose);
   try {
-    return await chrome.tabs.captureVisibleTab(windowId, {
-      format: CAPTURE_FORMAT,
-      quality: CAPTURE_QUALITY,
-    });
+    return await chrome.tabs.captureVisibleTab(windowId, encoding);
   } catch (error) {
     if (!isQuotaError(error)) throw error;
     await sleep(QUOTA_RETRY_DELAY_MS);
-    return await chrome.tabs.captureVisibleTab(windowId, {
-      format: CAPTURE_FORMAT,
-      quality: CAPTURE_QUALITY,
-    });
+    return await chrome.tabs.captureVisibleTab(windowId, encoding);
   }
 }
 
@@ -87,10 +117,11 @@ async function captureRaw(windowId: number): Promise<string> {
 export async function captureViewport(
   windowId: number,
   viewport: ViewportInfo,
+  purpose: CapturePurpose = 'run',
 ): Promise<RawFrame> {
   let dataUrl: string;
   try {
-    dataUrl = await captureRaw(windowId);
+    dataUrl = await captureRaw(windowId, purpose);
   } catch (error) {
     // captureVisibleTab refuses on pages extensions may not read at all —
     // chrome:// pages, the Web Store, the built-in PDF viewer, and any page
@@ -113,7 +144,7 @@ export async function captureViewport(
   lastCaptureFinishedAt = Date.now();
 
   console.info(
-    `[shield] frame ${CAPTURE_FORMAT} ${(encodedBytes / 1024).toFixed(0)}KB, ` +
+    `[shield] frame ${captureEncoding(purpose).format} ${(encodedBytes / 1024).toFixed(0)}KB, ` +
       `${gapMs === null ? 'first capture this session' : `${gapMs}ms since last capture`}`,
   );
 

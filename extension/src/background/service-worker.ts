@@ -46,9 +46,11 @@ import {
   type ScannedImage,
   type ScanSummary,
 } from '../lib/coverage';
+import { createScanTimer, formatScanTiming } from '../lib/scan-timing';
 import { classifyTextContent, detectDomPii } from '../lib/pii/dom-rules';
 import { faceRegions } from '../lib/pii/face-regions';
 import {
+  candidatesToRead,
   fullyVisible,
   imageCandidates,
   unreadableImageRegions,
@@ -71,7 +73,7 @@ import {
   type ProofScreen,
 } from '../lib/scan-proof';
 import { send } from '../lib/transport/client';
-import { readSettings } from '../lib/settings';
+import { REDACTION_FLOORS, readSettings } from '../lib/settings';
 import { readSelfTestRecord, writeSelfTestRecord } from '../lib/self-test-record';
 import { timed, type StageTiming } from '../lib/timing';
 import type {
@@ -738,6 +740,13 @@ async function runStep(
     stepTimings = [];
     setState({ timings: stepTimings });
 
+    // Read once per step, not once per use. Detection needs the redaction level
+    // before the frame is even analysed and transport needs the endpoint after
+    // it — two reads could disagree if the setting changed in between, and a
+    // step that detected at one level and reported another would be a lie told
+    // by an await boundary.
+    const settings = await readSettings();
+
     // Stage 1 — Screen Perception (ARCHITECTURE.md 2.1)
     //
     // Two halves: the captured frame and the DOM element map. Both must
@@ -910,7 +919,13 @@ async function runStep(
     // Text inside images — the gap neither the DOM rules nor the face detector
     // can reach. A photographed ID card carries an Aadhaar number that no
     // attribute declares and no face model recognises.
-    const ocr = await ocrImageRegions(rawFrame, snapshot.elements, geometry);
+    const { regions: ocr } = await ocrImageRegions(
+      rawFrame,
+      snapshot.elements,
+      geometry,
+      undefined,
+      REDACTION_FLOORS[settings.redactionLevel],
+    );
 
     // This pass's own detections FIRST, then what a scan carried forward. The
     // dedupe keeps the first of any pair describing the same thing, so a live
@@ -1042,7 +1057,7 @@ async function runStep(
     // enforcement: it accepts a sealed payload and nothing else, so there is no
     // expressible way to reach the network carrying raw page data.
     setStatus('sending');
-    const { endpoint, observeOnly } = await readSettings();
+    const { endpoint, observeOnly } = settings;
 
     // Recorded before the request, not after. If the server is unreachable the
     // question "what did Shield send?" still has an answer, and a failed request
@@ -1329,9 +1344,34 @@ async function ocrImageRegions(
   frame: RawFrame,
   elements: readonly DomElement[],
   geometry: { scaleX: number; scaleY: number },
-): Promise<SensitiveRegion[]> {
-  const candidates = imageCandidates(elements);
-  if (candidates.length === 0) return [];
+  /**
+   * Present only on the scan path, where the same image is captured at
+   * consecutive overlapping stops. A run reads one screen once and has nothing
+   * to skip, so it passes nothing and its behaviour is unchanged — including
+   * for clipped images, which a run still reads for whatever their visible part
+   * yields, because a run has no later stop to see them whole at.
+   */
+  stop?: { viewportWidth: number; viewportHeight: number; readWhole: ReadonlySet<string> },
+  /**
+   * The size floor from the redaction level — FR-14. Defaulted rather than
+   * required so a caller that forgets it gets `standard`, which is the floor of
+   * the range: the failure direction is hiding more, never less.
+   */
+  floor: { width: number; height: number } = REDACTION_FLOORS.standard,
+): Promise<{ regions: SensitiveRegion[]; readWhole: string[] }> {
+  const all = imageCandidates(elements, floor);
+  const candidates = stop
+    ? candidatesToRead(all, stop.viewportWidth, stop.viewportHeight, stop.readWhole)
+    : all;
+  if (candidates.length === 0) {
+    if (stop && all.length > 0) {
+      console.info(
+        `[shield] OCR: 0/${all.length} image(s) read at this stop — ` +
+          `already read whole or clipped by the viewport`,
+      );
+    }
+    return { regions: [], readWhole: [] };
+  }
 
   // Element boxes are CSS pixels; the frame is device pixels. Converted here
   // once, using the scale the capture MEASURED rather than devicePixelRatio —
@@ -1351,11 +1391,14 @@ async function ocrImageRegions(
     // The whole call failed, so nothing was examined. Every candidate is
     // covered rather than the run continuing as though the images were clean.
     console.warn('[shield] OCR unavailable — covering every candidate image', error);
-    return unreadableImageRegions(candidates);
+    return { regions: unreadableImageRegions(candidates), readWhole: [] };
   }
 
   const regions: SensitiveRegion[] = [];
   const unread: typeof candidates = [];
+  // Only successful reads. A crop that failed must be retried at the next
+  // stop, so "attempted" is never allowed to look like "read".
+  const readWhole: string[] = [];
 
   for (const candidate of candidates) {
     const result = results.find((entry) => entry.elementId === candidate.elementId);
@@ -1367,6 +1410,7 @@ async function ocrImageRegions(
       continue;
     }
 
+    readWhole.push(candidate.elementId);
     regions.push(
       ...ocrRegions(
         { elementId: result.elementId, words: result.words },
@@ -1394,11 +1438,12 @@ async function ocrImageRegions(
 
   const readCount = candidates.length - unread.length;
   console.info(
-    `[shield] OCR: ${readCount}/${candidates.length} image(s) read, ` +
+    `[shield] OCR: ${readCount}/${candidates.length} image(s) read` +
+      `${stop && all.length !== candidates.length ? ` (${all.length - candidates.length} skipped — already read whole or clipped)` : ''}, ` +
       `${regions.length} region(s) from images`,
   );
 
-  return regions;
+  return { regions, readWhole };
 }
 
 /**
@@ -1604,6 +1649,9 @@ async function scanPage(): Promise<void> {
   try {
     const tab = await getActiveTab();
     tabId = tab.id as number;
+    // `tabId` is a `let` so the cleanup path can see it, and TypeScript drops
+    // that narrowing inside a closure. The timed stages below are closures.
+    const scanTabId = tabId;
 
     setState({
       ...INITIAL_STATE,
@@ -1614,7 +1662,7 @@ async function scanPage(): Promise<void> {
 
     await ensureContentScript(tabId);
     await ensureVisionHost();
-    const { forceBackend, forceInferenceHost } = await readSettings();
+const { forceBackend, forceInferenceHost, redactionLevel } = await readSettings();
 
     // Shield's own UI must not appear in the frames Shield examines. A previous
     // scan's boxes would be captured, read by OCR, and reported as findings of
@@ -1649,11 +1697,34 @@ async function scanPage(): Promise<void> {
         `${plan.truncated ? ' — capped, the page continues past the last one' : ''}`,
     );
 
+    // Started before the first scroll, so the wall-clock it reports is the
+    // scan the user waited for, not the part of it that happened to be wrapped.
+    const timer = createScanTimer();
+
+    // Said out loud, because a scan run at a non-default level produces
+    // different numbers and a reader comparing two scans has to know which.
+    if (redactionLevel !== 'standard') {
+      console.info(
+        `[shield] redaction level ${redactionLevel} — image floor ` +
+          `${REDACTION_FLOORS[redactionLevel].width}x${REDACTION_FLOORS[redactionLevel].height}`,
+      );
+    }
+
     const findings: ScanFinding[] = [];
     // Every document-sized image, once per look, with whether THAT look held all
     // of it. An image clipped at every stop was never actually read, however
     // many times OCR ran on a piece of it.
     const images: ScannedImage[] = [];
+    /**
+     * Images whose crop was read WHOLE and SUCCESSFULLY at an earlier stop.
+     *
+     * Stops overlap by design, so without this the same picture is sent to OCR
+     * at two or three consecutive stops for an identical answer — and OCR is
+     * the most expensive thing a stop does. A failed read is deliberately
+     * absent, so it is retried; an image clipped everywhere never enters, so
+     * `unexaminedImages` still covers it whole. See `candidatesToRead`.
+     */
+    const readWholeImages = new Set<string>();
     /**
      * The raw frames, held until the walk is over.
      *
@@ -1706,7 +1777,9 @@ async function scanPage(): Promise<void> {
     for (const [index, stop] of plan.stops.entries()) {
       if (abandoned()) return;
 
-      const landed = await sendToTab<ScrollToResult>(tabId, { type: MSG.SCROLL_TO, y: stop });
+      const landed = await timer.measure('scroll', () =>
+        sendToTab<ScrollToResult>(scanTabId, { type: MSG.SCROLL_TO, y: stop }),
+      );
       if (!landed) {
         stoppedEarly = true;
         console.warn('[shield] scan stopped: the page stopped answering');
@@ -1724,23 +1797,32 @@ async function scanPage(): Promise<void> {
       }
       previousLanding = landed.scrollY;
 
-      await sleep(SCAN_SETTLE_MS);
+      await timer.measure('settle', () => sleep(SCAN_SETTLE_MS));
       if (abandoned()) return;
       setState({ scanProgress: { stop: index + 1, total: plan.stops.length } });
 
       try {
-        const frame = await captureViewport(tab.windowId, viewport);
-        const domMap = await sendToTab<ExtractDomResult>(tabId, { type: MSG.EXTRACT_DOM });
+        // The purpose is passed even though both paths now encode the same
+        // way: the equality is a measured result (DECISIONS.md 230), not an
+        // assumption, and the seam is what makes re-testing it cheap.
+        const frame = await timer.measure('capture', () =>
+          captureViewport(tab.windowId, viewport, 'scan'),
+        );
+        const domMap = await timer.measure('domScan', () =>
+          sendToTab<ExtractDomResult>(scanTabId, { type: MSG.EXTRACT_DOM }),
+        );
         if (!domMap) throw new Error('the page could not be read at this position');
 
-        const analysis = await sendToOffscreen({
-          type: MSG.ANALYSE_FRAME,
-          dataUrl: frame.dataUrl,
-          viewportWidth: viewport.width,
-          viewportHeight: viewport.height,
-          forceBackend,
-          forceInferenceHost,
-        });
+        const analysis = await timer.measure('inference', () =>
+          sendToOffscreen({
+            type: MSG.ANALYSE_FRAME,
+            dataUrl: frame.dataUrl,
+            viewportWidth: viewport.width,
+            viewportHeight: viewport.height,
+            forceBackend,
+            forceInferenceHost,
+          }),
+        );
         if (!analysis.ok) throw new Error(analysis.message);
 
         // Recorded before reading, so an image that OCR happened to find
@@ -1758,12 +1840,29 @@ async function scanPage(): Promise<void> {
           });
         }
 
-        const screen = await screenTextFindings(frame, domMap.elements, viewport);
+        const screen = await timer.measure('screenRead', () =>
+          screenTextFindings(frame, domMap.elements, viewport),
+        );
+
+        const imageText = await timer.measure('imageOcr', () =>
+          ocrImageRegions(
+            frame,
+            domMap.elements,
+            analysis.frame,
+            {
+              viewportWidth: viewport.width,
+              viewportHeight: landed.viewportHeight,
+              readWhole: readWholeImages,
+            },
+            REDACTION_FLOORS[redactionLevel],
+          ),
+        );
+        for (const elementId of imageText.readWhole) readWholeImages.add(elementId);
 
         const regions: SensitiveRegion[] = [
           ...detectDomPii(domMap.elements),
           ...faceRegions(analysis.detection.faces, analysis.frame),
-          ...(await ocrImageRegions(frame, domMap.elements, analysis.frame)),
+          ...imageText.regions,
           ...screen.regions,
         ];
 
@@ -1818,6 +1917,7 @@ async function scanPage(): Promise<void> {
         }
 
         examinedTo = landed.scrollY + landed.viewportHeight;
+        timer.countStop();
       } catch (error) {
         // One failed look does not discard the looks that succeeded, but it
         // absolutely does end the claim. The scan reports what it examined and
@@ -1865,20 +1965,22 @@ async function scanPage(): Promise<void> {
       );
 
       try {
-        const painted = await redactOffscreenFrame({
-          dataUrl: shot.dataUrl,
-          regions: onScreen.map((finding, index) => ({
-            regionId: `proof-${shot.scrollY}-${index}`,
-            category: finding.category,
-            source: finding.source,
-            confidence: 1,
-            elementId: null,
-            reason: finding.reason,
-            position: finding.position,
-          })),
-          scaleX: shot.scaleX,
-          scaleY: shot.scaleY,
-        });
+        const painted = await timer.measure('proof', () =>
+          redactOffscreenFrame({
+            dataUrl: shot.dataUrl,
+            regions: onScreen.map((finding, index) => ({
+              regionId: `proof-${shot.scrollY}-${index}`,
+              category: finding.category,
+              source: finding.source,
+              confidence: 1,
+              elementId: null,
+              reason: finding.reason,
+              position: finding.position,
+            })),
+            scaleX: shot.scaleX,
+            scaleY: shot.scaleY,
+          }),
+        );
 
         if (painted.ok) {
           screens.push({ at: shot.scrollY, dataUrl: painted.dataUrl, covered: painted.painted });
@@ -1909,6 +2011,34 @@ async function scanPage(): Promise<void> {
       omitted: omittedScreens,
       screens,
     });
+
+    // "Where did the time go?" — blank for scans until now, and the only basis
+    // on which anything about scan speed can be decided.
+    console.info(formatScanTiming(timer.summarise()));
+
+    // WHAT was found, not only how many.
+    //
+    // The run path has printed a per-detection table since Module B, and the
+    // scan path never has — so the path whose entire purpose is answering
+    // "what is on ALL of this page" could report a count and nothing else.
+    // That gap is what made the generalisation sweep's Detect column
+    // unfillable from a console: the operator could see eleven findings and
+    // not what any of them were.
+    if (all.length > 0) {
+      console.info(`[shield] ${all.length} finding(s) across the whole page`);
+      console.table(
+        all.map((finding) => ({
+          category: finding.category,
+          source: finding.source,
+          // Document coordinates, not viewport — a scan's findings outlive the
+          // scroll position they were found at, and a viewport figure here
+          // would point at the wrong place on every stop but one.
+          at: `${Math.round(finding.position.x)},${Math.round(finding.position.y)}`,
+          size: `${Math.round(finding.position.width)}x${Math.round(finding.position.height)}`,
+          why: finding.reason,
+        })),
+      );
+    }
 
     console.info(
       `[shield] scan complete — ${all.length} finding(s) across ` +
