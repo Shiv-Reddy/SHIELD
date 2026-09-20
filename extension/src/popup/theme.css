@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+
+/*
+ * Shield popup.
+ *
+ * THE DIRECTION IS PINNED BY A REFERENCE, AND THE REFERENCE WINS
+ *
+ * Supersedes the light "redacted document" theme. That design reasoned from
+ * the subject — a bar struck through a page — and it was a reasonable place to
+ * arrive from the brief alone. The brief is no longer alone: a specific
+ * extension UI was supplied as the target, and a named reference beats a
+ * derivation every time, because the person holding it can see something the
+ * derivation cannot.
+ *
+ * What is kept from the old design is the only part that was never decorative:
+ * the bars are still real measurements, one per category actually found, width
+ * proportional to share. On a dark ground a black bar is a hole rather than a
+ * mark, so they invert to near-white — the same information, drawn for the
+ * surface it now sits on.
+ *
+ * WHAT THE REFERENCE ACTUALLY ESTABLISHES
+ *
+ * Five things, and they are copied as a system rather than sampled piecemeal:
+ *
+ *   1. A blue-black ground, not neutral grey and not pure black, with cards
+ *      one step lighter and separated by hairlines rather than by shadow.
+ *   2. Generous radii that step down with nesting — the window, then cards,
+ *      then controls inside them.
+ *   3. Tabs that protrude from a card's edge instead of sitting inside it.
+ *      This is the detail that makes the reference recognisable and it is the
+ *      easiest to get wrong by leaving out.
+ *   4. Exactly one holographic gradient, on exactly one control per view. It
+ *      is the only saturated thing on the screen and it marks the primary
+ *      action. A second one anywhere would spend what makes the first work.
+ *   5. A violet stripe marking the live item, drawn on the leading edge.
+ *
+ * TYPE
+ *
+ * No web fonts — the extension CSP forbids remote stylesheets, and bundling a
+ * face would put a binary blob into a repository whose premise is that
+ * everything in it can be read. The reference's face is a geometric grotesque;
+ * the closest thing already present on the demo machine is Segoe UI Variable,
+ * with the platform stack behind it.
+ */
+
+@theme {
+  /* Ground. Blue-black, matching the reference — a neutral grey reads as a
+     developer tool and pure black kills the depth the cards depend on. */
+  --color-void: #0b0b12;
+  --color-panel: #12121b;
+  --color-card: #171722;
+  --color-card-raised: #1e1e2b;
+
+  /* Hairlines. The only separator in the interface; there are no shadows. */
+  --color-edge: rgba(255, 255, 255, 0.08);
+  --color-edge-lit: rgba(255, 255, 255, 0.16);
+
+  /* Text */
+  --color-bright: #ffffff;
+  --color-dim: #8e8ea3;
+  --color-faint: #63637a;
+
+  /* The violet that marks a live item. */
+  --color-live: #7b5cfa;
+  --color-live-wash: rgba(123, 92, 250, 0.12);
+
+  /* The one gradient. Pink to lavender to mint, dark text on top, reserved for
+     the single primary action in any view. */
+  --gradient-key: linear-gradient(
+    100deg,
+    #f3b2d8 0%,
+    #cbb2f6 48%,
+    #a7e3dd 100%
+  );
+
+  /* States, kept low-saturation so the gradient stays the only bright thing. */
+  --color-ok: #5fd0a4;
+  --color-warn: #e0b95f;
+  --color-alarm: #f2789a;
+
+  --font-ui: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system,
+    sans-serif;
+
+  /* Radii step down with nesting, as they do in the reference. */
+  --radius-window: 18px;
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+}
+
+html,
+body {
+  width: 372px;
+  margin: 0;
+  background: var(--color-void);
+  color: var(--color-bright);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * The key control's fill.
+ *
+ * A class rather than a utility because the gradient is a single design
+ * decision with a single home — if it is ever retuned it should change in one
+ * place, and a Tailwind arbitrary value repeated at two call sites is how a
+ * design system quietly acquires two slightly different accents.
+ */
+.key-fill {
+  background: var(--gradient-key);
+  color: #17131f;
+}
+
+.key-fill:disabled {
+  background: var(--color-card-raised);
+  color: var(--color-faint);
+}
+
+/*
+ * A tab that protrudes from the top edge of a card.
+ *
+ * The card carries the position; this carries the shape. It sits half outside
+ * its parent, so the parent must not clip, which is why no card in this
+ * interface uses overflow-hidden.
+ */
+.tab-out {
+  background: var(--color-card-raised);
+  border: 1px solid var(--color-edge);
+  border-radius: var(--radius-control);
+}
+
+/*
+ * The only motion.
+ *
+ * A mark travelling the masthead rule while the pipeline is live, answering
+ * "is anything happening" and nothing else. No entrance animations, no hover
+ * transitions on cards — both are the generic default and neither tells
+ * anybody anything.
+ */
+@keyframes shield-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(460%);
+  }
+}
+
+.shield-sweep {
+  animation: shield-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shield-sweep {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-live);
+  outline-offset: 2px;
+}

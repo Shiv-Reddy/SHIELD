@@ -1,5 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
 
@@ -25,6 +27,21 @@ const buildStamp = new Date().toLocaleString('sv-SE'); // local time, ISO-like
 
 export default defineConfig({
   root: src,
+  /**
+   * React and Tailwind, for the popup only.
+   *
+   * The popup is the one surface a person looks at, and it was 39 imperative
+   * DOM handles reading and writing the same elements from several places —
+   * the shape a declarative renderer removes rather than tidies. Nothing else
+   * in the extension gains from either: the service worker has no DOM, the
+   * content script draws overlay rectangles at computed coordinates, and the
+   * offscreen document has no UI at all.
+   *
+   * Neither dependency reaches the pipeline. Detection, redaction, the seal
+   * and transport are unchanged and untouched by this, which is why the popup
+   * could be rebuilt four days before a demo at all.
+   */
+  plugins: [react(), tailwindcss()],
   define: {
     __SHIELD_BUILD__: JSON.stringify(buildStamp),
     // Off unless asked for, so the element-map export is absent from any
