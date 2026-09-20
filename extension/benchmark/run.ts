@@ -34,6 +34,8 @@ import type {
   PixelScore,
   ScoredDetection,
 } from '../src/lib/benchmark/score';
+import { scoreAllBaselines } from '../src/lib/benchmark/baselines';
+import { candidateFloorCurve, layerCurve } from '../src/lib/benchmark/tradeoff';
 import { CORPUS, captureProblems } from './corpus';
 import { PIXEL_READINGS } from './pixels';
 
@@ -169,6 +171,135 @@ function markdown(report: BenchmarkReport): string {
       'more was painted than needed, below means some was left visible.',
   );
   lines.push('');
+
+  lines.push('## What this is compared against');
+  lines.push('');
+  lines.push(
+    'The same corpus, scored through the same `scorePage`, against four ' +
+      'strategies somebody could plausibly have shipped instead. Two of them ' +
+      'beat Shield on coverage. That is the point: **coverage is gameable and ' +
+      'these rows are what makes it readable** (DECISIONS.md 225).',
+  );
+  lines.push('');
+  lines.push('| Strategy | Recall | Precision | Coverage | Redaction precision | Area painted | Context kept |');
+  lines.push('|---|---|---|---|---|---|---|');
+  const baselines = scoreAllBaselines(CORPUS);
+  for (const row of baselines) {
+    const name = row.name === 'shield' ? `**${row.label}**` : row.label;
+    lines.push(
+      `| ${name} | ${percent(row.recall)} | ${percent(row.precision)} | ` +
+        `${percent(row.coverage)} | ${percent(row.redactionPrecision)} | ` +
+        `${ratio(row.areaRatio)} | ${percent(row.contextRetained)} |`,
+    );
+  }
+  lines.push('');
+  lines.push('| Strategy | What it is |');
+  lines.push('|---|---|');
+  for (const row of baselines) {
+    lines.push(`| ${row.label} | ${row.about} |`);
+  }
+  lines.push('');
+  const blanket = baselines.find((row) => row.name === 'blanket');
+  const shield = baselines.find((row) => row.name === 'shield');
+  if (blanket && shield) {
+    lines.push(
+      `**Read the last two columns together.** Blanket blur scores ` +
+        `${percent(blanket.coverage)} coverage — a perfect score on the metric ` +
+        `read alone — by painting ${ratio(blanket.areaRatio)} the area that needed ` +
+        `painting and leaving ${percent(blanket.contextRetained)} of the page ` +
+        `readable. It destroys ${blanket.contextLost} of ${blanket.contextTotal} ` +
+        `non-sensitive elements, which is every heading, button and label an agent ` +
+        `needs in order to act. Shield covers ${percent(shield.coverage)} at ` +
+        `${percent(shield.redactionPrecision)} precision and keeps ` +
+        `${percent(shield.contextRetained)} of the page usable. **A redactor that ` +
+        `hides everything has not solved the problem, it has moved it** — from ` +
+        `"the model sees private data" to "the model sees nothing".`,
+    );
+    lines.push('');
+    lines.push(
+      '`Context kept` counts non-sensitive elements still readable. It is the ' +
+        'only column here under which hiding everything scores zero, and it is ' +
+        'why the 60.4%-style coverage figure is not the failure it reads as.',
+    );
+    lines.push('');
+  }
+
+  lines.push('## What accuracy costs — the latency trade-off');
+  lines.push('');
+  lines.push(
+    'The problem statement asks for the balance explicitly. **The obvious ' +
+      'study is not available: Shield has no confidence threshold to sweep**, ' +
+      'because `dom-rules.ts` gates nothing on confidence and adding such a ' +
+      'gate would be a policy violation rather than an optimisation. These are ' +
+      'the two knobs that genuinely exist.',
+  );
+  lines.push('');
+  lines.push('### 1. Which layers run');
+  lines.push('');
+  lines.push('| Layer | Cost | Labels it owns | Found | Source of the cost figure |');
+  lines.push('|---|---|---|---|---|');
+  for (const layer of layerCurve(CORPUS)) {
+    const cost =
+      layer.costMs === null
+        ? '*unmeasured*'
+        : `${layer.costMs}ms${layer.perStop ? '/stop' : ''}`;
+    const found = layer.found === null ? '*needs a browser*' : String(layer.found);
+    lines.push(`| ${layer.name} | ${cost} | ${layer.owns} | ${found} | ${layer.source} |`);
+  }
+  lines.push('');
+  lines.push(
+    '**The span is three orders of magnitude.** The DOM walk owns 160 of the ' +
+      '170 labels and costs 4.4ms; whole-frame recognition costs 2.9s a stop ' +
+      'and owns none of them — it is measured as agreement against the DOM ' +
+      '(metric 1), not as recall against labels, and crediting it here would ' +
+      'hand it finds the DOM path is making. **That is the case for the run ' +
+      'and scan paths being separate** (DECISIONS.md 188): a 150ms run cannot ' +
+      'afford the layer that reads canvas, and a scan that transmits nothing ' +
+      'can. `Found` is blank where Node cannot execute the engine — a zero ' +
+      'there would read as a failing layer rather than an unmeasured one.',
+  );
+  lines.push('');
+  lines.push('### 2. The image candidate size floor');
+  lines.push('');
+  lines.push(
+    'Lower the floor and more pictures go to OCR: more recall on small ' +
+      'documents, less precision as furniture gets covered, and one more OCR crop of latency ' +
+      'per extra candidate. Cost is given as a multiple ' +
+      'because image OCR has never been isolated on a real page — the crop ' +
+      'count is exact and cost scales with it, so the ratio is the honest form.',
+  );
+  lines.push('');
+  lines.push('| Floor | Crops | Relative cost | Recall | Precision | Non-sensitive images covered |');
+  lines.push('|---|---|---|---|---|---|');
+  const floors = candidateFloorCurve(CORPUS);
+  for (const point of floors) {
+    const label =
+      point.minWidth === 140
+        ? `**${point.minWidth}x${point.minHeight}** (shipped)`
+        : `${point.minWidth}x${point.minHeight}`;
+    lines.push(
+      `| ${label} | ${point.candidates} | ${ratio(point.relativeCost)} | ` +
+        `${percent(point.recall)} (${point.sensitiveCaught}/${point.sensitiveTotal}) | ` +
+        `${percent(point.precision)} | ${point.overFlagged} |`,
+    );
+  }
+  lines.push('');
+  const shipped = floors.find((point) => point.minWidth === 140);
+  const loosest = floors[0];
+  if (shipped && loosest) {
+    lines.push(
+      `**The shipped floor sits on the knee, and this is the first thing that ` +
+        `says so.** Going below it catches no further sensitive image on this ` +
+        `corpus — recall holds at ${percent(shipped.recall)} all the way down — ` +
+        `while precision falls from ${percent(shipped.precision)} to ` +
+        `${percent(loosest.precision)} and the crop count rises to ` +
+        `${ratio(loosest.relativeCost)}. Going above it costs recall ` +
+        `immediately. 140x80 was originally derived from the width a twelve-digit ` +
+        `Aadhaar number needs to stay legible; it survives being measured, which ` +
+        `is not the same thing and is why the sweep exists.`,
+    );
+    lines.push('');
+  }
 
   lines.push('## Where the pages come from');
   lines.push('');

@@ -4,7 +4,7 @@
 
 Measures SIH metric 2 (recall and precision of PII detection) and metric 3 (precision of redaction) against a hand-labelled corpus. Labels describe the PAGE, never the detector output — several are things the DOM path structurally cannot see, and they are counted as misses because they are.
 
-Last run: 2026-09-14T09:31:45.855Z
+Last run: 2026-09-20T12:17:47.901Z
 
 ## Headline
 
@@ -23,6 +23,62 @@ Last run: 2026-09-14T09:31:45.855Z
 | Area painted / area needed | 0.72x |
 
 Coverage is the share of sensitive AREA painted — but a blanket blur also scores 100% there, so it is never quoted alone. **Redaction precision** is what metric 3 asks: of everything covered, how much needed covering. A blanket blur scores near zero. The area ratio is signed — above 1.00x means more was painted than needed, below means some was left visible.
+
+## What this is compared against
+
+The same corpus, scored through the same `scorePage`, against four strategies somebody could plausibly have shipped instead. Two of them beat Shield on coverage. That is the point: **coverage is gameable and these rows are what makes it readable** (DECISIONS.md 225).
+
+| Strategy | Recall | Precision | Coverage | Redaction precision | Area painted | Context kept |
+|---|---|---|---|---|---|---|
+| No redaction | 0.0% | 100.0% | 0.0% | 100.0% | 0.00x | 100.0% |
+| Blanket blur | 100.0% | 16.0% | 100.0% | 32.9% | 3.04x | 0.0% |
+| Hide every field | 77.1% | 75.3% | 56.2% | 77.1% | 0.73x | 95.2% |
+| Hide every value | 94.1% | 28.8% | 67.5% | 39.4% | 1.71x | 55.6% |
+| **Shield** | 83.5% | 83.5% | 60.4% | 83.9% | 0.72x | 96.9% |
+
+| Strategy | What it is |
+|---|---|
+| No redaction | Send the screen as captured. The floor everything else is above. |
+| Blanket blur | Cover the whole screen. What "we redact screenshots" means with no detector. |
+| Hide every field | Personal data lives in forms, so hide the forms. The common first heuristic. |
+| Hide every value | Fields and rendered text alike — all-inputs, once somebody notices printed data. |
+| Shield | Per-element detection, semantic placeholders. Measured on the same corpus. |
+
+**Read the last two columns together.** Blanket blur scores 100.0% coverage — a perfect score on the metric read alone — by painting 3.04x the area that needed painting and leaving 0.0% of the page readable. It destroys 891 of 891 non-sensitive elements, which is every heading, button and label an agent needs in order to act. Shield covers 60.4% at 83.9% precision and keeps 96.9% of the page usable. **A redactor that hides everything has not solved the problem, it has moved it** — from "the model sees private data" to "the model sees nothing".
+
+`Context kept` counts non-sensitive elements still readable. It is the only column here under which hiding everything scores zero, and it is why the 60.4%-style coverage figure is not the failure it reads as.
+
+## What accuracy costs — the latency trade-off
+
+The problem statement asks for the balance explicitly. **The obvious study is not available: Shield has no confidence threshold to sweep**, because `dom-rules.ts` gates nothing on confidence and adding such a gate would be a policy violation rather than an optimisation. These are the two knobs that genuinely exist.
+
+### 1. Which layers run
+
+| Layer | Cost | Labels it owns | Found | Source of the cost figure |
+|---|---|---|---|---|
+| DOM rules | 4.4ms | 160 | 142 | SESSION_LOG.md, one full pass on Chrome |
+| Face detection | 34ms | 3 | *needs a browser* | DECISIONS.md 218, Chrome document host, WebGPU |
+| Image OCR | *unmeasured* | 10 | *needs a browser* | Never isolated on a real page — the scan profile of DECISIONS.md 231 read 0ms because that page had no image candidates |
+| Whole-frame text | 2900ms/stop | 0 | *needs a browser* | DECISIONS.md 231, 82% of a scan, income-tax login |
+
+**The span is three orders of magnitude.** The DOM walk owns 160 of the 170 labels and costs 4.4ms; whole-frame recognition costs 2.9s a stop and owns none of them — it is measured as agreement against the DOM (metric 1), not as recall against labels, and crediting it here would hand it finds the DOM path is making. **That is the case for the run and scan paths being separate** (DECISIONS.md 188): a 150ms run cannot afford the layer that reads canvas, and a scan that transmits nothing can. `Found` is blank where Node cannot execute the engine — a zero there would read as a failing layer rather than an unmeasured one.
+
+### 2. The image candidate size floor
+
+Lower the floor and more pictures go to OCR: more recall on small documents, less precision as furniture gets covered, and one more OCR crop of latency per extra candidate. Cost is given as a multiple because image OCR has never been isolated on a real page — the crop count is exact and cost scales with it, so the ratio is the honest form.
+
+| Floor | Crops | Relative cost | Recall | Precision | Non-sensitive images covered |
+|---|---|---|---|---|---|
+| 40x23 | 33 | 2.54x | 90.0% (9/10) | 27.3% | 24 |
+| 60x34 | 27 | 2.08x | 90.0% (9/10) | 33.3% | 18 |
+| 80x46 | 20 | 1.54x | 90.0% (9/10) | 45.0% | 11 |
+| 100x57 | 16 | 1.23x | 90.0% (9/10) | 56.3% | 7 |
+| 120x69 | 15 | 1.15x | 90.0% (9/10) | 60.0% | 6 |
+| **140x80** (shipped) | 13 | 1.00x | 90.0% (9/10) | 69.2% | 4 |
+| 180x103 | 11 | 0.85x | 80.0% (8/10) | 72.7% | 3 |
+| 240x137 | 9 | 0.69x | 70.0% (7/10) | 77.8% | 2 |
+
+**The shipped floor sits on the knee, and this is the first thing that says so.** Going below it catches no further sensitive image on this corpus — recall holds at 90.0% all the way down — while precision falls from 69.2% to 27.3% and the crop count rises to 2.54x. Going above it costs recall immediately. 140x80 was originally derived from the width a twelve-digit Aadhaar number needs to stay legible; it survives being measured, which is not the same thing and is why the sweep exists.
 
 ## Where the pages come from
 
