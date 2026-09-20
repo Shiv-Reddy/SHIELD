@@ -40,7 +40,26 @@ ambiguously labeled field.
 **Pass criteria:** System defaults to hiding when uncertain, per policy.
 Document any misses — these are real pre-demo risk areas.
 
-### Screen 6 (Full Product): Real, Unmodified Third-Party Websites
+### Screen 6: Profile Edit — Face, PII and an Action At Once
+A profile page with a portrait, declared PII fields, a benign field holding
+content, an author-supplied dropdown, prose containing both a name and an email,
+and a Save button. The agent is asked to change a field and save.
+**Pass criteria:** the face is detected and redacted; declared fields are
+categorised from their own declarations; the action target's value is hidden AND
+the agent can still type into it; detection fires again on the re-capture after
+acting; the repeat guard refuses a second identical save. Nothing flagged on the
+dropdown, the button or the link.
+**Why it is separate from Screens 2 and 3:** those test the halves. This is the
+only screen where the visual model, the DOM rules and the reasoner must all work
+in one pass, which is the combination a real page presents. The DOM half of its
+expectations is verified without a browser by
+`extension/tests/profile-edit-fixture.test.ts`, so a failed browser run can only
+be the face, the action sequence, the re-capture or the repeat guard.
+**Status:** Built. DOM predictions pre-checked and all correct, including the
+one written down as uncertain — the default-to-hide rule does reach `type="date"`
+inputs. Not yet run in a browser.
+
+### Screen 7 (Full Product): Real, Unmodified Third-Party Websites
 A rotating set of real websites (not mocked pages) to test generalization
 claims beyond the curated test set.
 

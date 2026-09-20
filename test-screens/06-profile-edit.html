@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield test screen 6 — profile edit</title>
+    <!--
+      WHAT THIS SCREEN MEASURES THAT THE OTHER FIVE DO NOT
+
+      It is the only page where the visual model, the DOM rules and the reasoner
+      all have to work AT THE SAME TIME. Screen 3 has a face and no form, so the
+      reasoner is supposed to decline. Screens 1 and 2 have forms and no face.
+      Here there is a face, several declared PII fields, and something the agent
+      is actually asked to do — which is the combination a real "edit your
+      details" page presents and the combination nothing currently exercises.
+
+      Three things follow from that, and each is a claim this project makes that
+      no fixture has yet tested end to end:
+
+        1. HIDING A FIELD'S VALUE MUST NOT PREVENT ACTING ON IT. Shield names a
+           field and the client supplies the value (CLAUDE.md constraint 5). The
+           action target below is a field whose current value IS redacted, so a
+           successful run proves the selector survived redaction even though the
+           content did not. If this ever breaks, Shield becomes an extension
+           that protects a page by making it unusable.
+
+        2. DETECTION MUST FIRE AGAIN ON THE RE-CAPTURE. A multi-step run
+           captures the page a second time after acting. A face detector that
+           only ran on the first pass would leak the face on step 2 and every
+           unit test would still pass, because each test runs one pass.
+
+        3. THE REPEAT REFUSAL MUST HOLD WITH A REAL SAVE BUTTON. On a shopping
+           page five identical clicks is five orders. Here it is five saves,
+           which is harmless — which is exactly why it is the safe place to
+           demonstrate the refusal.
+
+      The portrait is NOT version controlled, for the reason given in
+      03-faces.html and README.md: photographs of real people carry likeness and
+      licensing questions a committed fixture should not settle silently. Supply
+      your own as face-a.jpg.
+
+      WHAT SHIELD SHOULD DO ON THIS PAGE
+
+      Task: "Change my public handle to @priya_codes and save."
+
+      Written before the first run so the page measures the system rather than
+      the system setting the expectations. The reasoning is given for each line,
+      so a wrong prediction is informative rather than merely wrong.
+
+        PROFILE PHOTO (~180px rendered)
+          -> FOUND. The measured floor is 80px at 0.312 against a 0.3 threshold
+             (03-faces.html, 2026-09-07), and 150px scored 0.962 there. 180px
+             sits well clear of the floor on a frame of similar width.
+
+        full name, autocomplete="name"        -> name, autocomplete token
+        email, type="email"                   -> email, declared input type
+        phone, type="tel"                     -> phone, declared input type
+        date of birth, type="date"            -> name? no. UNCERTAIN, see below
+
+        headline, label "Headline"            -> other, hidden by default. No
+                                                 pattern matches "headline", it
+                                                 holds a value, so the
+                                                 default-to-hide rule fires.
+                                                 This is correct and it is also
+                                                 the cost of that rule.
+
+        public handle, label "Public handle"  -> other, hidden by default. THIS
+                                                 IS THE ACTION TARGET. Its value
+                                                 is hidden and the agent must
+                                                 still be able to type into it.
+
+        timezone <select>                     -> NOT flagged. Its value is one of
+                                                 the page's own options, so
+                                                 nothing a user entered can be in
+                                                 it (DECISIONS.md, the rule
+                                                 02-signup.html surfaced).
+
+        bio textarea, name in prose           -> MISSED, and expected to be. A
+                                                 name in ordinary prose cannot be
+                                                 separated from other capitalised
+                                                 words without a named-entity
+                                                 model we do not ship. Written
+                                                 into SECURITY_PRIVACY.md 4.1 as
+                                                 a known limit; it is here so the
+                                                 limit is visible rather than
+                                                 merely documented.
+
+        bio textarea, email in prose          -> CAUGHT. Content patterns run
+                                                 over text, and an email address
+                                                 is high-precision enough to
+                                                 match in prose where a name is
+                                                 not. The same paragraph
+                                                 therefore demonstrates both
+                                                 sides of the limit at once.
+
+        "Save changes" button                 -> NOT flagged. type="submit"
+                                                 holds no free text.
+        "Cancel" link                         -> NOT flagged. Not an input.
+
+        DATE OF BIRTH is the one genuinely uncertain line and it is left
+        uncertain on purpose. `type="date"` is not in INPUT_TYPE_CATEGORIES, the
+        label "Date of birth" does not match any TEXT_PATTERNS entry, and the
+        field holds a value — so the default-to-hide rule should catch it as
+        `other` rather than as the `id_number`-adjacent category a reader might
+        expect. Predicting `other` here. If it comes back unflagged, the
+        default-to-hide rule does not reach date inputs and that is a real gap
+        worth a DECISIONS.md entry rather than a quiet fix.
+
+        Expected: 7 of 9 fields flagged, 1 face, 0 false positives on the
+        select, the button or the link.
+
+        REASONER, step 1 -> type "@priya_codes" into the public handle field
+        REASONER, step 2 -> click "Save changes" after the re-capture
+        REASONER, step 3 -> the same click again is REFUSED by the repeat guard
+
+      DOM HALF PRE-CHECKED 2026-09-21, before any browser run. The rules are
+      pure functions over element descriptions, so everything above except the
+      face and the reasoner is decidable without Chrome —
+      extension/tests/profile-edit-fixture.test.ts encodes this page field for
+      field and asserts each predicted category. All nine assertions pass,
+      including the line flagged as genuinely uncertain:
+
+        date of birth -> other. The default-to-hide rule DOES reach date
+                         inputs. Predicted correctly, and now it is a fact
+                         rather than a reasonable guess.
+
+      The predictions above are left exactly as written. This note records that
+      the decidable half was checked early so that a failed browser run means
+      something — it can now only be the face, the reasoner, the re-capture or
+      the repeat guard, which are the things this screen was built for.
+
+      MEASURED IN A BROWSER: not yet run. Fill this in from one Chrome run,
+      matching the format used in 03-faces.html — the figures, then what the
+      prediction got wrong, then what that means. Do not edit the predictions
+      above to match.
+    -->
+    <style>
+      :root {
+        --bg: #eef1f6;
+        --card: #ffffff;
+        --ink: #16191f;
+        --muted: #5d6675;
+        --line: #d9dee7;
+        --accent: #2563eb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif;
+        padding: 32px 16px;
+      }
+
+      .card {
+        width: 560px;
+        padding: 28px 32px 32px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        height: fit-content;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+
+      .sub {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .identity {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .identity img {
+        width: 180px;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #dfe4ec;
+      }
+
+      .identity p {
+        margin: 0 0 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field {
+        margin-top: 12px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: #3e4c59;
+      }
+
+      input[type='text'],
+      input[type='email'],
+      input[type='tel'],
+      input[type='date'],
+      select,
+      textarea {
+        width: 100%;
+        padding: 9px 11px;
+        font: inherit;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      textarea {
+        min-height: 88px;
+        resize: vertical;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+
+      button {
+        padding: 10px 18px;
+        font: inherit;
+        font-weight: 600;
+        color: #fff;
+        background: var(--accent);
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .actions a {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .saved {
+        margin-left: auto;
+        font-size: 13px;
+        color: #15803d;
+        visibility: hidden;
+      }
+
+      .saved[data-shown='true'] {
+        visibility: visible;
+      }
+
+      .footnote {
+        margin: 22px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Edit your profile</h1>
+      <p class="sub">Acme Internal Portal · these details are visible to your team.</p>
+
+      <form id="profile-form" action="#" method="post">
+        <div class="identity">
+          <!--
+            The face. Above the 80px floor measured on 03-faces.html by a wide
+            margin, so a miss here is a regression rather than a size limit.
+          -->
+          <img src="face-a.jpg" alt="Your profile photograph" />
+          <div>
+            <p>Your profile photograph is visible to everyone in the workspace.</p>
+            <p>JPG or PNG, at least 400&times;400.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="full-name">Full name</label>
+            <input
+              type="text"
+              id="full-name"
+              name="fullName"
+              autocomplete="name"
+              value="Priya Raghunathan"
+            />
+          </div>
+
+          <div class="field">
+            <label for="email">Work email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              autocomplete="email"
+              value="priya.r@example.com"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="phone">Mobile</label>
+            <input type="tel" id="phone" name="phone" autocomplete="tel" value="+91 98200 11234" />
+          </div>
+
+          <div class="field">
+            <!--
+              Deliberately uncertain. type="date" implies no category and the
+              label matches no text pattern, so this rides entirely on the
+              default-to-hide rule. See the prediction block above.
+            -->
+            <label for="dob">Date of birth</label>
+            <input type="date" id="dob" name="dob" value="1994-03-17" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="headline">Headline</label>
+          <input
+            type="text"
+            id="headline"
+            name="headline"
+            value="Backend engineer, payments platform"
+          />
+        </div>
+
+        <div class="field">
+          <!--
+            THE ACTION TARGET.
+
+            Its value is expected to be hidden by the default-to-hide rule, and
+            the agent is still expected to be able to type into it. That pairing
+            is the whole reason this screen exists: Shield names the field, the
+            client supplies the value, and the redaction of the current content
+            has to be irrelevant to whether the action lands.
+          -->
+          <label for="handle">Public handle</label>
+          <input type="text" id="handle" name="handle" value="@priya_builds" />
+        </div>
+
+        <div class="field">
+          <!--
+            Author-supplied value. Nothing a user typed can be in it, so it must
+            NOT be flagged — a box here is a false positive.
+          -->
+          <label for="timezone">Time zone</label>
+          <select id="timezone" name="timezone">
+            <option value="ist" selected>India Standard Time (UTC+5:30)</option>
+            <option value="gmt">Greenwich Mean Time (UTC+0)</option>
+            <option value="pst">Pacific Time (UTC-8)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <!--
+            Both sides of the prose limit in one paragraph. The email address is
+            expected to be caught by the content patterns; the person's name is
+            expected to be missed, because separating it from other capitalised
+            words needs a model we do not ship.
+          -->
+          <label for="bio">About you</label>
+          <textarea id="bio" name="bio">
+Joined the payments team in 2021, working with Arjun Mehta on settlement tooling. Reach me at priya.r@example.com or find me in the #payments channel.</textarea
+          >
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="save">Save changes</button>
+          <a href="#cancel">Cancel</a>
+          <span class="saved" id="saved-note">Saved</span>
+        </div>
+      </form>
+
+      <p class="footnote">
+        Synthetic test fixture. Fictional person, fictional data, not a real service.
+      </p>
+    </main>
+
+    <script>
+      /*
+        The form must not navigate away.
+
+        A submit that reloads the page would destroy the very thing a multi-step
+        run needs to observe — the state AFTER the action — and the run would
+        report a lost tab rather than a completed task. The visible "Saved"
+        acknowledgement is what makes the second step verifiable by eye.
+      */
+      document.getElementById('profile-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        document.getElementById('saved-note').dataset.shown = 'true';
+      });
+    </script>
+  </body>
+</html>

@@ -20,9 +20,10 @@ npx serve test-screens     # then http://localhost:3000/01-login.html
   changes, is not a fixture. Local files referenced by relative path are fine —
   they load offline and cannot change underneath a measurement.
 
-### Screen 3 needs two images you supply
+### Screens 3 and 6 need images you supply
 
-`03-faces.html` expects `face-a.jpg` and `face-b.png` beside it. They are **not
+`03-faces.html` expects `face-a.jpg` and `face-b.png` beside it, and
+`06-profile-edit.html` reuses `face-a.jpg`. They are **not
 version controlled** (see `.gitignore`), for two reasons that pull the same way:
 
 - A drawn or synthetic face does not reliably trigger a detector trained on
@@ -53,6 +54,7 @@ the ladder measures where rather than leaving it a guess.
 | 3 | Video call / profile photo | `03-faces.html` | Built — needs local images |
 | 4 | Clean control page | `04-clean.html` | Built |
 | 5 | Adversarial / edge cases | `05-adversarial.html` | Built |
+| 6 | Profile edit — face, PII and an action at once | `06-profile-edit.html` | Built — needs `face-a.jpg` |
 
 Screens 1, 2, 4 and 5 run automatically on every `npm test` in `extension/`,
 from element maps in `extension/tests/fixtures/screens.ts`. That covers
@@ -132,6 +134,33 @@ so nothing a user entered can be in it. See DECISIONS.md.
 This page is a fixture, not Phase 2's signup feature. Phase 2 is Shield
 completing a signup task end to end; this exists so that work has something to
 be measured against when it starts.
+
+## Screen 6 is the only page where everything runs at once
+
+Screens 1 and 2 have forms and no face. Screen 3 has a face and no form — the
+reasoner is supposed to decline there. `06-profile-edit.html` is the first page
+where the visual model, the DOM rules and the reasoner all have to work in the
+same pass, which is what an ordinary "edit your details" page actually presents.
+
+Three claims are tested there and nowhere else:
+
+- **Hiding a field's value must not prevent acting on it.** The action target is
+  a field whose current value IS redacted. Shield names the field and the client
+  supplies the value, so a successful run proves the selector survived redaction
+  even though the content did not. If that ever breaks, Shield protects a page
+  by making it unusable.
+- **Detection must fire again on the re-capture.** A multi-step run captures the
+  page a second time after acting. A face detector that only ran on the first
+  pass would leak the face on step 2 while every unit test still passed, because
+  each unit test runs one pass.
+- **The repeat refusal must hold against a real Save button.** Harmless here,
+  which is exactly why it is the safe place to demonstrate it.
+
+The DOM half of its predictions is checked without a browser, by
+`extension/tests/profile-edit-fixture.test.ts`. What is left for a real run is
+the face, the action sequence, the re-capture and the repeat guard — so a failed
+run points at one of those rather than at a rule that could have been checked
+in a second.
 
 ## Screen 5 is meant to be partly failed
 
