@@ -132,6 +132,21 @@ export interface ShieldSettings {
    */
   forceInferenceHost: InferenceHost | null;
   /**
+   * Show the sealed payload and wait for approval before transmitting.
+   *
+   * Off by default, and the reason is not timidity. Shield's invariant is
+   * enforced by a phantom type, a stage-order guard and a zero-leak content
+   * sweep — three mechanisms that ask nobody's permission. Consent is not what
+   * makes Shield safe, and shipping it on would imply it was. Defaulting it on
+   * would also put a decision in front of every step of a multi-step task,
+   * which is how people learn to click through consent dialogs without reading
+   * them (DECISIONS.md 240).
+   *
+   * Set from any extension console:
+   *   chrome.storage.local.set({ requireConsent: true })
+   */
+  requireConsent: boolean;
+  /**
    * Run the whole pipeline but never touch the page.
    *
    * Everything happens — capture, detection, redaction, the seal, the request,
@@ -170,6 +185,7 @@ const DEFAULTS: ShieldSettings = {
   forceInferenceHost: null,
   observeOnly: false,
   redactionLevel: 'standard',
+  requireConsent: false,
 };
 
 /**
@@ -196,6 +212,11 @@ export async function setObserveOnly(observeOnly: boolean): Promise<void> {
   await chrome.storage.local.set({ observeOnly });
 }
 
+/** Ask before transmitting, or stop asking. */
+export async function setRequireConsent(requireConsent: boolean): Promise<void> {
+  await chrome.storage.local.set({ requireConsent });
+}
+
 export async function readSettings(): Promise<ShieldSettings> {
   try {
     // Keys are requested by name rather than by passing the defaults object:
@@ -207,6 +228,7 @@ export async function readSettings(): Promise<ShieldSettings> {
       'endpoint',
       'observeOnly',
       'redactionLevel',
+      'requireConsent',
     ]);
     const forceBackend =
       stored['forceBackend'] === 'webgpu' || stored['forceBackend'] === 'wasm'
@@ -229,8 +251,20 @@ export async function readSettings(): Promise<ShieldSettings> {
     // Unrecognised means `standard`, which is the floor of the range. A
     // corrupted value can therefore only ever fail towards hiding more.
     const redactionLevel = redactionLevelFrom(stored['redactionLevel']);
+    // Anything other than an explicit `true` means do not ask. A corrupted
+    // value cannot breach the invariant here — what would be transmitted has
+    // already been sealed and verified — so this fails towards the documented
+    // default rather than towards a prompt nobody enabled.
+    const requireConsent = stored['requireConsent'] === true;
 
-    return { endpoint, forceBackend, forceInferenceHost, observeOnly, redactionLevel };
+    return {
+      endpoint,
+      forceBackend,
+      forceInferenceHost,
+      observeOnly,
+      redactionLevel,
+      requireConsent,
+    };
   } catch (error) {
     // A settings read must never be able to break inference — but silently
     // returning defaults is how a backend override appears to do nothing.

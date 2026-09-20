@@ -109,7 +109,11 @@ export function declineReason(decision: ConsentDecision): string {
  */
 export function summarise(
   payload: {
-    redacted_dom_summary: readonly { redacted_value?: string | null }[];
+    // `unknown[]` because this function COUNTS the entries and never reads
+    // one. Naming a field here would be describing a shape this module has no
+    // use for, and would make it break when the DOM summary changes for
+    // reasons that have nothing to do with consent.
+    redacted_dom_summary: readonly unknown[];
     redaction_manifest: readonly { category: string }[];
     // `| undefined` is explicit because the project runs with
     // exactOptionalPropertyTypes: a caller holding a payload whose frame was

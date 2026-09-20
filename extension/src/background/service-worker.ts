@@ -65,6 +65,12 @@ import {
 import type { ScreenTextRegion } from '../lib/vision/screen-text';
 import { buildManifest, redactDomElements } from '../lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../lib/redaction/payload';
+import {
+  declineReason,
+  mayTransmit,
+  summarise as summariseForConsent,
+} from '../lib/consent';
+import { applyConsentDecision, askForConsent, cancelConsent } from './consent-gate';
 import { recordTransmission } from '../lib/redaction/evidence';
 import { buildAuditEntry, recordAudit } from '../lib/audit';
 import {
@@ -1053,11 +1059,59 @@ async function runStep(
         'Verified: every flagged element carries a placeholder.',
     );
 
+    const { endpoint, observeOnly } = settings;
+
+    /*
+     * The pause between the seal and the wire.
+     *
+     * It sits HERE, after `buildSanitizedPayload` and before `send`, because
+     * the only honest moment to ask is once there is a real payload to show.
+     * Asking earlier would describe something that does not exist yet; asking
+     * later would be asking about something already gone.
+     *
+     * Nothing about this makes the payload safe — it was already sealed,
+     * order-checked and swept above, and that is what the guarantee rests on
+     * (DECISIONS.md 240). This adds a decision, not a protection, which is why
+     * it is off by default and why a run with it off is not weaker.
+     */
+    if (settings.requireConsent) {
+      setStatus('awaiting-consent');
+
+      const decision = await askForConsent(
+        // The payload's own id. Minted fresh per step, so an approval is bound
+        // to one payload rather than to a run — which is what makes a late
+        // click on an earlier step stale rather than usable.
+        summariseForConsent(payload, endpoint, payload.request_id),
+      );
+
+      if (!mayTransmit(decision)) {
+        // Returned as an ordinary outcome, not thrown. Declining is a correct
+        // use of the feature and the run ending is the feature working; an
+        // error would put it in red beside genuine failures.
+        console.info(`[shield] not transmitted — ${decision}`);
+        void recordAudit(
+          buildAuditEntry(regions, {
+            kind: 'run',
+            examined: 'viewport',
+            // The whole point of the entry: the log says a pass happened and
+            // that nothing left, which is the claim the user just made.
+            transmitted: false,
+            durationMs: stepTimings.reduce((sum, timing) => sum + timing.durationMs, 0),
+          }),
+        );
+        return {
+          acted: false,
+          summary: declineReason(decision),
+          signature: null,
+          repeated: false,
+        };
+      }
+    }
+
     // Stage 4 — Transport (ARCHITECTURE.md 2.4). The signature of `send` is the
     // enforcement: it accepts a sealed payload and nothing else, so there is no
     // expressible way to reach the network carrying raw page data.
     setStatus('sending');
-    const { endpoint, observeOnly } = settings;
 
     // Recorded before the request, not after. If the server is unreachable the
     // question "what did Shield send?" still has an answer, and a failed request
@@ -2194,7 +2248,19 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
       sendResponse({ accepted: true });
       return false;
 
+    case MSG.CONSENT_DECISION:
+      // `applied` is false when the id no longer matches anything waiting —
+      // a click that arrived after the timeout, or on a step that has since
+      // been abandoned. Reported rather than swallowed so the popup can stop
+      // showing a card for a decision that changed nothing.
+      sendResponse({ applied: applyConsentDecision(message.id, message.approved) });
+      return false;
+
     case MSG.CANCEL_TASK:
+      // Released before the run is torn down. The waiting promise resolves to
+      // a refusal, so a cancelled run cannot leave a payload approvable by a
+      // popup that is still showing its card.
+      cancelConsent();
       cancelTask();
       sendResponse({ accepted: true });
       return false;

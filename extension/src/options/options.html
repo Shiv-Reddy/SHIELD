@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shield — settings</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <!--
+      WHY THIS PAGE EXISTS
+
+      Two reasons, and the first is a defect. The rebuilt popup put a gear in
+      the masthead that called `chrome.runtime.openOptionsPage`, and no options
+      page was ever declared — on either browser. A control that does nothing is
+      the mirror image of the features the same rebuild dropped, and it was
+      shipped by the same pass (DECISIONS.md 244, 247).
+
+      The second is that FR-14 — configurable redaction aggressiveness — was
+      reachable only by typing into an extension console. It was built, tested
+      and ticked, and no person using Shield could change it. A requirement
+      satisfied only from a devtools prompt is satisfied in the same sense a
+      hidden panel is gated.
+
+      WHAT IS HERE AND WHAT IS NOT
+
+      Settings with no other home: the redaction level, the backend endpoint,
+      and the two inference overrides that exist so the fallback paths can be
+      exercised on hardware where they would otherwise never run. The two
+      behavioural switches are mirrored from the popup because a settings page
+      that omitted them would be a settings page people stop opening; both
+      surfaces read and write the same storage, and this page re-reads on open.
+
+      There is no Save button. Each control writes as it changes, the same way
+      the popup's switches do, because a settings page with an unsaved-changes
+      state is a settings page that can be closed having done nothing.
+    -->
+    <header class="masthead">
+      <h1>Shield</h1>
+      <p>Settings</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>How hard Shield looks</h2>
+        <p class="lede">
+          Shield always hides what it is sure about. This sets the smallest
+          image it will bother reading text out of — which is the one part of
+          detection that was ever a judgement call rather than a rule.
+        </p>
+
+        <!--
+          The range only goes UP. `standard` is the floor, not the middle: a lax
+          end would contradict the uncertainty rule in CLAUDE.md and the refusal
+          in dom-rules.ts to gate on confidence. Every number beside a level is
+          measured, from the sweep recorded in docs/BENCHMARK.md — a settings
+          page that described its options in adjectives would be asking people
+          to choose between three moods.
+        -->
+        <div class="choices" id="redaction-level"></div>
+      </section>
+
+      <section class="card">
+        <h2>Where redacted context is sent</h2>
+        <p class="lede">
+          Only sanitised context ever reaches this address. Change it to point
+          at a different backend — a hosted one, or a second machine on your
+          network.
+        </p>
+
+        <label class="field">
+          <span>Backend endpoint</span>
+          <input type="url" id="endpoint" spellcheck="false" autocomplete="off" />
+        </label>
+        <p class="note" id="endpoint-note"></p>
+      </section>
+
+      <section class="card">
+        <h2>What runs, and where</h2>
+        <p class="lede">
+          Shield prefers your graphics hardware and falls back to the CPU on its
+          own. These pin that choice, so the fallback can be exercised on a
+          machine where it would otherwise never run — which is the only honest
+          way to know it still works.
+        </p>
+
+        <label class="field">
+          <span>Inference backend</span>
+          <select id="force-backend">
+            <option value="">Automatic — prefer graphics, fall back to CPU</option>
+            <option value="webgpu">Always graphics (WebGPU)</option>
+            <option value="wasm">Always CPU (WebAssembly)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Inference host</span>
+          <select id="force-host">
+            <option value="">Automatic — per browser</option>
+            <option value="document">Offscreen document (Chrome default)</option>
+            <option value="worker">Dedicated worker (Firefox default)</option>
+          </select>
+        </label>
+
+        <p class="note">
+          Changing either rebuilds the loaded model, which takes about a second
+          on Chrome and about ten on Firefox.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Before Shield acts</h2>
+
+        <label class="switch">
+          <input type="checkbox" id="observe-only" />
+          <span>
+            <strong>Watch without acting</strong>
+            Runs everything, then reports the action instead of performing it.
+          </span>
+        </label>
+
+        <label class="switch">
+          <input type="checkbox" id="require-consent" />
+          <span>
+            <strong>Ask before sending</strong>
+            Shows what is about to go, every step. No answer means it is not sent.
+          </span>
+        </label>
+
+        <p class="note">
+          Neither of these is what keeps your data on this device. That is
+          enforced whether they are on or off — see the privacy note below.
+        </p>
+      </section>
+
+      <section class="card quiet">
+        <h2>What is not configurable, and why</h2>
+        <p class="lede">
+          There is no setting that makes Shield hide less than it does now.
+          Redaction is not gated on a confidence threshold, and adding one to
+          make this page look richer would turn a guarantee into a preference.
+          When Shield is unsure whether something is sensitive, it hides it.
+        </p>
+        <p class="build" id="build"></p>
+      </section>
+    </main>
+
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>

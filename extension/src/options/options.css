@@ -1,0 +1,246 @@
+/**
+ * Settings.
+ *
+ * Reached from the popup's gear, so it uses the popup's palette rather than the
+ * older blue one in proof.css — the page you open from a surface should look
+ * like the surface you opened it from. proof/ and sent/ keep their own
+ * stylesheet deliberately (DECISIONS.md 241): they work, they are read once
+ * each, and restyling them would spend demo-week risk on pages nobody is
+ * looking at. That leaves two palettes in the extension for now, which is
+ * stated here rather than discovered later.
+ *
+ * Hand-written rather than Tailwind. This page has about fifteen elements and
+ * no state worth a renderer; adding a second React entry point to the build to
+ * draw four form controls would cost more than it saves.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --void: #0b0b12;
+  --panel: #12121b;
+  --card: #171722;
+  --card-raised: #1e1e2b;
+
+  --edge: rgba(255, 255, 255, 0.08);
+  --edge-lit: rgba(255, 255, 255, 0.16);
+
+  --bright: #ffffff;
+  --dim: #8e8ea3;
+  --faint: #63637a;
+
+  --live: #7b5cfa;
+  --ok: #5fd0a4;
+  --warn: #e0b95f;
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--bright);
+  font: 400 14px/1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 22px 32px 18px;
+  border-bottom: 1px solid var(--edge);
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.masthead p {
+  margin: 0;
+  color: var(--faint);
+  font-size: 13px;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 20px 22px;
+  background: var(--card);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-card);
+}
+
+.card.quiet {
+  background: transparent;
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lede {
+  margin: 0 0 16px;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.note {
+  margin: 12px 0 0;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.build {
+  margin: 12px 0 0;
+  color: var(--faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- The redaction choices ------------------------------------------------ */
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--card-raised);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.choice:hover {
+  border-color: var(--edge-lit);
+}
+
+.choice input {
+  margin: 3px 0 0;
+  accent-color: var(--live);
+  flex-shrink: 0;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--live);
+  background: rgba(123, 92, 250, 0.1);
+}
+
+.choice-name {
+  display: block;
+  font-size: 13px;
+}
+
+.choice-detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+/* The measured consequence of each choice, kept visually distinct from the
+   description so it reads as data rather than as more prose. */
+.choice-measured {
+  display: block;
+  margin-top: 4px;
+  color: var(--faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Fields --------------------------------------------------------------- */
+
+.field {
+  display: block;
+  margin-top: 12px;
+}
+
+.field > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--bright);
+  background: var(--card-raised);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-control);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--live);
+}
+
+.field input[data-invalid='true'] {
+  border-color: var(--warn);
+}
+
+/* --- Switches ------------------------------------------------------------- */
+
+.switch {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.switch + .switch {
+  border-top: 1px solid var(--edge);
+}
+
+.switch input {
+  margin: 2px 0 0;
+  accent-color: var(--live);
+  flex-shrink: 0;
+}
+
+.switch strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.switch span {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 2px;
+}

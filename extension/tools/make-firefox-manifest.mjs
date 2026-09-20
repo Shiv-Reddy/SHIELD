@@ -62,6 +62,23 @@ delete manifest.minimum_chrome_version;
 manifest.browser_specific_settings = {
   gecko: {
     id: 'shield@sih26171',
+    /**
+     * What Shield collects, declared to the browser: nothing.
+     *
+     * Firefox requires this key on new extensions, and `none` is the one value
+     * this project could not have claimed dishonestly — it is the same
+     * statement the phantom type, the stage-order guard and the zero-leak sweep
+     * enforce in code. The redacted context that reaches the backend carries
+     * placeholders rather than values, and no URL, no identifier and no page
+     * content is stored or transmitted anywhere else.
+     *
+     * If that ever stops being true, this key is the first thing that has to
+     * change, and changing it is a decision with a paper trail rather than an
+     * omission nobody notices.
+     */
+    data_collection_permissions: {
+      required: ['none'],
+    },
     // 121 is where Firefox stopped refusing to start a background page when a
     // `service_worker` key was present, and the first version where a manifest
     // written for both browsers behaves. WebGPU needs far newer - 141 on

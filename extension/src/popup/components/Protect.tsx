@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { MSG } from '../../lib/messages';
-import { readSettings, setObserveOnly } from '../../lib/settings';
+import { readSettings, setObserveOnly, setRequireConsent } from '../../lib/settings';
 import { Card, GhostButton, Row, Title } from './Sheet';
 
 /** Drawn as a rectangle being enclosed — marking an area, not selecting text. */
@@ -56,6 +56,7 @@ async function countMarks(): Promise<number> {
 export function Protect({ onProblem }: { onProblem: (message: string) => void }) {
   const [marks, setMarks] = useState(0);
   const [observe, setObserve] = useState(false);
+  const [askFirst, setAskFirst] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(() => {
@@ -66,7 +67,10 @@ export function Protect({ onProblem }: { onProblem: (message: string) => void })
     refresh();
     // Read back from storage rather than assumed, so the switch always shows
     // what the next run will actually do.
-    void readSettings().then((settings) => setObserve(settings.observeOnly));
+    void readSettings().then((settings) => {
+      setObserve(settings.observeOnly);
+      setAskFirst(settings.requireConsent);
+    });
   }, [refresh]);
 
   const beginMarking = useCallback(() => {
@@ -140,6 +144,31 @@ export function Protect({ onProblem }: { onProblem: (message: string) => void })
           <span className="text-bright block text-[12px]">Watch without acting</span>
           <span className="text-faint block text-[11px]">
             Runs everything, then reports the action instead of performing it
+          </span>
+        </span>
+      </label>
+
+      {/*
+        Off by default, and the wording says why rather than implying this is
+        what keeps the page safe. It is not: the payload is sealed, order-checked
+        and swept before this ever appears, by three mechanisms that ask nobody
+        (DECISIONS.md 240). What this adds is a look before it goes.
+      */}
+      <label className="mt-2.5 flex cursor-pointer items-start gap-2.5">
+        <input
+          type="checkbox"
+          checked={askFirst}
+          onChange={(event) => {
+            const next = event.target.checked;
+            setAskFirst(next);
+            void setRequireConsent(next);
+          }}
+          className="accent-live mt-0.5 size-3.5 shrink-0"
+        />
+        <span className="leading-snug">
+          <span className="text-bright block text-[12px]">Ask before sending</span>
+          <span className="text-faint block text-[11px]">
+            Shows what is about to go, every step. No answer means it is not sent
           </span>
         </span>
       </label>

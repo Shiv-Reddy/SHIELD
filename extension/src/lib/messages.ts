@@ -65,6 +65,16 @@ export const MSG = {
   WARM_UP: 'shield/warm-up',
   /** Popup -> worker: backend override changed; restart the inference host. */
   RESTART_BACKEND: 'shield/restart-backend',
+  /**
+   * Worker -> popup: a sealed payload is waiting for a decision.
+   *
+   * Broadcast rather than a request, because the popup may not be open. A
+   * broadcast nobody receives is the timeout path, which refuses — see
+   * lib/consent.ts.
+   */
+  CONSENT_REQUESTED: 'shield/consent-requested',
+  /** Popup -> worker: the user's answer to one consent request. */
+  CONSENT_DECISION: 'shield/consent-decision',
   /** Worker -> offscreen document: drop the loaded session and rebuild it. */
   RELOAD_MODEL: 'shield/reload-model',
   /** Worker -> offscreen document: run the CPU fallback self-test now. */
@@ -174,6 +184,19 @@ export interface ScanPageMessage {
   type: typeof MSG.SCAN_PAGE;
 }
 
+/**
+ * One answer to one consent request.
+ *
+ * The id is carried back so a late click cannot authorise a payload the user
+ * never saw: an approval for step 1, arriving after step 2 has sealed, is
+ * discarded as stale rather than applied (lib/consent.ts).
+ */
+export interface ConsentDecisionMessage {
+  type: typeof MSG.CONSENT_DECISION;
+  id: string;
+  approved: boolean;
+}
+
 export type PopupMessage =
   | RunTaskMessage
   | CancelTaskMessage
@@ -181,7 +204,8 @@ export type PopupMessage =
   | PrepareMessage
   | BeginManualMessage
   | ScanPageMessage
-  | RestartBackendMessage;
+  | RestartBackendMessage
+  | ConsentDecisionMessage;
 
 // --- Service worker -> content script ---------------------------------------
 
@@ -666,13 +690,20 @@ export type AnalyseFrameResult =
 // --- Service worker -> popup (broadcast) ------------------------------------
 
 import type { ShieldState } from './status';
+import type { ConsentRequest } from './consent';
 
 export interface StateChangedMessage {
   type: typeof MSG.STATE_CHANGED;
   state: ShieldState;
 }
 
-export type WorkerBroadcast = StateChangedMessage;
+/** A sealed payload, described in counts, awaiting a decision. */
+export interface ConsentRequestedMessage {
+  type: typeof MSG.CONSENT_REQUESTED;
+  request: ConsentRequest;
+}
+
+export type WorkerBroadcast = StateChangedMessage | ConsentRequestedMessage;
 
 // --- Helpers ----------------------------------------------------------------
 

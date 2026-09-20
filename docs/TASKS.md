@@ -498,7 +498,33 @@ and the checks are in place; both remaining boxes need someone to run it.
       The earlier "always falls back to WASM" was never a WebGPU finding: the
       reason could not be captured because the console belonged to the process
       that had hung, which 207 then explained and the Worker fixed.
-- [ ] Run the full fixture set on both browsers
+- [x] **Firefox packaging verified without a browser.** DECISIONS.md 252.
+      `tools/check-build.mjs` runs on `dist` and on `dist-firefox` separately,
+      resolving every manifest path, every `.html` opened by string from the
+      source, and the four things the Firefox manifest rewrite could get wrong.
+      Both failure modes provoked before it was trusted. It caught a real stale
+      `dist-firefox` on its first honest run.
+- [x] **The settings page — and the gear that opened nothing.** DECISIONS.md
+      251. The rebuilt popup's gear called `openOptionsPage` with no options
+      page declared in either manifest, on both browsers, silently. Fixed, and
+      the page also makes **FR-14 reachable by a person** rather than only from
+      an extension console — along with both inference overrides, which is what
+      C3 below needed a console for.
+- [x] **Mozilla's own linter passes with zero errors.** DECISIONS.md 253.
+      `npm run lint:firefox` runs `web-ext lint` — the tool AMO review uses —
+      against `dist-firefox`. The Firefox build would pass validation as
+      submitted. The one warning that was a real requirement is fixed:
+      `data_collection_permissions: ["none"]`, enforced by `check-build.mjs`.
+      The remaining ten are triaged in 253 rather than silenced — four are
+      Chrome-only APIs sitting unreachable in a shared bundle, four are
+      third-party `eval` in Tesseract and ORT, two are React internals now
+      pinned by a test.
+- [ ] **Run the full fixture set on both browsers.** Six screens now, not five.
+      Runbook Session B, which is rewritten: Firefox's pipeline was proven on
+      2026-09-17, but **the entire popup, the consent gate, the audit panel,
+      the scan card, the settings page and the corpus panel all arrived after
+      that date and have never run there.** The session is no longer "does
+      Firefox work" but "does the client we have now work there".
 
 **UN-PARKED — DECISIONS.md 215 supersedes 208.** 208 parked this by weighing a
 threading redesign against T2.2 sitting at 20% with no numbers at all. Both
@@ -585,6 +611,38 @@ protocol and the audit are done; the rows are not.
 
 ---
 
+## The near deadline: a college national hackathon, 25-26 September
+
+Written down because it existed only in conversation, which is not a place a
+plan survives. **SIH work is postponed to after 27 September** — the items
+below marked *SIH evidence* are not dropped, they are out of scope until then.
+
+The event is 30 hours and the format is build-on-site, but a pre-built project
+is allowed and that is what we are bringing: **fully built, deployable, not a
+demo shell.** The on-site hours go to polish, not to construction.
+
+**Target: complete by 23 September.**
+
+| Day | What has to be true by the end of it |
+|---|---|
+| **21 Sep** | The new popup loaded and judged in Chrome. All five fixtures smoke-tested on the current build. **The segmentation change measured or reverted** — see below |
+| **22 Sep** | Both model paths proven live for the first time: an OpenRouter key and a real call, and `ollama pull qwen2.5vl:7b` with one offline run |
+| **23 Sep** | README and deck current, judge Q&A said out loud, one full rehearsal, backup video recorded |
+
+**The one measurement actually blocking a claim** is the PSM 11 segmentation
+change (DECISIONS.md 238). It is built, shipped and unmeasured. Re-scan the
+same ten pages and read DOM coverage against **22.2% pooled** — not against one
+page, whose noise floor is three points (230) against a real spread of 4.4x
+(236). If it does not move it, revert it and stop spending on OCR input
+parameters altogether: resolution (212), encoding (230) and segmentation (238)
+will all have been tried.
+
+**Deferred to after 27 September, SIH evidence only:** the 20-site sweep beyond
+the nine rows recorded, task types beyond login, Firefox resource figures and
+its idle-disposal window, the full fixture set on both browsers, a second
+machine, face pixel truth, the CPU fallback under `forceInferenceHost:
+'worker'`, and Edge verification.
+
 ## Popup rebuild — carried across, and not
 
 The popup is React + Tailwind following a supplied reference (DECISIONS.md
@@ -592,11 +650,37 @@ The popup is React + Tailwind following a supplied reference (DECISIONS.md
 record. **Not yet carried across, named rather than dropped** (DECISIONS.md
 244):
 
-- [ ] **The `SHIELD_DEV` element-map export.** The only way the benchmark
-      corpus grows, and DECISIONS.md 183 is about this panel's gate failing in
-      a way that read as working — so it is restored carefully or not at all.
-- [ ] The audit panel — every pass Shield has made, as counts
-- [ ] The force-CPU toggle on the build line, which proves the WASM fallback
+- [x] **The `SHIELD_DEV` element-map export — restored, and the gate is now
+      checked rather than argued.** DECISIONS.md 245, 246.
+      `components/CorpusCapture.tsx`, gated by a compile-time ternary in
+      App.tsx. `tools/check-dev-gate.mjs` greps the built bundle after every
+      build and fails **in both directions** — absent from a normal build,
+      present under `SHIELD_DEV=1` — because a gate that silently removed the
+      panel from dev builds would stop the corpus growing unnoticed. Both
+      failures were provoked deliberately; a check nobody has watched fail is
+      not evidence. `build:firefox` checks `dist-firefox` by name rather than
+      inheriting the Chrome check through a copy.
+      **The old test had rotted.** It guarded `popup.ts`, which stopped being a
+      build entry at the React rebuild, and went on passing while the live
+      popup's gate was checked by nothing. Retargeted, 8 tests.
+- [x] **The audit panel — restored.** `components/Audit.tsx`. Recent passes with
+      date, scope and sent/not-sent per row, export and clear. Storage is read
+      when the panel opens, not when the popup mounts.
+- [x] **The force-CPU toggle — restored.** The build line in the masthead is
+      the control again, and says `forced: wasm` when a backend is pinned. It
+      sends `RESTART_BACKEND`, without which the override writes a setting and
+      changes nothing until the next reload.
+- [x] **Three more losses found and fixed that the first sweep missed.**
+      DECISIONS.md 247. `state.fellBack` (a PRD Section 20 *requirement* — the
+      user must be told when inference fell back to CPU); `scan.truncated` and
+      `scan.stops` (a truncated scan was reporting a bare count, and the stop
+      cap has already bitten mygov.in at 55% of the document); and
+      `MSG.SCAN_STATUS` (findings live in the page and outlive the worker, so
+      a popup reopened after eviction was reporting no protection while the
+      protection was still in place).
+- [x] **`tests/popup-parity.test.ts` — the check that should have preceded the
+      port.** Every message the popup must send, every setting only it can
+      change, every state field it must surface. Proved by breaking it.
 
 ## Tier 3 — makes the case
 
@@ -693,16 +777,49 @@ The first three need no browser and can start now.
       precision collapses 69.2% → 27.3% and crops rise to 2.54x — pure cost.
       Above it recall falls at once, 90% → 80% → 70%. The floor was *derived*
       from Aadhaar legibility; it is now *measured*, which is a different claim.
-- [~] **Consent preview — decision logic built, UI wiring next.**
-      DECISIONS.md 240. `lib/consent.ts`, 11 tests. **Exactly one outcome
-      transmits**; a decline, a timeout, a closed popup, a malformed reply and
-      a stale approval all refuse. Off by default, because the invariant is
-      enforced by three mechanisms that ask nobody's permission and shipping it
-      on would imply otherwise. Summary carries counts and categories only —
-      placeholders counted from the manifest, so a page containing `[EMAIL]`
-      in its own text cannot inflate it. **Remaining: the popup surface and the
-      pause in `runStep` between the seal and transport.**
-- [ ] **Profile-edit fixture.** Face + name/email + Save, in one acting loop
+- [x] **Consent preview — built, wired and tested end to end.**
+      DECISIONS.md 240, 248. `lib/consent.ts` (11 tests) decides what an outcome
+      means; `background/consent-gate.ts` (11 tests) holds the run open;
+      `popup/components/Consent.tsx` is the surface; `settings.requireConsent`
+      is the switch, off by default.
+      **The pause sits between the seal and the wire** — after
+      `buildSanitizedPayload`, before `send` — because that is the only moment
+      at which there is a real payload to show. `awaiting-consent` is
+      deliberately NOT in `STAGE_ORDER`: it is a pause, not a stage, and adding
+      it would let the order guard be satisfied by having asked.
+      **Exactly one outcome transmits.** Decline, timeout, stale id, a second
+      ask underneath the first, a cancelled run and worker eviction mid-wait all
+      land where `mayTransmit` refuses. The timeout is tested with fake timers
+      rather than skipped, because it is the likeliest path in real use — a
+      popup opened, ignored and closed — and "it probably times out" is the kind
+      of assumption this project keeps finding to be wrong.
+- [x] **DEMO_SCRIPT.md brought current.** DECISIONS.md 249. It told judges in
+      two places that the image-OCR pass was "deliberately deferred"; it has
+      been built since, so the rehearsed answer was one we would have delivered
+      confidently and wrongly. Corrected to what the evidence supports — the
+      capability exists, the adversarial fixture has NOT been re-run since, and
+      the script now says exactly that rather than claiming the case is caught.
+      Added: the whole-page scan and its record (absent entirely, despite being
+      the answer to the most obvious question about a one-screen agent), the
+      audit log, and the two limits that go with a scan.
+- [x] **Profile-edit fixture — built, and its DOM half already verified.**
+      DECISIONS.md 250. `test-screens/06-profile-edit.html`, TESTING.md Screen
+      6. The only page where the visual model, the DOM rules and the reasoner
+      must all work in one pass — Screens 1 and 2 have forms and no face,
+      Screen 3 has a face and the reasoner is meant to decline.
+      **Three claims tested nowhere else:** hiding a field's value must not
+      prevent acting on it (the action target's value IS redacted); detection
+      must fire again on the re-capture, which no unit test can catch because
+      each runs one pass; and the repeat guard must hold against a real Save
+      button.
+      **The DOM predictions were checked before any browser run** —
+      `tests/profile-edit-fixture.test.ts`, 9 assertions, all correct including
+      the one written down as uncertain: the default-to-hide rule does reach
+      `type="date"` inputs. What is left for Chrome is the face, the action
+      sequence, the re-capture and the repeat guard, so a failed run now points
+      at one of those rather than at a rule decidable in a second.
+      **Needs `test-screens/face-a.jpg`**, which is not and must not be
+      committed.
 - [x] **Configurable redaction aggressiveness — built.** FR-14, DECISIONS.md
       234. `redactionLevel` in settings, 12 tests. **The range only goes up:**
       `standard` is the floor, not the middle, because a lax end would violate

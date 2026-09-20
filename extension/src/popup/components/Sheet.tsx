@@ -7,7 +7,7 @@
  * nesting: window, then card, then the controls inside it.
  */
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 /**
  * A card, optionally with a tab protruding from its top edge and a violet
@@ -22,11 +22,20 @@ export function Card({
   children,
   tab,
   live = false,
+  caution = false,
   className = '',
 }: {
   children: ReactNode;
   tab?: ReactNode;
   live?: boolean;
+  /**
+   * A dashed amber edge, for a surface that is not part of the product.
+   *
+   * Used by exactly one card — the development-build capture panel, which can
+   * write real field values to disk. Looking unlike everything around it is the
+   * point, not a style choice.
+   */
+  caution?: boolean;
   className?: string;
 }) {
   return (
@@ -40,9 +49,9 @@ export function Card({
       ) : null}
 
       <div
-        className={`bg-card border-edge rounded-card relative border px-3.5 py-3 ${
-          live ? 'pl-4' : ''
-        }`}
+        className={`bg-card rounded-card relative border px-3.5 py-3 ${
+          caution ? 'border-warn/40 border-dashed' : 'border-edge'
+        } ${live ? 'pl-4' : ''}`}
       >
         {live ? (
           <span
@@ -121,6 +130,59 @@ export function GhostButton({
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * A section that opens.
+ *
+ * The evidence surfaces are shut by default and cost something to render —
+ * the history reads storage, the capture panel talks to the page — so opening
+ * is what triggers the work rather than mounting. `onOpenChange` is how a
+ * panel learns it was closed, which for the capture panel is the moment a
+ * review stops being valid.
+ */
+export function Disclosure({
+  label,
+  openLabel,
+  onOpenChange,
+  children,
+}: {
+  label: string;
+  openLabel: string;
+  onOpenChange?: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          onOpenChange?.(next);
+        }}
+        className="hover:text-bright text-dim -mx-2 flex w-[calc(100%+1rem)] items-center gap-2 px-2 py-1 text-left text-[12px]"
+      >
+        <span>{open ? openLabel : label}</span>
+        <svg
+          viewBox="0 0 20 20"
+          className={`ml-auto size-3.5 shrink-0 ${open ? 'rotate-90' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m7.5 4.5 6 5.5-6 5.5" />
+        </svg>
+      </button>
+      {open ? <div className="mt-2">{children}</div> : null}
+    </>
   );
 }
 

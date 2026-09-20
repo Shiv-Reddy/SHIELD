@@ -123,18 +123,72 @@ it just failed on** — that stops the sweep being a measurement.
 
 ---
 
-## Session B — Firefox (~40 min)
+## Session B — Firefox, end to end (~60 min)
 
-**Closes:** T2.2's Firefox figures, and unblocks the disposal-window decision
-that is currently waiting on them (DECISIONS.md 222).
+**Closes:** T2.2's Firefox figures, the disposal-window decision waiting on
+them (DECISIONS.md 222), and the fixture set on Firefox.
+
+**Read this first.** Firefox has already been proven once, on 2026-09-17: event
+page, content-script injection, the DOM map, a Worker running ORT on **WebGPU**,
+the CPU fallback, and a full task end to end at **364ms warm** (DECISIONS.md
+220, 222). None of that is in question.
+
+**What has never run on Firefox is everything built since.** The entire popup
+was rebuilt in React and Tailwind, and the consent gate, audit panel, scan card,
+settings page, corpus panel, scan timing, PSM 11 segmentation and redaction
+levels all arrived after that date. So this session is not "does Firefox work" —
+it is "does the client we have now work there", which is a different question
+with a much larger surface.
 
 ```bash
 cd extension
-npm run build:firefox        # produces dist-firefox/
+npm run build:firefox        # produces dist-firefox/, and checks it
 ```
+
+```bash
+npm run lint:firefox         # optional, needs network — Mozilla's own linter
+```
+
+That build now refuses to finish if the Firefox manifest is wrong — a background
+key still naming a service worker, the `offscreen` permission left in, a missing
+gecko id, or any page referenced by name that is not in the output. **If it
+prints two `manifest consistent` lines, the packaging is not what is broken.**
 
 Firefox: `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** →
 pick `dist-firefox/manifest.json`.
+
+### B1. The new surfaces, before any measurement (~15 min)
+
+Open the popup. Work down it and note anything that looks wrong — this is the
+part no test can reach, and the part most likely to be broken.
+
+| Check | What right looks like |
+|---|---|
+| The popup renders at all | Dark blue-black, white shield mark, one gradient button. A blank or unstyled popup means the Tailwind stylesheet did not load — say so, it is a CSP problem and worth knowing immediately |
+| Tabs on cards | The small labels protrude from the **top edge** of a card, half outside it. If they are clipped, Firefox is applying an overflow rule Chrome is not |
+| The gear, top right | Opens the **settings page in a tab**. This is brand new and has never run anywhere — it did not exist until today |
+| On the settings page | Four redaction levels with pixel floors and measured percentages; the endpoint; two inference dropdowns. Change the redaction level and reopen — it should have stuck |
+| "Scan the whole page" | Progress counts up, then a sentence naming what was found and across how many screens |
+| "See what it looked at" | Opens the scan record in a tab, with redacted screenshots |
+| "What was sent" | Opens the payload inspector |
+| The build line, bottom left of the masthead | Click it. It should read `forced: wasm`, and the next run should use CPU |
+
+### B2. The consent gate, which has never run on either browser
+
+In the popup, tick **"Ask before sending"**. Then run any task.
+
+1. A card should appear **before** anything is transmitted, naming counts, the
+   frame size and the endpoint.
+2. Press **Don't send**. The run must stop and the console must say
+   `[shield] not transmitted — declined`.
+3. Run again, approve, and confirm it proceeds.
+4. **Run again and just close the popup.** Wait a minute. It must time out and
+   send nothing — `[shield] not transmitted — timed-out`. This is the path that
+   matters most and the one nobody would think to try.
+
+Untick it afterwards. It is off by default for a reason (DECISIONS.md 240).
+
+### B3. The measurements (~25 min)
 
 1. Run **docs/RESOURCES.md's protocol**, unchanged, on Firefox. Six readings,
    both processes recorded separately, reading 3 repeated five times. Firefox's
@@ -142,12 +196,20 @@ pick `dist-firefox/manifest.json`.
 2. **The reading that matters most is #2 — the resident cost of a built
    session.** The disposal window cannot be chosen until that number exists: a
    10s rebuild is only worth avoiding if the resident session turns out cheap.
-3. While you are there, run the **five test screens** from `test-screens/` on
-   Firefox and record pass/fail per screen.
+3. Run the **six test screens** from `test-screens/` on Firefox, pass/fail each.
+   Screen 6 is new and needs `face-a.jpg` beside it.
 
 **Expect the first run to take ~10s** for model init and shader compilation.
 That is one-time per session and not a per-frame cost (DECISIONS.md 222) — do
 not record it as latency.
+
+### What to bring back
+
+- The six resource readings, both processes.
+- Six pass/fail lines for the fixtures.
+- **Anything in B1 that looked wrong**, in your own words. A screenshot beats a
+  description. This is the half of the session that has no other source.
+- Whether B2's four consent steps behaved, especially step 4.
 
 ---
 

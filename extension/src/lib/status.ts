@@ -31,6 +31,17 @@ export const SHIELD_STATUSES = [
    * because it is not on that path at all.
    */
   'scanning',
+  /**
+   * Sealed, verified, and waiting for the user to say whether it may go.
+   *
+   * Deliberately absent from `STAGE_ORDER`, like `scanning` and for a related
+   * reason: this is a PAUSE between two stages, not a stage of its own. Adding
+   * it to the sequence would mean the order guard could be satisfied by having
+   * asked — which would make consent part of what proves the payload safe. It
+   * is not. The phantom type, the stage guard and the zero-leak sweep do that,
+   * and they ask nobody's permission (DECISIONS.md 240).
+   */
+  'awaiting-consent',
 ] as const;
 
 export type ShieldStatus = (typeof SHIELD_STATUSES)[number];
@@ -47,6 +58,7 @@ export const STATUS_LABEL: Record<ShieldStatus, string> = {
   done: 'Done',
   error: 'Error',
   scanning: 'Scanning the page',
+  'awaiting-consent': 'Waiting for you',
 };
 
 /**

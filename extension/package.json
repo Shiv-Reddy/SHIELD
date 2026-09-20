@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "icons": "node tools/make-icons.mjs",
-    "build": "npm run verify-models && npm run ort-assets && npm run ocr-assets && npm run icons && vite build && vite build --config vite.content.config.ts",
+    "build": "npm run verify-models && npm run ort-assets && npm run ocr-assets && npm run icons && vite build && vite build --config vite.content.config.ts && node tools/check-dev-gate.mjs && node tools/check-build.mjs dist",
     "watch": "npm run icons && vite build --watch",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"import('node:fs').then(f=>f.rmSync('dist',{recursive:true,force:true}))\"",
@@ -16,7 +16,8 @@
     "benchmark": "node --import ./tools/test-setup.mjs benchmark/run.ts",
     "check": "npm run test && tsc --noEmit && npm run build",
     "ocr-assets": "node tools/copy-ocr-assets.mjs",
-    "build:firefox": "npm run build && node tools/make-firefox-manifest.mjs"
+    "build:firefox": "npm run build && node tools/make-firefox-manifest.mjs && node tools/check-dev-gate.mjs dist-firefox && node tools/check-build.mjs dist-firefox",
+    "lint:firefox": "npx --yes web-ext@latest lint --source-dir dist-firefox --self-hosted"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

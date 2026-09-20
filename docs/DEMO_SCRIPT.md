@@ -96,7 +96,15 @@ length can be cut from the top.
    200. The obvious objection to running a model locally is that it must be
    slow; the answer is about a sixth of a second, measured every run rather than
    claimed.
-6. **The adversarial screen** (`05-adversarial.html`), if there is time. See the
+6. **The whole-page scan, and the record it leaves.** A run reads one screen and
+   says so. The scan walks the entire document, screen by screen, and transmits
+   *nothing* — it exists to cover a page rather than to act on one. "See what it
+   looked at" then opens a redacted picture of every screen examined, kept
+   locally. That is the only surface in this project that proves a pass happened
+   rather than reporting that it did, and it is worth showing even when nothing
+   was found: "Shield looked at all six screens and there was nothing to hide"
+   is a result.
+7. **The adversarial screen** (`05-adversarial.html`), if there is time. See the
    question below — it is stronger volunteered than extracted.
 
 ---
@@ -116,6 +124,31 @@ redacted as `other` rather than passed through. DOM signals are the primary
 detector for form fields because they are structural rather than a visual guess.
 We also built a screen specifically to make it fail — see below.
 
+**Q: "You only ever see one screen. What about the rest of the page?"**
+Correct, and Shield says so rather than leaving it to be discovered — every run
+reports how much of the document it actually examined, whether or not the page
+scrolls and whether or not anything was found. A boundary that only appears
+when it is bad is one nobody learns to look for.
+The whole-page scan is the answer for the rest: it walks the document screen by
+screen, and its findings are hidden on every subsequent run. **It transmits
+nothing at all**, which is why it can afford the expensive layer a 150ms run
+cannot — whole-frame OCR costs about 2.9 seconds per screen against a DOM walk's
+4.4ms, three orders of magnitude, and that gap is the whole reason the two paths
+exist separately.
+Two honest limits go with it. A scan's findings are a claim as of when it ran,
+so a page that reflows will drift — drift over-redacts, which is the safe
+direction, not a guarantee. And the scan has a stop cap; on a very long page it
+stops early and **says "stopped early" beside the count** rather than reporting
+a whole-page number it did not earn. That has already happened on a real
+government page at 55% of the document.
+
+**Q: "Can I see what it has done over time, not just this run?"**
+Yes — the popup keeps a log of every pass: when, what scope it claimed, how many
+of each category, and whether anything was transmitted. Categories, counts, rule
+names and timings only. No page content, no field values and no URLs, which is
+deliberate so the file can be handed to somebody else. It exports as JSON from
+the popup.
+
 **Q: "What happens if someone tries to trick your system?"**
 Open `test-screens/05-adversarial.html` and run it. Eight cases, with what we
 expected written down *before* the first run. Five are caught, including a
@@ -123,10 +156,19 @@ masked field with no `type="password"` and a field whose `autocomplete`
 attribute claims a nickname while it holds an email — where the more sensitive
 reading wins.
 
-**Two are missed, and we say so.** A person's name in ordinary prose cannot be
-separated from other capitalised words without a named-entity model we do not
-ship. An ID number rendered inside an image needs an OCR pass we deliberately
-deferred. Both are written into SECURITY_PRIVACY.md Section 4.1.
+**Two were missed at the last full run of this page, and we say so.** A person's
+name in ordinary prose cannot be separated from other capitalised words without
+a named-entity model we do not ship. An ID number rendered inside an image
+needed an OCR pass that did not exist at the time. Both are written into
+SECURITY_PRIVACY.md Section 4.1.
+
+**The second of those now has the pass it was missing.** Image OCR is built and
+confirmed reading images on real pages, and a scan reads each candidate image
+once and whole. What we have NOT done is re-run this fixture since, so the
+result quoted above is the last one actually measured rather than the one we
+expect. If asked directly: the capability exists, the fixture has not been
+re-measured, and we would rather say that than read a number off a hope. The
+figure to watch is the one in the file, and it will be the one we re-run.
 
 If pressed on why we did not simply fix them: tuning the rules until that page
 goes green would stop it measuring anything. A fixture you optimise against is
@@ -175,8 +217,10 @@ tampering, information disclosure and elevation of privilege for this specific
 architecture, including limits we have not solved. It was not an afterthought.
 
 **Q: "What would you do with more time?"**
-A phased roadmap: the deferred OCR pass, a wider PII taxonomy, testing against
-real third-party sites, formal security review, then Chrome Web Store. We
+A phased roadmap: a named-entity model so names in prose are detectable at all,
+a wider PII taxonomy, non-Latin OCR — `eng.traineddata` is all we ship, so a
+Devanagari page returns Latin-shaped guesses and we do not count them as
+evidence — then formal security review and the Chrome Web Store. We
 deliberately did not half-build any of it, and none of it is architecturally
 blocked.
 
