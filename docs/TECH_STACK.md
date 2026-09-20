@@ -17,6 +17,7 @@ overhead the hackathon timeline can't absorb.
 | Vision model | Targeted at what DOM cannot see (faces, pixel-baked text) rather than generic element detection — see DECISIONS.md |
 | Face detection | UltraFace version-RFB-320 (native ONNX, MIT, WIDERFACE-trained) |
 | OCR | Tesseract.js, run only on image-element crops — see DECISIONS.md |
+| Popup UI | React 19 + Tailwind 4, popup only. Nothing else in the client uses either, and neither reaches the pipeline (DECISIONS.md 241) |
 | Redaction rendering | Canvas API |
 | DOM scanning | Native JavaScript |
 

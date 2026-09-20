@@ -88,6 +88,7 @@ Read the relevant one before starting related work.
 | File | Holds |
 |---|---|
 | docs/TASKS.md | What is next. The driver. Read first, always |
+| docs/OPERATOR_RUNBOOK.md | Every task needing a browser, key or second machine — steps, and what to bring back |
 | docs/SESSION_LOG.md | Where the last session stopped |
 | docs/DECISIONS.md | Why every settled choice was made |
 | docs/PRD.md | Requirements, hackathon vs full scope |

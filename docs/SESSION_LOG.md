@@ -7,7 +7,7 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-16
+## Current state — 2026-09-20
 
 **Core is complete, and for the first time every one of the five scored metrics
 has a number against it.** Phases 1–3 closed. Every module A–G built and
@@ -15,21 +15,180 @@ verified in Chrome against the live backend.
 
 | Metric | Weight | Measured |
 |---|---|---|
-| 1 — visual context from screen | 25% | **18.6% agreement**, one real page |
+| 1 — visual context from screen | 25% | **18.4% agreement / 22.2% DOM coverage**, pooled over **10 real pages**, range 8.5–37.4% |
 | 2 — PII recall / precision | 20% | **83.5% / 83.5%**, 50 pages, 12 real |
 | 3 — redaction precision | 20% | **83.9%**, coverage 60.4% |
-| 4 — client resource use | 20% | **Scan 217MB, CPU ≤2.1%**, one machine |
-| 5 — end-to-end latency | 15% | **~135ms**, every stage inside budget |
+| 4 — client resource use | 20% | **Scan peak ~285MB, run ~144MB, CPU ≤1.1%**, Chrome, one machine |
+| 5 — end-to-end latency | 15% | **Chrome ~150ms, Firefox 364ms warm**, every stage inside budget |
 
 | Measure | Value |
 |---|---|
-| Client tests | 296 |
+| Client tests | 346 |
 | Reasoner checks | 82 |
 | Prompt checks | 53 |
 | One full pass | 27.4ms capture · 4.4ms DOM · 52.0ms inference · 40.2ms redaction · 10.5ms network |
 | Backend on an integrated-graphics laptop | **WebGPU**, 31.7ms inference |
 | CPU fallback, proved by self-test | 135ms init, 17ms inference |
 | Face detection | 6 of 8; reliable 110px+, marginal at 80px (0.312 vs 0.3) |
+
+**Done 2026-09-20 — three scan-path changes built, then all three measured in
+one Chrome run. Two produced results; one of those was a null, and the null is
+the most useful thing in this entry.**
+
+| | Built | Measured |
+|---|---|---|
+| PNG scan capture | yes | **zero effect — reverted** (DECISIONS.md 230) |
+| One read per image | yes | did not fire: no image candidates on this page |
+| Scan profile | yes | **82% of a scan is whole-frame OCR** (DECISIONS.md 231) |
+
+- **PNG on the scan path — tried and reverted on its own measurement**
+  (DECISIONS.md 227, 230). 29 argued JPEG ringing costs recognition; 70 only
+  ever reverted that on latency. Tried properly for the first time, and the
+  first stop came back **identical to the JPEG run, item for item — 12 agreed,
+  9 pixel-only, 35 markup-only, both times.** Not close: the same three
+  integers. PNG was not even expensive here (112–140KB, smaller than the JPEG
+  it replaced, 54ms capture), so 70's 1511KB figure was a photograph-heavy
+  page rather than PNG as such. Reverted because a scan holds every frame until
+  the walk ends, which on a photo-heavy page is a metric-4 cost for a benefit
+  now measured at zero. The seam stays, both branches equal on purpose.
+- **The page figures moved down, and the reason matters more than the figures.**
+  Agreement 22.8% → 20.3%, DOM coverage 31.6% → **28.1%**. Every bit of that is
+  the second stop; the first did not shift by one item. An effect that is
+  exactly zero at one stop is not an effect. **So what this run actually
+  measured is the noise floor of a single-page agreement figure — about three
+  points** — which is the bar every future "metric 1 improved" claim has to
+  clear, and is most of the distance between the only two readings we have.
+- **Metric 1's input has now been exhausted as a lever.** Resolution was tried
+  (212: four points). Encoding has been tried (zero). Markup-only is still 41
+  of 57. The remaining candidate is the recognition engine itself, not the
+  pixels handed to it, and nothing further should be spent on the input.
+- **A scan reads each image once, whole** (DECISIONS.md 228). Stops overlap by
+  25%, so the same picture was going to OCR two or three times for an identical
+  answer, and OCR is the most expensive thing a stop does. Only *successful*
+  whole reads are remembered — a failed read is retried, and there is a test
+  for that specific case, because "attempted" looking like "read" is the one
+  bug in this change that would be a privacy failure rather than a lost
+  optimisation. Clipped images are left to a stop that sees them entire or to
+  `unexaminedImages`, which covers them whole at full confidence; that is a
+  stronger outcome than a half-read returning clean.
+- **A scan is profiled, with no budgets** (DECISIONS.md 229). `scan-timing.ts`
+  reports per-stage totals, call counts and per-call cost, shares taken against
+  wall-clock with the unwrapped remainder printed rather than renormalised
+  away. 9 tests, written against the instrument rather than against the scan —
+  lesson 12, applied before the fact.
+- **The first profile, and it redirected the work** (DECISIONS.md 231). 7.0s
+  over two stops, 3.5s/stop: **`screen text` 5.7s — 82%, 2.9s per stop.**
+  Settle 914ms (13%, our own 450ms constant), face inference 108ms, capture
+  108ms, record 68ms, DOM walk 10ms, scroll 1ms. Unaccounted 10ms, so the
+  profile is 99.9% complete and can be read as one.
+  **`image OCR 0ms`.** The scan-speed change was aimed at image OCR on the
+  reasoning that overlapping stops re-read the same pictures — and a logged-out
+  login form has no image candidates at all, so it did not fire and is neither
+  confirmed nor refuted. It will matter on a page with documents on it. It was
+  going to be optimised on faith for as long as nobody measured.
+  **The same stage is the cost and the ceiling.** Whole-frame OCR is 82% of the
+  scan's time *and* the 41 markup-only items — the largest latency item and the
+  binding constraint on a metric worth 25%, in one component. Everything else
+  totals 18% of a path that transmits nothing. Work aimed there counts twice;
+  work aimed anywhere else in this profile cannot pay.
+
+**The naive-baseline comparison is built and measured** (DECISIONS.md 232) —
+the strongest judge-facing artefact the project did not have, and the thing
+that makes 60.4% coverage readable instead of alarming.
+
+| Strategy | Recall | Precision | Coverage | Redaction precision | Area | Context kept |
+|---|---|---|---|---|---|---|
+| No redaction | 0.0% | 100.0% | 0.0% | 100.0% | 0.00x | 100.0% |
+| Blanket blur | 100.0% | 16.0% | **100.0%** | 32.9% | 3.04x | **0.0%** |
+| Hide every field | 77.1% | 75.3% | 56.2% | 77.1% | 0.73x | 95.2% |
+| Hide every value | **94.1%** | 28.8% | 67.5% | 39.4% | 1.71x | 55.6% |
+| **Shield** | 83.5% | 83.5% | 60.4% | **83.9%** | 0.72x | **96.9%** |
+
+**Two of the four beat Shield on a headline number, and the table says so in
+its own first paragraph.** Blanket blur takes a perfect coverage score by
+painting 3.04x the area needed and destroying 891 of 891 non-sensitive
+elements. Hide-every-value takes 94.1% recall and pays 55 points of precision
+and nearly half the page. Hide-every-field is the only one Shield beats
+outright. **Shield is the only row above 80% on recall, precision and redaction
+precision simultaneously while keeping the page usable.**
+
+The column doing the work is **Context kept** — non-sensitive elements still
+readable. It is the only measure under which hiding everything scores zero, and
+it answers the question no detection metric asks: can the agent still act on
+what is left. `tests/baselines.test.ts` asserts that blanket blur still beats
+Shield on coverage, deliberately — if Shield ever wins every column the
+baselines have been weakened, not the detector improved. That is lesson 12
+applied to a persuasion artefact, which is where it matters most.
+
+It also prices the recall gap honestly: hide-every-value reaching 94.1% says
+the ~11 points Shield is missing are reachable by aggression, at a cost of 55
+points of precision. DECISIONS.md 224's target is a real frontier, and the way
+to it is better detection rather than a looser rule.
+
+**The latency/accuracy trade-off study is built and measured** (DECISIONS.md
+233) — and the study the PS's phrasing implies turned out not to be available.
+A confidence-threshold sweep is the obvious shape, and **Shield has no
+confidence threshold; adding one to draw a curve would be a policy violation**
+(`dom-rules.ts` header, SECURITY_PRIVACY.md §4). The two real knobs are
+reported instead.
+
+**Which layers run — the span is three orders of magnitude:**
+
+| Layer | Cost | Labels owned | Found |
+|---|---|---|---|
+| DOM rules | 4.4ms | 160 | 142 |
+| Face detection | 34ms | 3 | needs a browser |
+| Image OCR | *unmeasured* | 10 | needs a browser |
+| Whole-frame text | 2900ms/stop | 0 | needs a browser |
+
+The DOM walk owns 160 of 170 labels for 4.4ms; whole-frame recognition costs
+2.9s a stop and owns none, because its output is agreement (metric 1) not
+recall, and crediting it here would count metric 1 twice under two names.
+**That is the quantitative case for DECISIONS.md 188's run/scan split.** Every
+cost is quoted from a recorded run with its source printed; an unmeasured one
+stays null and prints as *unmeasured*, and the cumulative column stops at it
+rather than producing a total with a term silently missing.
+
+**The image size floor sits exactly on the knee, and nothing said so before.**
+Below the shipped 140x80, recall holds flat at 90% all the way down to 40px
+while precision collapses 69.2% → 27.3% and the crop count rises to 2.54x —
+pure cost, no gain. Above it recall falls immediately, 90% → 80% → 70%. That
+floor was *derived* from the width a twelve-digit Aadhaar number needs to stay
+legible; it is now *measured*, which is a different claim and the reason the
+sweep was worth running. The sweep passes the floor into the shipped
+`imageCandidates` rather than reimplementing its geometry, with a test that
+fails if it ever stops doing so.
+
+**FR-14 is built, and the interesting part is what it refuses to do**
+(DECISIONS.md 234). "Configurable redaction aggressiveness" reads as a slider
+with a lax end, and building one would violate CLAUDE.md's uncertainty rule and
+`dom-rules.ts`'s refusal to gate redaction on confidence. **So the range only
+goes up: `standard` is the floor of the setting, not its middle**, and the
+honest answer to "can a user reduce redaction?" is no, with a reason that can
+be pointed at.
+
+What is configurable is the part that was always a judgement call — the
+geometric image floor. `standard` 140x80, `thorough` 100x57, `maximum` 40x23,
+each a measured row from the sweep above: 1.00x / 1.23x / 2.54x the OCR crops
+at 69.2% / 56.3% / 27.3% precision. A test pins the three pairs to the sweep,
+so a floor edited without re-running the measurement fails rather than quietly
+shipping a guess. `thorough` buys nothing on the current 50 pages and is
+offered anyway with that stated — 50 pages is not the world.
+
+Every failure direction lands on `standard` or above: unrecognised value,
+corrupted value, missing key, non-string, and a caller that forgets the
+argument. One test each, because a setting whose broken state loosens redaction
+would be worse than no setting. One incidental fix came out of it: `runStep`
+read settings twice across several awaits, so a setting changed in between
+would have produced a step that detected at one level and reported another.
+
+342 client tests pass, `tsc --noEmit` clean, both builds pass, `npm run
+benchmark` regenerates docs/BENCHMARK.md with both studies in it, and Chrome's
+bundle graph is re-verified unchanged: `dist/service-worker.js` still statically
+imports six chunks and reaches `dispatch` and `inference-session` only through
+the dynamic preload table.
+
+---
 
 **Benchmark — the corpus grew from 4 pages to 38 and every number moved:**
 
@@ -134,57 +293,107 @@ every run for as long as it is true.
 
 ## Next session starts with
 
-**Session 34 closed three of the six items below by running them.** What is
-left splits cleanly: one thing nobody can do without Firefox, and a pile of
-corpus work that needs only patience.
+Priorities and targets live in TASKS.md ("Top three by impact", "Targets").
+Firefox is closed as a port (DECISIONS.md 220–222); what is left there is
+measurement.
 
-1. **Load the extension in Firefox and run one task end to end.** The largest
-   single unknown in the project, and the one thing no amount of building
-   substitutes for. Everything is built (DECISIONS.md 219): `dist-firefox/`
-   carries every chunk, the event page owns the vision path in-process, and
-   inference runs on a dedicated Worker. **None of it has ever executed on
-   Firefox.** 207 is the standing lesson about precisely this gap — the last
-   architecture reasoned through without running it hung the browser.
-   Watch three things: whether ORT selects WebGPU there (`SessionFacts.webgpuError`
-   now carries the reason when it does not, which 208 could never capture);
-   whether the event page stays responsive *during* inference, which is the
-   entire point of the Worker; and whether the idle timer actually releases the
-   session after 120s.
-2. **Nine more pages for the agreement rate.** 22.8% is one page. One page is a
-   data point, not a rate, and this is 25% of the score.
-3. **The generalisation sweep's 20 sites.** The protocol is written
-   (docs/GENERALISATION.md) and the table is committed empty. Observe-only,
-   logged out, sensitive list written down *before* reading Shield's output.
-   Start with the regional-language portal — the audit predicts the rule path
-   declines there, and a predicted failure that does not happen is as
-   interesting as one that does.
-4. **Face pixel truth**, the last open box in T1.1. Needs a recorded Chrome run
-   — the boxes cannot be committed because `face-a.jpg` and `face-b.png` are
-   not.
-5. **The settled-after figure for memory.** Five scans established it does not
-   climb, which was the leak question and is now answered. The protocol also
-   asks for the value the footprint *returns to*, and only the peak was taken.
-   It does not change the verdict; it is the difference between a footprint
-   that recovers and one that merely stops growing.
+**Session A of the runbook is done — nine pages scanned, and metric 1 fell.**
+Pooled over ten pages: **agreement 18.4%, DOM coverage 22.2%** (762 agreed, 709
+pixel-only, 2678 markup-only), against the 31.6% the single income-tax page had
+been carrying 25% of the score on. **It was flattering by nine points**, which
+is lesson 7 repeating on a different metric. Per page the coverage runs 8.5% to
+37.4% — a 4.4x spread — with a median of 21.6% a single point from the pooled
+figure, so the number is not an artefact of one enormous page. Rows and failure
+modes in docs/GENERALISATION.md §3; reasoning in DECISIONS.md 236–237.
 
-**Closed this session, with numbers rather than reasoning:** the upscale
-after-measurement (18.6% -> 22.8%), the five-scan memory test (not a leak; the
-217MB -> ~285MB rise is the upscale's canvas, and the arithmetic matches), and
-the Chrome host comparison (WebGPU survives in the worker; Chrome keeps the
-document host anyway — DECISIONS.md 218).
+**Predictions scored 2 right, 2 wrong, 1 half**, which is the reason for
+writing them down first. Right: Maps is overwhelmingly pixel-only (4 agreed
+against 42) and NSE's dense numerals are the worst read (785 markup-only).
+Wrong: GitHub's dark low-contrast theme was predicted to hurt and is the best
+page on the list at 37.4%; Apple's large display type was predicted to read
+near-perfectly and lands mid-table at 18.6%, its text being mostly baked into
+images.
 
-**Two limits found by reading the source, not running it** (T2.3, audit):
-submit and consent wording is English-only, so the no-key rule path declines
-rather than acting on a Devanagari portal; and checkbox state crosses the trust
-boundary as the two literal strings `checked` / `unchecked`, so a change on one
-side breaks consent handling on the other silently. Neither is fixed.
+**Two limits found that no test could have.** A Devanagari page returned 143
+pixel-only regions with only `eng.traineddata` shipped — Latin-shaped guesses
+at Devanagari glyphs, failing towards over-redaction, which is safe and is not
+the same as correct. It inflates exactly the column metric 1 uses to argue the
+pixel layer earns its place, so **a pixel-only count on a non-Latin page is not
+evidence**. And `MAX_SCAN_STOPS` bit a real page for the first time: mygov.in
+is 15950px and the scan examined 8744 of them, 55%, and said so in three
+separate places rather than reporting a whole-page verdict with a hole in it.
 
-**Parked deliberately:** Firefox (DECISIONS.md 207–208). Everything up to
-inference works there; what is left is a threading redesign on a browser that
-is not the demo.
+**Two things confirmed.** DECISIONS.md 231's profile holds across nine more
+pages — whole-frame OCR is 49–90% of a scan's wall-clock, ~72% on average. And
+228's image-OCR skipping is firing on real pages, which the income-tax login
+could never have shown because it has no image candidates at all.
 
-**Needs a key, not a design:** T1.3's last two boxes — one live call proving
-the model uses the picture, and one `ollama pull` proving the offline claim.
+**Two changes built on the back of that, neither yet measured.**
+
+- **The whole frame is now read as sparse text** (DECISIONS.md 238). Tesseract
+  defaults to PSM 3 — full page layout analysis, built for scanned documents,
+  which hunts for columns and a reading order and **discards regions as
+  non-text before recognition runs**. A browser viewport has no such structure,
+  and that mechanism produces exactly the markup-only symptom that is metric
+  1's only failing row. PSM 11 is sparse text, no layout analysis. **A crop
+  keeps PSM 3** — a photographed card genuinely is a document, and metric 3's
+  pixel figures must not be disturbed while chasing metric 1. What is claimed
+  is a plausible mechanism, not a result: 230's encoding hypothesis was at
+  least as reasonable and bought exactly zero.
+- **A scan now prints what it found, not only how many** (DECISIONS.md 239).
+  The run path has had a per-detection table since Module B; the path whose
+  purpose is answering "what is on ALL of this page" could report `29
+  finding(s)` and nothing about any of them. That is precisely why the sweep's
+  Detect column was unfillable from a console. Positions print in document
+  coordinates, because a scan's findings outlive the scroll they were found at.
+
+**Steps for every item below, and the exact lines to bring back, are in
+docs/OPERATOR_RUNBOOK.md** (DECISIONS.md 235) — grouped into five sittings.
+Session A merges the sweep with metric 1's missing pages, which were being
+planned as two sittings and are one.
+
+**Needs a human at a browser:**
+
+1. **The remaining eleven sweep sites**, for T2.3's detection rows — the nine
+   above answered metric 1 and left the Detect column blank, because the
+   sensitive list was not written down first. **Those nine need re-running for
+   detection, or eleven fresh sites need it done properly.** Scoring detection
+   against findings already read is the one thing the protocol forbids.
+2. **The generalisation sweep's 20 sites.** Protocol written
+   (docs/GENERALISATION.md), table committed empty. Observe-only, logged out,
+   sensitive list written down *before* reading Shield's output. Start with the
+   regional-language portal — the audit predicts the rule path declines there,
+   and a predicted failure that does not happen is as interesting as one that does.
+3. **Firefox resource figures.** The task-manager protocol in docs/RESOURCES.md,
+   run on Firefox. Metric 4 is 20% and Firefox is unmeasured; it also gates the
+   idle-disposal window, which cannot be chosen until a resident Firefox
+   session has a cost (DECISIONS.md 222).
+4. **Face pixel truth** (T1.1) and **the settled-after memory figure** (T2.2).
+   Both need a recorded Chrome run; the face boxes cannot be committed because
+   `face-a.jpg` and `face-b.png` are not.
+5. **Re-prove the Chrome CPU fallback under `forceInferenceHost: 'worker'`**,
+   and **run the full fixture set on both browsers**. The cached verdict would
+   have masked 221 under the worker host.
+6. **A scan of any page with an image on it**, to confirm the image-OCR
+   skipping fires at all. The login form had no image candidates, so
+   `image OCR 0ms` is not evidence either way. Look for
+   `image OCR … (n skipped — already read whole or clipped)`.
+
+**Startable without a browser:**
+
+- **The naive-baseline comparison** (Tier 3) — blind blur vs semantic
+  placeholders, measured. What makes coverage 60.4% readable (DECISIONS.md 225)
+  and the strongest judge-facing differentiator not yet built. This is the next
+  one to start.
+- **The latency/accuracy trade-off study** (Tier 3) — threshold vs recall vs
+  milliseconds, as a curve. The PS asks for the balance explicitly.
+- The PNG scan capture, scan speed and scan latency instrumentation are now
+  **built** (DECISIONS.md 227–229). What each owes is a figure, and the figures
+  need a browser — see item 6 below.
+
+**Needs a key and a disk, not a design:** T1.3's last two boxes — one live call
+proving the model uses the picture, and one `ollama pull` proving the offline
+claim.
 
 ---
 
@@ -226,6 +435,16 @@ the model uses the picture, and one `ollama pull` proving the offline claim.
 | 31 | Firefox port built, tried and parked; resource use measured for the first time; metric 1 measured at 18.6% on a real page |
 | 32 | Frame doubled before recognition, on the scan path, with a tested pixel ceiling; generalisation protocol written and the fixture-path audit done — none exists, and it found two limits the sweep would not have |
 | 33 | DECISIONS.md given a supersession convention and an index of what is no longer in force; Chrome-only reversed and Firefox un-parked (214–216); inference moved behind a two-host seam with the Worker built |
+| 34 | Upscale measured after the fact (18.6% -> 22.8%); five scans prove there is no leak; Chrome host comparison, document host kept |
+| 35 | Firefox runs the whole vision path end to end — WebGPU, 364ms warm, CPU fallback proved on both browsers; double-build race fixed |
+| 36 | Targets and reading rules set for all five metrics (DECISIONS.md 223–226); work re-ordered by impact |
+| 37 | Scan path given one read per image and a profile of its own; PNG capture tried and reverted on a clean null. 82% of a scan is whole-frame OCR, which is also metric 1's ceiling (DECISIONS.md 227–231) |
+| 38 | Shield measured against the four redactors it could have been — two beat it on a headline number and the table says so (DECISIONS.md 232) |
+| 39 | Latency/accuracy measured over the two knobs that exist rather than the threshold that does not; the image size floor is shown to sit on the knee (DECISIONS.md 233) |
+| 40 | FR-14 built as a range that only increases — `standard` is the floor, and the levels above it are priced from the sweep (DECISIONS.md 234) |
+| 41 | Operator runbook written: eleven browser-dependent items in five sittings, with steps and what to bring back (DECISIONS.md 235) |
+| 42 | Metric 1 measured on ten pages: 22.2% DOM coverage, not the 31.6% one page claimed. Devanagari and the 12-stop cap found as limits (DECISIONS.md 236–237) |
+| 43 | Segmentation mode split: the viewport read as sparse text, a crop still as a document. A scan prints its findings (DECISIONS.md 238–239) |
 
 ---
 
@@ -279,6 +498,15 @@ the model uses the picture, and one `ollama pull` proving the offline claim.
    flattering figure. RESOURCES.md states both and names the single test that
    would settle it, because a resource table is read as measured fact and a
    number chosen for how it sounds is worse than an admitted gap.
+13. **A single-page metric has a noise floor, and not knowing it makes every
+   claim about that metric unfalsifiable.** The same page, read twice, with a
+   change between the runs whose effect at the first stop was exactly zero,
+   still moved DOM coverage 31.6% → 28.1%. Three points of drift from nothing
+   at all. The 2.0x upscale was credited with four points on a single reading
+   of the same page (212) — a figure now barely outside the noise, and it was
+   never presented that way because nobody had measured the noise. The null
+   result was worth more than the change we were testing for.
+
 12. **A measuring instrument flatters itself unless tested.** The first scorer
    averaged per-page ratios and dropped pages that scored zero, so total failure
    on a page raised the corpus score. It was caught by a test written against

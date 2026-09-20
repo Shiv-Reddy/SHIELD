@@ -90,7 +90,7 @@ Status: ✅ built · ⬜ planned (see docs/TASKS.md) · ✂ deliberately cut
 | FR-11 | Redact flagged visual regions before transmission | ✅ |
 | FR-12 | Replace flagged DOM values with placeholder tokens | ✅ |
 | FR-13 | Semantic placeholders, not blind blackout | ✅ |
-| FR-14 | Configurable redaction aggressiveness | ⬜ Day 1 |
+| FR-14 | Configurable redaction aggressiveness | ✅ Range only increases; `standard` is the floor (DECISIONS.md 234) |
 
 ### Transport and cloud reasoning
 | ID | Requirement | Status |
