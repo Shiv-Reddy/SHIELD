@@ -1,0 +1,8 @@
+# Everything the image does not run. The venv especially: it holds Windows
+# binaries that would be both useless and large inside a Linux image.
+.venv/
+__pycache__/
+*.pyc
+test_*.py
+verify_vision_live.py
+README.md

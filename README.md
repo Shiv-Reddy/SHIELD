@@ -68,6 +68,7 @@ if you're new to the project:
 1. [PRD.md](./docs/PRD.md) — full product requirements (hackathon + full product scope)
 2. [ARCHITECTURE.md](./docs/ARCHITECTURE.md) — system design, data flow, components
 3. [SECURITY_PRIVACY.md](./docs/SECURITY_PRIVACY.md) — threat model, redaction policy, compliance notes
+   - [PRIVACY.md](./docs/PRIVACY.md) — the same commitments in plain words, written for whoever installs it
 4. [API_SPEC.md](./docs/API_SPEC.md) — client-server API contract
 5. [TECH_STACK.md](./docs/TECH_STACK.md) — technology choices, hackathon + production
 6. [TESTING.md](./docs/TESTING.md) — full test strategy and test screen definitions
@@ -265,6 +266,63 @@ criteria. The Zero-Leak Verification described in Section 6 is no longer a
 manual pre-demo procedure — it runs inside every request and refuses to transmit
 on a hit — but the demo laptop should still be run once before judging.
 
+## Packaging and Running It Elsewhere
+
+Shield is packaged as a product, not only as a checkout.
+
+### Distributable archives
+
+```bash
+cd extension
+npm run package
+```
+
+Builds both browsers, then writes `release/shield-chrome-<version>.zip`,
+`release/shield-firefox-<version>.zip` and a `SHA256SUMS` file. Both archives are
+the store upload format.
+
+The archives are verified by extraction rather than trusted: the shipped model
+and bundles come out byte-identical, and the model's hash matches the sha256
+pinned in `extension/tools/models.json`. **Packaging refuses outright if the
+build carries the developer corpus panel** — `check-dev-gate.mjs` guards this at
+build time, and it is checked again against the exact bytes about to be
+archived.
+
+One honest caveat: these are **not reproducible builds**. Each build embeds a
+timestamp so that a running extension can say which build it is, so two clean
+builds of the same commit have different checksums. The sums identify *a* build,
+not *the* build.
+
+### The server in a container
+
+```bash
+docker build -t shield-server ./server
+docker run --rm -p 127.0.0.1:8787:8787 shield-server
+```
+
+202MB, runs as a non-root user, and answers a real `/analyze` on the rule path in
+about 40ms. With no reasoning model configured it runs the rules, which drive the
+whole demo — that is the contingency, not a degraded mode.
+
+**Note the `127.0.0.1:` in the publish argument, and keep it.** This server has
+no authentication and no rate limit by design, because it was written to be
+reached from the same machine that runs the extension. Dropping the loopback
+prefix exposes an endpoint anyone who finds it can drive. See
+[server/Dockerfile](./server/Dockerfile), which says this at length.
+
+### Store readiness
+
+`npm run lint:firefox` runs `web-ext lint` — the validator AMO review itself
+uses — against the Firefox build: **0 errors, 0 notices, 13 warnings.** None of
+the warnings are in code we wrote; they come from Tesseract, ONNX Runtime and
+React, or are Chrome-only APIs the Firefox path never calls. One is a genuine
+open item, recorded in [DECISIONS.md](./docs/DECISIONS.md) 262: the manifest's
+`strict_min_version` of 121 predates the `data_collection_permissions` key it
+carries, which Firefox only understands from 140.
+
+Shield requests `activeTab`, `scripting`, `storage` and `offscreen` — no
+`<all_urls>`, and no access to sites you have not invoked it on.
+
 ## Production Deployment (Full Product, Not Required for Hackathon)
 
 If continuing this project beyond the hackathon, see:
@@ -307,5 +365,13 @@ Licence, both while being the stronger models for the job. See
 
 ## License
 
-Not yet chosen. The code is the team's own work; the third-party components
-above carry the licences listed.
+**Apache License 2.0** — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+
+Apache-2.0 rather than MIT for the express patent grant, on a project whose
+detection and redaction work is the part worth protecting. It is also the
+licence Qwen2.5-VL carries, so the stack reads as one consistent grant rather
+than a mixture that has to be explained.
+
+The third-party components above carry the licences listed, and NOTICE records
+each one with its source. The face-detection weights are pinned by sha256 in
+`extension/tools/models.json` and verified on every build.

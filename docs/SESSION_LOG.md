@@ -293,6 +293,56 @@ every run for as long as it is true.
 
 ## Next session starts with
 
+### 2026-09-21 (later) — packaged as a product; hosting declined
+
+**"Deploy" was two jobs and only one was worth doing before the 25th.**
+
+**Hosting the server: declined, deliberately.** The manifest's
+`host_permissions` is localhost-only, `DEFAULT_ENDPOINT` carries a written
+reason against pointing at a hosted endpoint, and the server has no auth and no
+rate limit because it was written to be reached from the same machine. Public,
+it is an open relay. More to the point, the demo currently survives the venue
+wifi dying — 260 proved the whole stack runs offline — and hosting trades that
+away. DECISIONS.md 262.
+
+**Chrome cannot be deployed before the event at all** — the Web Store is the
+only path and its review queue is not controllable. Firefox can: `lint:firefox`
+already runs `--self-hosted` and passes, so an AMO-signed `.xpi` is hours. So
+distribution helps the secondary browser and not the primary demo, which is
+worth knowing before spending a day on it.
+
+**Four absences closed.** There was **no LICENSE at all** (so the default was
+all rights reserved while the deck said "open") — now Apache-2.0 for the patent
+grant, matching Qwen's own licence, with a NOTICE recording every third-party
+component. **docs/PRIVACY.md** is new, written for whoever installs it rather
+than for engineers, and states the four known limits rather than burying them.
+**server/Dockerfile** was built and run, not merely written: 202MB, non-root,
+real `/analyze` in **42ms** on the rule path. **`npm run package`** writes both
+store archives with checksums, using a zip writer against `node:zlib` rather
+than a dependency, and **refuses a `SHIELD_DEV=1` build** — a refusal provoked
+before it was trusted.
+
+**Verified rather than asserted, twice.** The archives were extracted again:
+59/59 files, model and bundles byte-identical, the model's hash matching the pin
+in `tools/models.json`. And PRIVACY.md's "exactly one outbound request" is
+checkable — there is one `fetch` in the extension outside tests, and no
+analytics or telemetry package anywhere.
+
+**One real finding from the AMO validator.** 0 errors, 0 notices, 13 warnings,
+and every warning is now attributed: none are in code we wrote. But
+`strict_min_version` is 121 while `data_collection_permissions` only exists from
+Firefox **140**, so **on 121-139 that declaration is silently ignored**. The code
+guarantees are unaffected, but PRIVACY.md leans on it. Left open rather than
+changed, because raising the floor abandons a documented decision.
+
+**Uncommitted:** LICENSE, NOTICE, docs/PRIVACY.md, server/Dockerfile,
+server/.dockerignore, extension/tools/package.mjs, README.md, TASKS.md,
+DECISIONS.md (261-262), extension/package.json, extension/.gitignore. 394 tests
+and typecheck pass.
+
+**Open items back to 11** — two were added, not hidden: the Firefox minimum
+version decision, and the optional AMO signing.
+
 ### 2026-09-21 — T1.3 closed. The model reads the picture, and no key was needed.
 
 **T1.3 is done.** Both remaining boxes closed locally, on an open-weights model,

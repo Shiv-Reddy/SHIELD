@@ -847,6 +847,46 @@ The first three need no browser and can start now.
 
 ---
 
+## Shipping as a product — 2026-09-21
+
+Packaging, not hosting. **Hosting the /analyze server was considered and
+declined** for now: the demo would gain a dependency on venue networking and
+lose the offline property 260 just proved, and the server has no auth or rate
+limit because it was written to be reached from the same machine. DECISIONS.md
+262.
+
+- [x] **LICENSE — Apache-2.0**, with a NOTICE file recording every third-party
+      component and its source. There had been no licence at all, so the default
+      was all rights reserved while the deck said "open" (DECISIONS.md 261).
+- [x] **docs/PRIVACY.md** — the collection statement in plain words, for whoever
+      installs it rather than for engineers. Kept consistent with
+      SECURITY_PRIVACY.md on purpose, and it states the four known limits rather
+      than burying them.
+- [x] **server/Dockerfile** — built and run, not merely written. Answers a real
+      `/analyze` in 42ms on the rule path, 202MB, non-root, published to host
+      loopback only.
+- [x] **`npm run package`** — both store archives plus SHA256SUMS, verified by
+      extracting them again (59/59 files, model byte-identical, hash matches the
+      pin in `tools/models.json`). Refuses to package a `SHIELD_DEV=1` build, and
+      that refusal was provoked before it was trusted.
+- [x] **The 13 `web-ext lint` warnings are attributed** rather than counted. 0
+      errors, 0 notices. None are in code we wrote.
+
+- [ ] **Decide the Firefox minimum version.** `strict_min_version` is `121.0`,
+      but `data_collection_permissions` only exists from Firefox **140** (142 on
+      Android), so **on 121-139 the "we collect nothing" declaration is silently
+      ignored by the browser.** The code guarantees are unaffected — the
+      declaration is a statement to the vendor, not the mechanism — but
+      PRIVACY.md leans on it. Raising the floor to 140 abandons the documented
+      reason 121 was chosen, so this needs a decision rather than an edit.
+- [ ] **An AMO-signed unlisted build**, if a Firefox release artifact is wanted
+      before the event. `lint:firefox` already runs `--self-hosted` and passes;
+      signing needs a Mozilla account and is hours, not days. **Chrome has no
+      equivalent** — the Web Store is the only path and its review queue is not
+      controllable, so the Chrome demo stays "Load unpacked" either way.
+
+---
+
 ## Known limits — say these before someone else finds them
 
 - Names in prose are not detected. Only in fields. The same is true of

@@ -17,7 +17,8 @@
     "check": "npm run test && tsc --noEmit && npm run build",
     "ocr-assets": "node tools/copy-ocr-assets.mjs",
     "build:firefox": "npm run build && node tools/make-firefox-manifest.mjs && node tools/check-dev-gate.mjs dist-firefox && node tools/check-build.mjs dist-firefox",
-    "lint:firefox": "npx --yes web-ext@latest lint --source-dir dist-firefox --self-hosted"
+    "lint:firefox": "npx --yes web-ext@latest lint --source-dir dist-firefox --self-hosted",
+    "package": "npm run build:firefox && node tools/package.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
