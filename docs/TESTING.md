@@ -55,9 +55,19 @@ in one pass, which is the combination a real page presents. The DOM half of its
 expectations is verified without a browser by
 `extension/tests/profile-edit-fixture.test.ts`, so a failed browser run can only
 be the face, the action sequence, the re-capture or the repeat guard.
-**Status:** Built. DOM predictions pre-checked and all correct, including the
-one written down as uncertain — the default-to-hide rule does reach `type="date"`
-inputs. Not yet run in a browser.
+**Status:** Built, scanned on Firefox and run as a task on Chrome,
+2026-09-21. The client half passes completely — face at 93%, the action target
+redacted, the payload sealed. **The reasoner declines**, correctly, and the task
+as written turned out to be one no stateless reasoner can express: see
+DECISIONS.md 258. Claims 2 and 3 remain untested.
+
+**Original status line:** Scanned on Firefox 2026-09-21. **Every prediction held** —
+8 findings (7 fields plus the face at 97%), the select and the button clean, the
+name in prose missed as documented, and the uncertain date-of-birth line correct.
+**The acting loop is still untested**: that was a scan, not a task, so the three
+claims this screen exists for — typing into a field whose value is redacted,
+detection firing again on the re-capture, and the repeat guard refusing a second
+save — remain unverified. Run it as a task to close them.
 
 ### Screen 7 (Full Product): Real, Unmodified Third-Party Websites
 A rotating set of real websites (not mocked pages) to test generalization

@@ -129,10 +129,70 @@
       something — it can now only be the face, the reasoner, the re-capture or
       the repeat guard, which are the things this screen was built for.
 
-      MEASURED IN A BROWSER: not yet run. Fill this in from one Chrome run,
-      matching the format used in 03-faces.html — the figures, then what the
-      prediction got wrong, then what that means. Do not edit the predictions
-      above to match.
+      MEASURED IN A BROWSER 2026-09-21, FIREFOX, SCAN PATH. Every prediction
+      above held. Eight findings, which is the 7 fields plus the face:
+
+        profile photo         -> FOUND, visual, 97% confidence, 79x85
+        full name             -> name,   autocomplete="name"
+        work email            -> email,  declared input type
+        mobile                -> phone,  declared input type
+        date of birth         -> other,  hidden by default
+        headline              -> other,  hidden by default
+        public handle         -> other,  hidden by default  <- the action target
+        time zone <select>    -> NOT flagged
+        bio, email in prose   -> email,  visible text matched email format
+        bio, name in prose    -> MISSED, as predicted and as documented
+        "Save changes"        -> NOT flagged
+
+      Page agreement 40.7%; 11 agreed, 11 pixels only (1 hidden), 5 markup only.
+      DOM coverage 68.8%, which is what a small clean page looks like against
+      the 22.2% pooled over ten real ones — this fixture is not evidence about
+      metric 1 and is not offered as any.
+
+      WHAT THIS RUN DID NOT TEST, AND IT IS THE HALF THAT MATTERS MOST
+
+      A SCAN, not a task. So the three claims this screen was built for are
+      still unverified: that the agent can type into the handle field whose
+      value is redacted, that detection fires again on the re-capture after
+      acting, and that the repeat guard refuses a second identical save. What
+      the scan proves is only the input to those — the face is found, the
+      action target is hidden, and nothing false was flagged.
+
+      RUN AS A TASK 2026-09-21, CHROME. The client half passed completely and
+      the reasoner declined, and the decline turned out to be the useful result.
+
+        DOM map            -> all 15 elements, every selector resolved
+        face               -> FOUND, 93% confidence, 1 kept of 4 candidates
+        regions detected   -> 8, matching the scan exactly
+        redaction          -> 8 regions, 8 manifest entries, 70KB frame
+        action target      -> e5 = #handle = [REDACTED]  <- the point
+        payload            -> sealed and verified
+        reasoner           -> DECLINED: "No recognised form on this screen."
+
+      THE TASK ABOVE CANNOT BE EXPRESSED BY ANY REASONER, AND THAT IS THIS
+      FIXTURE'S MISTAKE
+
+      "Change my public handle to X and save" needs two steps, and nothing in
+      AnalyzeRequest can tell step 1 from step 2 here. There is no step counter
+      and no record of the previous action, and #handle reads [REDACTED]
+      whether it holds the old value or the new one - so step 2's payload is
+      indistinguishable in shape from step 1's. A hosted model would face
+      exactly the same problem. The sign-up form only escapes this because its
+      "filled" flag flips when an empty field is completed, and THIS SCREEN'S
+      ACTION TARGET WAS SPECIFIED AS PRE-FILLED, which removes that signal. The
+      task was written before checking what the payload can distinguish.
+
+      Claim 1 at the top of this file - that hiding a value must not prevent
+      acting on the field - is therefore NOT tested here, and does not need to
+      be: 01-login.html proves it on every run, where the password reads
+      [PASSWORD] and the client still types into it via [USE_SAVED_CREDENTIAL].
+      What this screen uniquely delivers is the combination: a face, declared
+      fields and a redacted action target, all read correctly in one pass.
+
+      Claims 2 and 3 - detection firing again on the re-capture, and the repeat
+      guard - remain untested, and reaching them needs either a task this
+      contract can express or a step counter in the request, which is not a
+      change to make four days before an event. See DECISIONS.md 258.
     -->
     <style>
       :root {

@@ -104,6 +104,13 @@ length can be cut from the top.
    rather than reporting that it did, and it is worth showing even when nothing
    was found: "Shield looked at all six screens and there was nothing to hide"
    is a result.
+7. **An ID number read off a picture.** `01-login.html` embeds a sample
+   Aadhaar card and a sample PAN card. Shield reads the numbers out of the
+   images and covers them, with no markup anywhere saying those numbers exist —
+   the console labels them *text in image* and *text on screen with no element*,
+   which are two different pixel paths. If one thing has to carry the argument
+   for running a vision model at all, it is this: every other finding on that
+   page could have come from the DOM, and these could not.
 7. **The adversarial screen** (`05-adversarial.html`), if there is time. See the
    question below — it is stronger volunteered than extracted.
 
@@ -151,26 +158,33 @@ the popup.
 
 **Q: "What happens if someone tries to trick your system?"**
 Open `test-screens/05-adversarial.html` and run it. Eight cases, with what we
-expected written down *before* the first run. Five are caught, including a
+expected written down *before* the first run. Six are caught, including a
 masked field with no `type="password"` and a field whose `autocomplete`
 attribute claims a nickname while it holds an email — where the more sensitive
 reading wins.
 
-**Two were missed at the last full run of this page, and we say so.** A person's
-name in ordinary prose cannot be separated from other capitalised words without
-a named-entity model we do not ship. An ID number rendered inside an image
-needed an OCR pass that did not exist at the time. Both are written into
-SECURITY_PRIVACY.md Section 4.1.
+**Re-measured 2026-09-21 on Firefox, and it moved: six of eight.** The case
+that changed is the interesting one.
 
-**The second of those now has the pass it was missing.** Image OCR is built and
-confirmed reading images on real pages, and a scan reads each candidate image
-once and whole. What we have NOT done is re-run this fixture since, so the
-result quoted above is the last one actually measured rather than the one we
-expect. If asked directly: the capability exists, the fixture has not been
-re-measured, and we would rather say that than read a number off a hope. The
-figure to watch is the one in the file, and it will be the one we re-run.
+**Case 6 — an ID number rendered inside an image — is now caught**, by the
+pixel layer rather than by any rule: `id_number`, source `ocr`, reason *"text on
+screen with no element — visible text matched Aadhaar number format"*. There is
+no DOM element there to find. It was missed for as long as the project had no
+way to read a screen, and it is caught now because it has one. **This is the
+single clearest demonstration on any fixture of why the visual model earns its
+place** — every other finding on the page could in principle have come from
+markup, and this one could not.
 
-If pressed on why we did not simply fix them: tuning the rules until that page
+**Case 4 — a person's name in ordinary prose — is still missed, and will be.**
+It cannot be separated from other capitalised words without a named-entity
+model we do not ship. Written into SECURITY_PRIVACY.md Section 4.1, and it
+should be volunteered rather than conceded.
+
+**Case 8 is a control and it stayed clean** — the thing that looks like PII and
+is not was correctly left alone, so the improvement above did not come from
+loosening anything.
+
+If pressed on why we did not simply fix case 4: tuning the rules until this page
 goes green would stop it measuring anything. A fixture you optimise against is
 no longer a test.
 
