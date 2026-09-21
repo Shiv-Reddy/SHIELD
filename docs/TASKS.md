@@ -519,12 +519,14 @@ and the checks are in place; both remaining boxes need someone to run it.
       Chrome-only APIs sitting unreachable in a shared bundle, four are
       third-party `eval` in Tesseract and ORT, two are React internals now
       pinned by a test.
-- [ ] **Run the full fixture set on both browsers.** Six screens now, not five.
-      Runbook Session B, which is rewritten: Firefox's pipeline was proven on
-      2026-09-17, but **the entire popup, the consent gate, the audit panel,
-      the scan card, the settings page and the corpus panel all arrived after
-      that date and have never run there.** The session is no longer "does
-      Firefox work" but "does the client we have now work there".
+- [~] **Fixture set on both browsers — Firefox done, Chrome partly.**
+      **All six ran on Firefox 2026-09-21** and the popup, settings page, scan
+      card and corpus panel all rendered there. Screen 1 gained two pixel-layer
+      findings (DECISIONS.md 259), screen 5 went from five caught to six (255),
+      screen 3 returned 7 of 8 against Chrome's 6 (256), and screen 6 matched
+      every prediction (250). Screen 4, the control, still flags nothing.
+      **Remaining: screens 1–5 re-run on Chrome** to confirm the pixel-layer
+      gains are not Firefox-specific. Screen 6 has already run there as a task.
 
 **UN-PARKED — DECISIONS.md 215 supersedes 208.** 208 parked this by weighing a
 threading redesign against T2.2 sitting at 20% with no numbers at all. Both
@@ -743,15 +745,17 @@ The first three need no browser and can start now.
       PSM 11, sparse text; **a crop keeps PSM 3, because a card really is a
       document** and metric 3's pixel figures must not be disturbed while
       chasing metric 1. `lib/vision/segmentation.ts` is pure, 4 tests.
-- [ ] **Measure the segmentation change.** Re-scan the same ten pages and
-      state DOM coverage against **22.2% pooled** — not against one page, whose
-      noise floor is three points (230) against a real spread of 4.4x (236).
-      230 is the standing lesson: the encoding hypothesis was at least as
-      reasonable and bought exactly zero.
-- [ ] **If sparse mode does not move it, the engine itself is the remaining
-      candidate.** Resolution (212), encoding (230) and segmentation (238) will
-      all have been tried. Nothing further should be spent on the input or its
-      parameters.
+- [x] **Segmentation measured — a null, and it closes the avenue.**
+      DECISIONS.md 257. Five pages re-scanned on Chrome: mean **+1.6 points**
+      against a ±3 noise floor, changes in both directions. Not an effect.
+      **Resolution (212), encoding (230) and segmentation (238) have now all
+      been tried and all three returned nothing** — metric 1's ~22% is what
+      this engine reads off a browser viewport, not a setting waiting to be
+      found. Nothing further goes on the OCR input or its parameters; a future
+      improvement has to come from a different engine or a different layer.
+      **Kept rather than reverted**, departing from the pre-registered call
+      because unlike PNG it carries no measured cost — see 257 to overrule.
+
 - [x] **Latency/accuracy trade-off study — built and measured.** DECISIONS.md
       233. `lib/benchmark/tradeoff.ts`, 11 tests, written into docs/BENCHMARK.md.
       **The study the question implies is not available**: Shield has no

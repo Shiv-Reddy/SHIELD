@@ -30,14 +30,35 @@ never written by hand; it carries PII recall and precision over a 50-page
 corpus, a comparison against the four redaction strategies Shield could have
 been instead, and what accuracy costs in milliseconds.
 
+**Including the numbers that are not flattering.** Blanket-blurring the whole
+screen beats Shield on coverage — it scores 100% by destroying all 891
+non-sensitive elements on the page, and a test asserts it keeps winning that
+column, because if Shield ever won every column the baselines would have been
+weakened rather than the detector improved. And the figure for how much of a
+screen the pixel reader can account for is **22.2%, pooled over ten real
+pages** — not the 31.6% a single page had been carrying that quarter of the
+score on. It was flattering by nine points, and the pooled number replaced it.
+
 The privacy invariant has three independent guards: a phantom type that makes
 transmitting unredacted data a compile error, a runtime stage-order check, and a
 content search that refuses to transmit if any flagged value still appears
 anywhere in the payload.
 
+The six test screens were last run on **Firefox, 2026-09-21**, including the
+adversarial one built specifically to make Shield fail. Six of its eight cases
+are caught — and the case that changed most recently is an ID number rendered
+*inside an image*, which was missed for as long as the project had no way to
+read a screen and is now found by the pixel reader with no DOM element to go on.
+The clean control page still flags nothing, which is the check that matters when
+a score goes up.
+
 Known limits are documented rather than discovered:
 [SECURITY_PRIVACY.md](./docs/SECURITY_PRIVACY.md) Section 4.1 lists what Shield
-does not detect, and why.
+does not detect, and why. A person's name in ordinary prose is still missed and
+is expected to stay missed. Face detection is reliable at 110px and above and
+marginal below roughly 80px — and *marginal* was recently shown to mean it can
+differ between two browsers on the same laptop, not that there is a fixed
+cutoff.
 
 ## Documentation
 
@@ -57,7 +78,10 @@ if you're new to the project:
 11. [DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md) — demo prerequisites, fixture gotchas and judge Q&A
 12. [BENCHMARK.md](./docs/BENCHMARK.md) — generated: detection and redaction measured against a labelled corpus
 13. [EVALUATION_CRITERIA.md](./docs/EVALUATION_CRITERIA.md) — the weighted judging rubric
-14. [SESSION_LOG.md](./docs/SESSION_LOG.md) — what happened each work session
+14. [GENERALISATION.md](./docs/GENERALISATION.md) — what happens on real sites nobody built for this, including the failures
+15. [RESOURCES.md](./docs/RESOURCES.md) — how memory and CPU were measured, and the protocol for repeating it
+16. [OPERATOR_RUNBOOK.md](./docs/OPERATOR_RUNBOOK.md) — every task that needs a browser, a key or a second machine
+17. [SESSION_LOG.md](./docs/SESSION_LOG.md) — what happened each work session
 
 ## Setup Instructions (Hackathon Build)
 
@@ -87,6 +111,40 @@ Then load the extension in Chrome:
 2. Enable "Developer mode" (top right)
 3. Click "Load unpacked"
 4. Select the `extension/dist` folder
+
+### Client (Firefox)
+
+```bash
+cd extension
+npm run build:firefox
+```
+
+Then load it:
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on"
+3. Select `extension/dist-firefox/manifest.json`
+
+`dist-firefox/` is generated from the Chrome build with a manifest derived from
+Chrome's, so the two cannot drift apart and a Firefox change cannot break
+Chrome. The build refuses to finish if that manifest is wrong — a background key
+still naming a service worker, a permission Firefox rejects, a missing add-on
+id, or any page referenced by name that is not in the output. It prints one
+`manifest consistent` line per browser when both are sound.
+
+Firefox runs an event page rather than a service worker, so it hosts inference
+on a dedicated worker instead of an offscreen document. Detection, redaction and
+the transport seal are identical on both.
+
+Firefox blocks extensions on `file://` pages by default, so the local test
+screens need `extensions.content_script_on_file_urls` set in `about:config`, or
+serving them over HTTP.
+
+Optional, needs network — Mozilla's own validator, the one used for add-on
+review:
+
+```bash
+npm run lint:firefox
+```
 
 ### Server (Backend)
 
@@ -119,13 +177,19 @@ shield/
 ├── extension/           # Chrome extension client
 │   ├── public/          # manifest.json and generated icons
 │   ├── src/
-│   │   ├── background/  # Service worker: orchestration, capture
-│   │   ├── content/     # In-page code: DOM map, action execution
-│   │   ├── popup/       # Status UI
-│   │   └── lib/         # Shared types, messages, timing
-│   ├── tools/           # Build-time asset generation and model pinning
+│   │   ├── background/  # Orchestration, capture, the consent gate
+│   │   ├── content/     # In-page code: DOM map, overlay, action execution
+│   │   ├── offscreen/   # Inference host: ONNX Runtime, OCR, face detection
+│   │   ├── popup/       # The interface (React + Tailwind)
+│   │   ├── options/     # Settings: redaction level, endpoint, overrides
+│   │   ├── proof/       # The scan record — every screen examined, redacted
+│   │   ├── sent/        # The payload inspector — exactly what was transmitted
+│   │   └── lib/         # Detection rules, redaction, transport, benchmark
+│   ├── benchmark/       # Corpus scoring — regenerates docs/BENCHMARK.md
+│   ├── tools/           # Asset generation, model pinning, build verification
 │   ├── tests/           # Unit and integration tests (`npm test`)
-│   └── dist/            # Build output — this is what Chrome loads
+│   ├── dist/            # Chrome build output — this is what Chrome loads
+│   └── dist-firefox/    # Firefox build output
 ├── server/              # FastAPI backend: /analyze, /health, prompt builder
 ├── test-screens/        # Mock pages for testing (TESTING.md Section 1)
 ├── docs/                # Project documentation
@@ -139,23 +203,62 @@ pipeline.
 
 ## How to Use
 
-1. Load the extension as described above.
-2. Start the backend server.
-3. Navigate to a webpage with a form.
-4. Click the Shield extension icon to activate it.
-5. Watch it detect and hide sensitive fields, then complete the task.
+Load the extension, start the backend, and open a page with a form on it. Then
+the toolbar icon opens everything below.
+
+**Ask it to do something.** Type a task — "log in with my saved details" — and
+Shield reads the screen locally, covers anything private, sends only the
+redacted context, and performs the one action it gets back. The assistant may
+return `click`, `type` or `scroll`, and nothing else.
+
+**Or look without acting.** "Scan the whole page" walks the entire document,
+screen by screen, and **transmits nothing at all**. It exists to cover a page
+rather than to act on one, which is why it can afford to read pixels in a way a
+150ms run cannot. It reports how many screens it examined, and says so plainly
+when a page is long enough that it stopped early.
+
+**Hide something yourself.** "Mark an area private" lets you drag a box over
+anything Shield did not think was sensitive. Marks are hidden on every run
+afterwards.
+
+**Then check what actually happened.** Three surfaces, and they are the point
+rather than a debug aid:
+
+- *What was sent* — the exact JSON that left, recorded **before** the request,
+  so it still has an answer when the network fails.
+- *See what it looked at* — a redacted picture of every screen a scan examined,
+  kept locally. The only surface that proves a pass happened rather than
+  reporting that it did.
+- *What has been hidden* — every pass, with counts, categories and whether
+  anything was transmitted. Exports as JSON with no page content, no values and
+  no URLs, so it can be handed to somebody else.
+
+**If you want to approve each one.** Turn on "Ask before sending" and Shield
+shows you what is about to go, every step, and waits. A decline, a timeout, or
+simply closing the popup all mean it is not sent. It is off by default, because
+what keeps your data on this device is not this switch — it is the three guards
+described above, which ask nobody's permission.
+
+**Settings** (the gear) holds how hard Shield looks at images, where redacted
+context is sent, and which inference backend to pin — the last so the CPU
+fallback can be exercised on a machine where it would otherwise never run.
 
 ## Testing
 
 ```bash
-cd extension && npm test        # 50 checks, no test framework dependency
+cd extension && npm test        # 394 checks, no test framework dependency
 cd server && .venv/Scripts/python test_reasoner.py
 cd server && .venv/Scripts/python test_prompt.py
 ```
 
 The client suite runs the detection → redaction → transport-seal pipeline
-against four of the five test screens on every run, so a regression in what
-Shield hides fails immediately rather than at the next manual check.
+against the test screens on every run, so a regression in what Shield hides
+fails immediately rather than at the next manual check. It also checks things
+that are not about correctness but about whether a feature is still there at
+all: that the popup can still send every message it used to, that the
+element-map export is compiled out of any build that did not ask for it, and
+that both browser bundles contain every page they reference by name. Each of
+those guards a defect this project actually shipped once.
 
 See [TESTING.md](./docs/TESTING.md) for the full test screen set and pass/fail
 criteria. The Zero-Leak Verification described in Section 6 is no longer a
