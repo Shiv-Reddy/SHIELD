@@ -219,11 +219,28 @@ and the rules did not change between them. ARCHITECTURE.md covers how this
 generalises to arbitrary sites in a production version.
 
 **Q: "Why not do everything locally, with no cloud at all?"**
-Local models are fast and private but limited at reasoning. The architecture
-allows simple actions to become fully local later; for harder reasoning the
-cloud model is materially better, while never seeing anything sensitive. The
-rule-based path already runs the whole demo with no model at all, which is also
-our contingency if a hosted provider is down.
+You can, and we have run it. The same server, pointed at `qwen2.5vl:7b` on
+Ollama with no key and no account, answers a real request in **22.2 seconds**
+end to end on a laptop with no GPU offload. That is a working offline fallback
+and it is **not** a demo path: 22 seconds a step against a one-second budget is
+three orders of magnitude out, which is the honest reason the reasoning model is
+hosted. Nothing sensitive reaches it either way.
+So there are two contingencies, not one. If a hosted provider is down, the
+rule-based path runs the whole demo with no model at all; if there is no
+internet in the room, the local model still reasons, slowly. The adapter took
+the local model **without a code change** — provider is configuration.
+
+**Q: "Does the model actually look at the picture, or do you just send it?"**
+Asked more often than expected, and it is the right question — wiring proves
+transmission, not use. We settled it by experiment: two requests whose page
+description is byte-identical and whose screenshot is not. One shows a login
+form; the other shows the same form with a cookie banner covering the sign-in
+button. The first returns *click Sign in*; the second returns *click Accept
+cookies*, and says why — "the Accept cookies button needs to be clicked to
+proceed with the sign-in process."
+With the screenshot withheld, both return *click Sign in*. That control is the
+point: the only thing that differed was the pixels, so that is where the
+difference came from. `server/verify_vision_live.py`, DECISIONS.md 260.
 
 **Q: "Is this actually secure, or a demo trick?"**
 There is a documented STRIDE threat model in SECURITY_PRIVACY.md covering

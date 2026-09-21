@@ -266,30 +266,42 @@ the point is having tried it rather than assuming.
 
 ---
 
-## Session D — the model path (~20 min, needs a key and disk)
+## Session D — the model path — **DONE 2026-09-21, nothing to bring back**
 
-### D1. One live call that proves the picture is used
+Both halves closed without an operator, a key or an account, because the job was
+misread. **Ollama speaks the same OpenAI-compatible shape the adapter already
+targets and ignores the bearer token**, so the local model exercised the whole
+path with no code change — see DECISIONS.md 260.
 
-Get a free-tier OpenRouter key, then:
+### D1. One live call that proves the picture is used — done
 
-```bash
-export SHIELD_MODEL_KEY="sk-or-..."
-export SHIELD_MODEL_NAME="qwen/qwen2.5-vl-32b-instruct:free"
-export SHIELD_MODEL_ENDPOINT="https://openrouter.ai/api/v1/chat/completions"
-```
+Wiring had 18 checks; none of them could tell "sent" from "read", because a
+model that ignores a correctly formatted image passes all 18. Settled by
+experiment instead: `server/verify_vision_live.py` sends two requests with a
+byte-identical PAGE CONTEXT and a different screenshot — a login form, and the
+same form with a cookie banner covering the sign-in button.
 
-Start the server, check `/health` reports vision `on`, run one task, and bring
-back the console. The wiring has 18 checks against it and **no live call has
-ever been made** — that is the gap.
+    plain frame   -> click e3 (Sign in)
+    banner frame  -> click e4 (Accept cookies)
+    frame withheld -> click e3 both times   <- the control
 
-### D2. The offline path, run once
+The action moved with the pixels and nothing else changed. The control is what
+makes it a result rather than a coincidence, and the harness reports
+INCONCLUSIVE rather than a pass if the provider is not deterministic.
 
-```bash
-ollama pull qwen2.5vl:7b      # 6.0GB, Q4_K_M
-```
+### D2. The offline path, run once — done
 
-Point `SHIELD_MODEL_ENDPOINT` at the local Ollama endpoint and run one task.
-The claim in docs/TECH_STACK.md is currently written down and untried.
+`qwen2.5vl:7b` on ollama 0.34.2, **CPU only**, answering through the real
+`/analyze` in **22.2s** with `reasoner: model`, `vision: on`. Warm: vision
+13.0–18.3s, text-only 11.3–11.7s, so the image costs about 2–6s on top.
+
+**A fallback, not a demo path.** Twenty seconds a step is three orders of
+magnitude past the budget. What it buys is an answer to "what if the venue has
+no internet" that has been run rather than described.
+
+**If anyone does get a hosted key**, the only thing left worth doing is
+repeating D1 against the 32B to confirm the larger model behaves the same way.
+That is a nice-to-have, not an open requirement.
 
 ---
 
@@ -311,7 +323,7 @@ numbers cannot be compared to Machine A's.
 | A | Four console lines per site, plus found/missed/over-flagged against the pre-written list. The `image OCR … skipped` line from any page with pictures |
 | B | docs/RESOURCES.md's six readings on Firefox, five repeats of reading 3, and the resident-session figure. Pass/fail for five screens |
 | C | Face boxes and scores. One settled-memory number. `CPU fallback verified` or `BROKEN`. Pass/fail for five screens. Edge works or does not |
-| D | `/health` output and one run's console, twice — once cloud, once Ollama |
+| D | **Nothing — done 2026-09-21 without a key.** DECISIONS.md 260 |
 | E | The same table as B, plus the machine's specification |
 
 ---

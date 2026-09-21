@@ -293,6 +293,48 @@ every run for as long as it is true.
 
 ## Next session starts with
 
+### 2026-09-21 — T1.3 closed. The model reads the picture, and no key was needed.
+
+**T1.3 is done.** Both remaining boxes closed locally, on an open-weights model,
+with no account and nothing paid.
+
+**The blocker had been misread for weeks.** "One live call that proves the
+picture is used" was filed as needing a hosted key, and the offline run as a
+separate, harder job. It is the reverse: **ollama serves the same
+OpenAI-compatible shape the adapter already targets and ignores the bearer
+token**, so one local model closed both. The adapter took it **with no code
+change**, which is the first real evidence that "the provider is configuration,
+not code" (DECISIONS.md 195) was true rather than intended.
+
+**Wiring is not use, and 18 checks could not tell them apart.** test_prompt.py
+already proved the frame is sent correctly; a model that receives a correct
+image and ignores it passes every one of those checks. Settled by experiment
+instead — `server/verify_vision_live.py` sends two requests with a byte-identical
+PAGE CONTEXT and a different screenshot, and the chosen action moves with the
+pixels: *click Sign in* on the plain frame, *click Accept cookies* when a banner
+covers the button. **With the frame withheld, both return Sign in** — that
+control is what makes it a result. Both failure paths were provoked against
+stubs first, so a pass means something (the discipline from 246).
+
+**Measured, CPU only, no GPU offload:** vision 13.0–18.3s warm, text-only
+11.3–11.7s, **22.2s end to end through the real `/analyze`**. The image costs
+about 2–6s on top. **This is a fallback, not a demo path** — three orders of
+magnitude past the budget — and DEMO_SCRIPT.md now says so with the number.
+
+**Found by accident:** a stale server from an earlier session was still holding
+8787 and answering `/health` with `model_configured: false` while the newly
+configured one failed to bind. Exactly what the demo checklist warns about,
+found here rather than on stage.
+
+**Uncommitted:** `server/verify_vision_live.py` (new), TASKS.md, DECISIONS.md
+(260), DEMO_SCRIPT.md, OPERATOR_RUNBOOK.md. 394 extension tests and both server
+suites pass.
+
+**Next:** Session B and C of the runbook — the Firefox resource figures (which
+unblock the idle-disposal window), screens 1–5 on Chrome, Edge, and the Chrome
+CPU-fallback re-prove. All need a browser, none need a key. Session D is closed
+and needs nothing brought back.
+
 Priorities and targets live in TASKS.md ("Top three by impact", "Targets").
 Firefox is closed as a port (DECISIONS.md 220–222); what is left there is
 measurement.

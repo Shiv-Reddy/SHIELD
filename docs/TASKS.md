@@ -304,18 +304,27 @@ nothing. Agreement is reported beside it, never as the target (DECISIONS.md 223)
       environment variable either way. Stated plainly that the laptop runs the
       7B and the cloud demo the 32B: same family, same licence, same wire
       format, smaller model.
-- [ ] **Run it offline once.** Written down, not yet executed — needs an
-      `ollama pull` on a machine with the disk for it.
-- [ ] **Verify the redacted frame is actually used in the model's reasoning.**
-      The template now describes the image only when one is attached
-      (DECISIONS.md 198) and 18 checks cover the wiring, but no live call has
-      been made: that needs a key.
+- [x] **Run it offline once.** Done 2026-09-21 — `qwen2.5vl:7b` on ollama
+      0.34.2, CPU only, answering through the real `/analyze` in **22.2s** end
+      to end with `reasoner: model`, `vision: on`. A working offline fallback,
+      not a demo path.
+- [x] **Verify the redacted frame is actually used in the model's reasoning.**
+      Done 2026-09-21 by experiment rather than by inspection, and it needed no
+      key: `server/verify_vision_live.py` sends two requests whose PAGE CONTEXT
+      is identical and whose screenshot is not, and the chosen action moves with
+      the pixels. Control run with the frame withheld is identical across both.
 
 **Done when:** the demo runs on an open-weights VLM that receives the redacted
-frame, and the offline path is documented and tried once.
+frame, and the offline path is documented and tried once. **Met 2026-09-21.**
 
-**What is left is a key and a disk, not a design.** The adapter, the template
-and the checks are in place; both remaining boxes need someone to run it.
+**The blocker was never a key.** It was read as one for weeks because the hosted
+provider is the demo path, and the offline route was filed as the harder of the
+two. It is the easier: ollama speaks the same OpenAI-compatible shape the
+adapter already targets and ignores the bearer token entirely, so the whole tier
+closed locally, on an open-weights model, with nothing paid and no account. That
+the adapter took a local model with no code change is the strongest evidence
+that "the provider is configuration, not code" (DECISIONS.md 195) was true
+rather than merely intended.
 
 ---
 
