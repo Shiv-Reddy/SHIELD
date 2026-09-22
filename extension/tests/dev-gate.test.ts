@@ -18,8 +18,9 @@
  *
  * Because it happened a second time, to this file. The original guarded
  * `popup.ts`, and when the popup was rebuilt in React that file stopped being a
- * build entry — reachable now only from popup-legacy.html, which nothing
- * builds. Every assertion here went on passing, describing a gate on code that
+ * build entry — reachable only from popup-legacy.html, which nothing built.
+ * Both files were deleted on 2026-09-22 and the test that guarded them went
+ * with them; a gate on code that does not ship is not a gate. Every assertion here went on passing, describing a gate on code that
  * no longer ships, while the live popup's gate was checked by nothing at all.
  * A test that outlives the thing it guards does not fail; it reports success
  * about a file nobody loads, which is the same shape as the bug above.
@@ -113,16 +114,6 @@ test('the capture panel has no markup in the popup entry document', () => {
   // in every build, which is why the panel is a component rather than a page.
   assert.equal(POPUP_HTML.includes('devtools'), false);
   assert.equal(POPUP_HTML.includes('Capture this page'), false);
-});
-
-test('the legacy popup keeps its own gate for as long as it exists', () => {
-  // Not built today — popup-legacy.html is no vite entry. But it is a complete
-  // second copy of the panel sitting in the tree, and if it is ever restored as
-  // a fallback it must come back gated rather than come back at all costs.
-  const legacy = code('src/popup/popup.ts');
-
-  assert.match(legacy, /if \(__SHIELD_DEV__\) wireCorpusCapture\(\);/);
-  assert.equal((legacy.match(/__SHIELD_DEV__/g) ?? []).length, 1);
 });
 
 test('the build checker greps for the string the panel actually renders', () => {

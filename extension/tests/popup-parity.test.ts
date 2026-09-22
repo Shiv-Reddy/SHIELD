@@ -17,8 +17,10 @@
  *
  * WHY THE LIST IS WRITTEN DOWN RATHER THAN ONLY DERIVED
  *
- * Deriving it from popup.ts alone would make this test evaporate the day that
- * file is deleted — and popup.ts is dead code awaiting removal, so that day is
+ * Deriving it from popup.ts alone would have made this test evaporate the day
+ * that file was deleted, which happened on 2026-09-22. The list below is
+ * written down instead, so it outlived the thing it was once compared against.
+ * (Original note: popup.ts is dead code awaiting removal, so that day is
  * coming. A test that disappears with the thing it was comparing against
  * protects nothing afterwards. The list below is the popup's surface contract;
  * the cross-check against the legacy file is a bonus that runs while it lasts.
@@ -97,19 +99,6 @@ test('the popup can still ask for everything it used to', () => {
     `The popup no longer sends: ${missing.join(', ')}. If a feature was dropped ` +
       `on purpose, remove it from REQUIRED and say why in DECISIONS.md.`,
   );
-});
-
-test('the legacy popup names nothing the rebuilt one does not', () => {
-  // Dead code — reachable only from popup-legacy.html, which nothing builds.
-  // While it is in the tree it is a free second opinion about what the popup
-  // used to do, so it is compared rather than ignored.
-  if (!existsSync(join(ROOT, 'src/popup/popup.ts'))) return;
-
-  const legacy = messagesIn(['src/popup/popup.ts']);
-  const rebuilt = messagesIn(POPUP_SOURCES);
-  const lost = [...legacy].filter((message) => !rebuilt.has(message)).sort();
-
-  assert.deepEqual(lost, [], `Carried across from popup.ts and then lost: ${lost.join(', ')}`);
 });
 
 /**

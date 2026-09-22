@@ -15,6 +15,7 @@
 
 import { test, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { CONSENT_TIMEOUT_MS, mayTransmit, type ConsentRequest } from '../src/lib/consent';
 
 /** Enough of the extension API for this module. Nothing else is touched. */
@@ -182,4 +183,96 @@ test('nothing is pending once an answer has been given', async () => {
   await decision;
 
   assert.equal(gate.pendingConsentId(), null);
+});
+
+/*
+ * The defect a browser found on 2026-09-22, and the invariant that prevents it.
+ *
+ * With "ask before sending" on, a second run started while the first was still
+ * waiting produced a card that could never be answered. The gate itself was
+ * right — the first run was abandoned as 'stale' and nothing was transmitted —
+ * but the abandoned run then reported `done`, and the popup clears the consent
+ * card on any status that is not `awaiting-consent`. The card it cleared
+ * belonged to the SECOND run, which was still waiting, so that run could only
+ * time out. Consent worked exactly once per popup session.
+ *
+ * Nothing in the suite covered it because every existing test drives the gate
+ * directly, where the popup does not exist. These pin the one fact the fix
+ * rests on: 'stale' is produced by supersession and by nothing else, so it is
+ * safe for the service worker to read it as "another run owns the status now".
+ */
+
+test('a second ask abandons the first as stale, and the second stays open', async () => {
+  const first = gate.askForConsent(requestFor('step-1'));
+  const second = gate.askForConsent(requestFor('step-2'));
+
+  assert.equal(await first, 'stale', 'the abandoned run must not resolve to anything usable');
+
+  // The replacement is still waiting — it is the run that owns the card now.
+  assert.equal(gate.pendingConsentId(), 'step-2');
+
+  assert.equal(gate.applyConsentDecision('step-2', true), true);
+  assert.equal(await second, 'approved');
+});
+
+test('the abandoned run cannot be approved afterwards, by its own id or the new one', async () => {
+  const first = gate.askForConsent(requestFor('step-1'));
+  const second = gate.askForConsent(requestFor('step-2'));
+
+  // A late click on the card the user actually saw for step 1.
+  assert.equal(
+    gate.applyConsentDecision('step-1', true),
+    false,
+    'an approval for a superseded payload must not be applied to anything',
+  );
+
+  assert.equal(await first, 'stale');
+  gate.applyConsentDecision('step-2', false);
+  assert.equal(await second, 'declined');
+});
+
+test('stale is never transmittable, which is what lets the worker act on it', () => {
+  // The fix has the service worker treat 'stale' as "a newer run owns the
+  // status" and return silently. That is only sound because 'stale' can never
+  // authorise anything, on any path.
+  assert.equal(mayTransmit('stale'), false);
+});
+
+test('a superseded run returns without writing the status', () => {
+  /*
+   * Read as text because the service worker cannot be imported under Node —
+   * it binds chrome.* listeners at module scope. The same approach the dev-gate
+   * test uses, and for the same reason.
+   *
+   * What is pinned is narrow and is the actual fix: the superseded branch must
+   * come BEFORE the branches that call setStatus('done'), and must not call it
+   * itself. Reordering it below them would restore the defect exactly.
+   */
+  const worker = readFileSync(
+    new URL('../src/background/service-worker.ts', import.meta.url),
+    'utf8',
+  );
+
+  const guard = worker.indexOf('if (outcome.superseded)');
+  assert.ok(guard > 0, 'the superseded guard is gone — a second consented run can no longer be answered');
+
+  const repeated = worker.indexOf('if (outcome.repeated)');
+  const acted = worker.indexOf('if (!outcome.acted)');
+  assert.ok(
+    guard < repeated && guard < acted,
+    'the superseded check must run before any branch that sets a terminal status',
+  );
+
+  // The branch body, up to the next `if`, must not set a status. Comments are
+  // stripped first: this branch explains the defect in prose, and the words
+  // naming it are not the same thing as a call to it.
+  const body = worker
+    .slice(guard, repeated)
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.equal(
+    /setStatus\s*\(/.test(body),
+    false,
+    'a superseded run set the status again — that is the bug this branch exists to prevent',
+  );
 });

@@ -49,17 +49,37 @@ import { HAS_OFFSCREEN, ensureOffscreenDocument } from './offscreen';
 /**
  * How long the Firefox host keeps a session it is not using.
  *
- * The same 120s the offscreen document uses, for the same reason and with one
- * difference that matters. Chrome's document closes *itself*, taking the WASM
- * module and GPU buffers with it. Firefox's event page cannot close itself —
- * it is the extension — so it drops the session instead, which releases the
- * same 25MB module and the same GPU buffers and leaves the page running.
+ * Chrome's document closes *itself*, taking the WASM module and GPU buffers
+ * with it. Firefox's event page cannot close itself — it is the extension — so
+ * it drops the session instead, which releases the same 25MB module and the
+ * same GPU buffers and leaves the page running.
  *
- * Without this, Firefox pinned all of it for the life of the browser session:
- * the disposal defect DECISIONS.md 206 recorded and 216 required fixing in the
+ * Without disposal at all, Firefox pinned all of it for the life of the browser
+ * session: the defect DECISIONS.md 206 recorded and 216 required fixing in the
  * same change as the host, because a host's lifecycle moves with the host.
+ *
+ * TEN MINUTES HERE, TWO ON CHROME, AND THE ASYMMETRY IS MEASURED
+ *
+ * This matched Chrome's 120s until 2026-09-22, when the numbers 222 asked for
+ * finally existed. Both of its inputs turned out to be wrong.
+ *
+ * The rebuild is not ~10s, it is **~16.5-17s** across three separate sessions,
+ * almost all of it WebGPU shader warm-up. And the session is not expensive to
+ * keep: on Firefox the extension process returns to its pre-run baseline within
+ * about a minute of the work finishing, with or without this timer (RESOURCES.md,
+ * readings 4 and 6 at 61MB and 60MB against 65MB idle).
+ *
+ * 222 set the test itself — "a 10s rebuild is only worth avoiding if the
+ * resident session turns out cheap" — so this follows that criterion rather
+ * than overriding it. Disposing early on Firefox buys back no measurable memory
+ * and charges 17 seconds for it, which on a demo is the difference between a
+ * pause and a failure.
+ *
+ * Still finite, and deliberately so. A browser left open overnight should not
+ * hold a model it stopped needing hours ago, and ten minutes is long enough to
+ * cover a rehearsal or a working session without reaching that.
  */
-const IDLE_DISPOSE_MS = 120_000;
+const IDLE_DISPOSE_MS = 600_000;
 
 interface LocalHost {
   dispatch: (message: OffscreenMessage) => Promise<unknown>;

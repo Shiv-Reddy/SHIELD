@@ -1,7 +1,7 @@
 # Tasks — Shield
 
-**SIH26171 (ISRO): On-device Visual Perception for Light-weight Browser Agents.**
-**No deadline. Goal: full compliance with the problem statement, no compromise.**
+**On-device visual perception for light-weight browser agents. Team Anarchy.**
+**Goal: a product that is fully built and deployable, not a demo shell.**
 
 Read this file first, every session. It is the only source of truth for what is
 next.
@@ -15,8 +15,8 @@ next.
 | 1 | Accuracy of visual context from screen | 25% | **Measured on ten pages. Pooled DOM coverage 22.2%, agreement 18.4%** — 762 agreed, 709 pixel-only, 2678 markup-only (DECISIONS.md 236). The one page it used to rest on said 31.6%, so **that was flattering by nine points**. Per page 8.5%–37.4%, a **4.4x spread**, median 21.6%. The number driven is DOM coverage, never agreement alone (223) |
 | 2 | Recall & precision of PII detection | 20% | **Measured.** 83.5% / 83.5% over 50 pages, 12 of them real |
 | 3 | Precision of redaction | 20% | **Measured.** 83.9% precision, 60.4% coverage |
-| 4 | Client-side resource utilization | 20% | **Measured on one machine, Chrome only.** Scan peak ~285MB at 2.0x (was 217MB before the upscale), run peak ~144MB, CPU ≤1.1%. **Five scans back to back do not climb — not a leak.** Settled-after value missing; nothing measured on Firefox |
-| 5 | End-to-end task latency | 15% | **Measured on both browsers.** Chrome ~150ms/pass; Firefox 364ms warm (228ms inference), ~10s on the first run while the session builds. Both inside budget once warm |
+| 4 | Client-side resource utilization | 20% | **Measured on both browsers, one machine.** Chrome scan peak 250-287MB, run peak ~144MB. Firefox 65MB idle, 415MB scan peak, **back to 60MB on its own**. **CPU during a scan is 87-93% on Chrome and 75-97% on Firefox** — the ≤1.1% in the table until 2026-09-22 was a sampling error, not a measurement (DECISIONS.md 266). Five scans back to back do not climb — not a leak. Chrome's settled-after figure is the one gap left |
+| 5 | End-to-end task latency | 15% | **Measured on both browsers.** Chrome ~150ms/pass; Firefox warm 253-259ms inference across three runs 2026-09-22, consistent with the 228ms recorded before. **Cold start is worse than recorded: 16.7s and 17.0s model init on two separate 2026-09-22 sessions, against ~10s on 2026-09-17**, shader warm-up alone accounting for 16.0s and 16.3s. The two new readings agree closely with each other and not with the old one, so **~17s is the figure and ~10s should not be quoted again.** Warm is inside budget on both |
 
 **Metric 1 rests on one page.** 25% of the score, one data point. A page is a
 data point, not a rate.
@@ -456,20 +456,27 @@ rather than merely intended.
       recorded 135ms-init/17ms-inference figure is slower — both are trivial
       next to the 10s WebGPU build, which is the asymmetry the item below is
       about.
-- [ ] **Decide Firefox's idle disposal window. The trade is not Chrome's.**
-      The vision host releases its session after 120s idle (DECISIONS.md 219),
-      which on Chrome costs ~1s to rebuild and on Firefox costs **~10s**. A
-      demo with a two-minute gap therefore pays ten seconds on Firefox for a
-      resource saving that is real but modest. Options are a longer window
-      there, warming on browser start rather than popup-open, or accepting it
-      and pre-warming before a demo. Needs a number for what the session
-      actually costs resident on Firefox before choosing — the task manager
-      protocol in docs/RESOURCES.md, run on Firefox.
+- [x] **Firefox's idle disposal window: raised to 10 minutes. Decided 2026-09-22
+      on measurements, not preference.** Both inputs 222 was waiting on turned
+      out to be wrong. The rebuild is **~16.5-17s**, not ~10s, across three
+      sessions. And the resident session is **cheap** — Firefox returns to its
+      pre-run baseline within about a minute either way (readings 4 and 6 at
+      61MB and 60MB against 65MB idle). 222's own criterion was "a 10s rebuild
+      is only worth avoiding if the resident session turns out cheap", so this
+      follows it. Chrome stays at 120s: its rebuild is ~1s and the trade there
+      is the opposite one. DECISIONS.md 264.
 - [ ] **Re-prove the CPU fallback on Chrome under `forceInferenceHost: 'worker'`.**
       Chrome's default document host shares a realm with the self-test, so it
       never hit 221 and its cached verdict is honest. Under the worker host it
       would have, and the cached "verified" record would have masked it. Clear
       the record and re-run once to confirm the fix holds there too.
+      **Attempted 2026-09-22 and no verdict was produced** — every console from
+      that session carried the *cached* line from 2026-09-17, so the record was
+      never cleared and the worker host was never selected. **Still open, and
+      deliberately not marked done:** the whole point of this item is that a
+      cached "verified" can mask a real break, so accepting a cached line as
+      the answer would be the exact mistake it exists to catch. One console
+      command and one run.
 - [x] **Chrome measured. WebGPU survives in the worker; the gate is met.**
       DECISIONS.md 218. One machine, integrated Intel, build 2026-09-16
       23:13:53, same page and task each run:
@@ -528,27 +535,14 @@ rather than merely intended.
       Chrome-only APIs sitting unreachable in a shared bundle, four are
       third-party `eval` in Tesseract and ORT, two are React internals now
       pinned by a test.
-- [~] **Fixture set on both browsers — Firefox done, Chrome partly.**
-      **All six ran on Firefox 2026-09-21** and the popup, settings page, scan
-      card and corpus panel all rendered there. Screen 1 gained two pixel-layer
-      findings (DECISIONS.md 259), screen 5 went from five caught to six (255),
-      screen 3 returned 7 of 8 against Chrome's 6 (256), and screen 6 matched
-      every prediction (250). Screen 4, the control, still flags nothing.
-      **Remaining: screens 1–5 re-run on Chrome** to confirm the pixel-layer
-      gains are not Firefox-specific. Screen 6 has already run there as a task.
-
-**UN-PARKED — DECISIONS.md 215 supersedes 208.** 208 parked this by weighing a
-threading redesign against T2.2 sitting at 20% with no numbers at all. Both
-sides of that comparison have moved: T2.2 now has figures on a real machine,
-and 207 narrowed the Firefox work from "unknown" to one diagnosed defect with a
-named fix. **Chrome stays the primary demo** (214); this is additive to it and
-must not cost it.
-
-**Done when:** the login and signup demos pass on Firefox and Chrome.
-
-### T2.2 Resource measurement
-**Metric 4 — 20%, currently unmeasured.**
-
+- [x] **Fixture set on both browsers — DONE 2026-09-22.** All six screens on
+      Firefox (2026-09-21) and all six on Chrome. Screens 1 and 5 reproduce
+      finding-for-finding across browsers, so the pixel-layer gains are
+      properties of the pipeline rather than of one graphics stack
+      (DECISIONS.md 265). Screen 2 returns 11 findings, screen 4 returns 0,
+      screen 6 matches its pre-registered prediction exactly, and screen 3 now
+      returns 7 of 8 on **both** browsers — Chrome up from 6, and at 0.44
+      rather than the 0.312 that made the old verdict marginal (266).
 - [x] **A protocol that two people would follow identically** —
       docs/RESOURCES.md. Six readings at named moments, both extension
       processes recorded separately, the run repeated five times because a
@@ -572,12 +566,13 @@ must not cost it.
       was the right call: the JS heap was reporting ~8% of what Shield actually
       occupies, the other ~198MB being ONNX's WASM linear memory, which no
       page-visible counter reports. docs/RESOURCES.md carries the table.
-- [ ] **The same figures on Firefox.** Nothing has been measured there at all,
-      and the disposal-window decision above cannot be made without it: a 10s
-      rebuild is only worth avoiding if the resident session is cheap.
-- [x] **Repeated five times, both paths.** 2026-09-16: five task runs peak at
-      ~144MB, five whole-page scans at 280-290MB, and neither climbs across the
-      five — which is what answered the leak question in docs/RESOURCES.md.
+- [x] **The same figures on Firefox — measured 2026-09-22.** All six readings,
+      both processes, in RESOURCES.md. Extensions process: 65MB idle, 256MB
+      after model init, 290MB at run peak, 415MB during a scan, and **back to
+      60-61MB on its own afterwards**. Metric 4 now has numbers on both
+      browsers. Two caveats recorded rather than smoothed: reading 3 was taken
+      once rather than five times, and Firefox's CPU percentages cannot be
+      quoted beside Chrome's — different instruments, different normalisation.
 - [ ] **A second machine for contrast** — a discrete GPU, or an older laptop.
       Machine A already covers the integrated-graphics case that matters most.
 
@@ -622,228 +617,29 @@ protocol and the audit are done; the rows are not.
 
 ---
 
-## The near deadline: a college national hackathon, 25-26 September
-
-Written down because it existed only in conversation, which is not a place a
-plan survives. **SIH work is postponed to after 27 September** — the items
-below marked *SIH evidence* are not dropped, they are out of scope until then.
+## The near deadline: a national college hackathon, 25-26 September
 
 The event is 30 hours and the format is build-on-site, but a pre-built project
-is allowed and that is what we are bringing: **fully built, deployable, not a
-demo shell.** The on-site hours go to polish, not to construction.
+is allowed and that is what we are bringing: **fully built and deployable, not
+a demo shell.** The on-site hours go to polish and presentation, not to
+construction.
 
-**Target: complete by 23 September.**
+**Target: complete by 23 September.** Code freezes then.
 
 | Day | What has to be true by the end of it |
 |---|---|
-| **21 Sep** | The new popup loaded and judged in Chrome. All five fixtures smoke-tested on the current build. **The segmentation change measured or reverted** — see below |
-| **22 Sep** | Both model paths proven live for the first time: an OpenRouter key and a real call, and `ollama pull qwen2.5vl:7b` with one offline run |
-| **23 Sep** | README and deck current, judge Q&A said out loud, one full rehearsal, backup video recorded |
+| **21 Sep** | Popup rebuilt and judged in Chrome. T1.3 closed — the model reads the redacted frame, proven by experiment. Licensing, privacy policy, Dockerfile and release packaging done |
+| **22 Sep** | Firefox and Chrome both measured. Fixture set closed on both browsers. Edge verified. Consent gate defect found and fixed. Disposal window decided |
+| **23 Sep** | **Freeze.** README and deck current, judge Q&A said out loud, one full rehearsal, backup video recorded. No new measurement |
 
-**The one measurement actually blocking a claim** is the PSM 11 segmentation
-change (DECISIONS.md 238). It is built, shipped and unmeasured. Re-scan the
-same ten pages and read DOM coverage against **22.2% pooled** — not against one
-page, whose noise floor is three points (230) against a real spread of 4.4x
-(236). If it does not move it, revert it and stop spending on OCR input
-parameters altogether: resolution (212), encoding (230) and segmentation (238)
-will all have been tried.
+**Two short measurements are still owed**, both on Chrome and both about five
+minutes: the settled-after-two-minutes memory figure, and a CPU-fallback
+verdict under the worker host that is dated today rather than cached.
 
-**Deferred to after 27 September, SIH evidence only:** the 20-site sweep beyond
-the nine rows recorded, task types beyond login, Firefox resource figures and
-its idle-disposal window, the full fixture set on both browsers, a second
-machine, face pixel truth, the CPU fallback under `forceInferenceHost:
-'worker'`, and Edge verification.
-
-## Popup rebuild — carried across, and not
-
-The popup is React + Tailwind following a supplied reference (DECISIONS.md
-241, 243). Restored: marking by hand, observe-only, clearing a scan, the scan
-record. **Not yet carried across, named rather than dropped** (DECISIONS.md
-244):
-
-- [x] **The `SHIELD_DEV` element-map export — restored, and the gate is now
-      checked rather than argued.** DECISIONS.md 245, 246.
-      `components/CorpusCapture.tsx`, gated by a compile-time ternary in
-      App.tsx. `tools/check-dev-gate.mjs` greps the built bundle after every
-      build and fails **in both directions** — absent from a normal build,
-      present under `SHIELD_DEV=1` — because a gate that silently removed the
-      panel from dev builds would stop the corpus growing unnoticed. Both
-      failures were provoked deliberately; a check nobody has watched fail is
-      not evidence. `build:firefox` checks `dist-firefox` by name rather than
-      inheriting the Chrome check through a copy.
-      **The old test had rotted.** It guarded `popup.ts`, which stopped being a
-      build entry at the React rebuild, and went on passing while the live
-      popup's gate was checked by nothing. Retargeted, 8 tests.
-- [x] **The audit panel — restored.** `components/Audit.tsx`. Recent passes with
-      date, scope and sent/not-sent per row, export and clear. Storage is read
-      when the panel opens, not when the popup mounts.
-- [x] **The force-CPU toggle — restored.** The build line in the masthead is
-      the control again, and says `forced: wasm` when a backend is pinned. It
-      sends `RESTART_BACKEND`, without which the override writes a setting and
-      changes nothing until the next reload.
-- [x] **Three more losses found and fixed that the first sweep missed.**
-      DECISIONS.md 247. `state.fellBack` (a PRD Section 20 *requirement* — the
-      user must be told when inference fell back to CPU); `scan.truncated` and
-      `scan.stops` (a truncated scan was reporting a bare count, and the stop
-      cap has already bitten mygov.in at 55% of the document); and
-      `MSG.SCAN_STATUS` (findings live in the page and outlive the worker, so
-      a popup reopened after eviction was reporting no protection while the
-      protection was still in place).
-- [x] **`tests/popup-parity.test.ts` — the check that should have preceded the
-      port.** Every message the popup must send, every setting only it can
-      change, every state field it must surface. Proved by breaking it.
-
-## Tier 3 — makes the case
-
-The first three need no browser and can start now.
-
-- [x] **Naive-baseline comparison — built and measured.** DECISIONS.md 232.
-      `lib/benchmark/baselines.ts`, 10 tests, written into docs/BENCHMARK.md by
-      `npm run benchmark`. Four strategies Shield could have been, scored
-      through the same `scorePage`:
-
-      | Strategy | Recall | Precision | Coverage | Redaction precision | Area | Context kept |
-      |---|---|---|---|---|---|---|
-      | No redaction | 0.0% | 100.0% | 0.0% | 100.0% | 0.00x | 100.0% |
-      | Blanket blur | 100.0% | 16.0% | **100.0%** | 32.9% | 3.04x | **0.0%** |
-      | Hide every field | 77.1% | 75.3% | 56.2% | 77.1% | 0.73x | 95.2% |
-      | Hide every value | **94.1%** | 28.8% | 67.5% | 39.4% | 1.71x | 55.6% |
-      | **Shield** | 83.5% | 83.5% | 60.4% | **83.9%** | 0.72x | **96.9%** |
-
-      **Two baselines beat Shield on a headline number and the table says so.**
-      Blanket blur takes 100% coverage by destroying 891 of 891 non-sensitive
-      elements; hide-every-value takes 94.1% recall and pays 55 points of
-      precision and half the page. Shield is the only row above 80% on recall,
-      precision and redaction precision at once while keeping the page usable.
-      A test asserts blanket blur still wins on coverage — if Shield ever wins
-      every column the baselines have been weakened, not the detector improved.
-- [x] **Scan speed — built.** DECISIONS.md 228. A scan stop now reads each image
-      once and only whole: already-read-whole candidates are skipped, and
-      clipped ones are left to a stop that sees them entire or to
-      `unexaminedImages`, which covers them at full confidence. Only *successful*
-      whole reads are remembered, so a failed read is still retried — tested,
-      because "attempted" looking like "read" is the one bug here that would be
-      a privacy failure rather than a lost optimisation. The run path is
-      untouched.
-- [x] **Scan latency instrumentation — built.** DECISIONS.md 229.
-      `lib/scan-timing.ts` accumulates per-stage totals, call counts and
-      per-call cost across every stop, with no budget column — a run's budgets
-      describe one pass over one screen and would warn on every stage of every
-      stop. Shares are of wall-clock and the unwrapped remainder is printed
-      rather than renormalised away. 9 tests, written against the instrument.
-- [x] **The first scan profile — and it retires the assumption above.**
-      DECISIONS.md 231. Income-tax login, 1333px, two stops: **7.0s total,
-      3.5s/stop**, of which **`screen text` is 5.7s — 82%, 2.9s per stop**.
-      Settle 914ms (13%, our own 450ms constant), face inference 108ms, capture
-      108ms, redacted record 68ms, DOM walk 10ms, scroll 1ms, unaccounted 10ms.
-      **`image OCR 0ms`** — a logged-out login form has no image candidates, so
-      the skipping above did not fire here and is neither confirmed nor refuted.
-      It will matter on a page with documents on it.
-- [x] **Image-OCR skipping confirmed firing on real pages.** DECISIONS.md
-      237. `OCR: 4/4 image(s) read (2 skipped — already read whole or clipped)`
-      appears repeatedly across the sweep, alongside
-      `0/n image(s) read at this stop` where every candidate was already
-      covered. The income-tax login could never have shown this — it has no
-      image candidates at all.
-- [x] **Whole-frame OCR: the segmentation mode is the next hypothesis, built.**
-      DECISIONS.md 238. Tesseract defaults to PSM 3 — full page layout
-      analysis, built for scanned documents, which looks for columns and a
-      reading order and **discards regions as non-text before recognition
-      runs**. A browser viewport has no such structure, and that mechanism
-      produces exactly the markup-only symptom. The whole frame now asks for
-      PSM 11, sparse text; **a crop keeps PSM 3, because a card really is a
-      document** and metric 3's pixel figures must not be disturbed while
-      chasing metric 1. `lib/vision/segmentation.ts` is pure, 4 tests.
-- [x] **Segmentation measured — a null, and it closes the avenue.**
-      DECISIONS.md 257. Five pages re-scanned on Chrome: mean **+1.6 points**
-      against a ±3 noise floor, changes in both directions. Not an effect.
-      **Resolution (212), encoding (230) and segmentation (238) have now all
-      been tried and all three returned nothing** — metric 1's ~22% is what
-      this engine reads off a browser viewport, not a setting waiting to be
-      found. Nothing further goes on the OCR input or its parameters; a future
-      improvement has to come from a different engine or a different layer.
-      **Kept rather than reverted**, departing from the pre-registered call
-      because unlike PNG it carries no measured cost — see 257 to overrule.
-
-- [x] **Latency/accuracy trade-off study — built and measured.** DECISIONS.md
-      233. `lib/benchmark/tradeoff.ts`, 11 tests, written into docs/BENCHMARK.md.
-      **The study the question implies is not available**: Shield has no
-      confidence threshold to sweep, and adding one to draw a curve would be a
-      policy violation (`dom-rules.ts` header, SECURITY_PRIVACY.md §4). The two
-      knobs that do exist are reported instead.
-
-      **Which layers run — three orders of magnitude:**
-
-      | Layer | Cost | Labels owned | Found |
-      |---|---|---|---|
-      | DOM rules | 4.4ms | 160 | 142 |
-      | Face detection | 34ms | 3 | needs a browser |
-      | Image OCR | *unmeasured* | 10 | needs a browser |
-      | Whole-frame text | 2900ms/stop | 0 | needs a browser |
-
-      The quantitative case for DECISIONS.md 188's run/scan split: a 150ms run
-      cannot afford the layer that reads a canvas. Costs are quoted from
-      recorded runs with sources; unmeasured stays null, never 0.
-
-      **The image size floor sits exactly on the knee**, and this is the first
-      evidence of it. Below 140x80 recall holds flat at 90% down to 40px while
-      precision collapses 69.2% → 27.3% and crops rise to 2.54x — pure cost.
-      Above it recall falls at once, 90% → 80% → 70%. The floor was *derived*
-      from Aadhaar legibility; it is now *measured*, which is a different claim.
-- [x] **Consent preview — built, wired and tested end to end.**
-      DECISIONS.md 240, 248. `lib/consent.ts` (11 tests) decides what an outcome
-      means; `background/consent-gate.ts` (11 tests) holds the run open;
-      `popup/components/Consent.tsx` is the surface; `settings.requireConsent`
-      is the switch, off by default.
-      **The pause sits between the seal and the wire** — after
-      `buildSanitizedPayload`, before `send` — because that is the only moment
-      at which there is a real payload to show. `awaiting-consent` is
-      deliberately NOT in `STAGE_ORDER`: it is a pause, not a stage, and adding
-      it would let the order guard be satisfied by having asked.
-      **Exactly one outcome transmits.** Decline, timeout, stale id, a second
-      ask underneath the first, a cancelled run and worker eviction mid-wait all
-      land where `mayTransmit` refuses. The timeout is tested with fake timers
-      rather than skipped, because it is the likeliest path in real use — a
-      popup opened, ignored and closed — and "it probably times out" is the kind
-      of assumption this project keeps finding to be wrong.
-- [x] **DEMO_SCRIPT.md brought current.** DECISIONS.md 249. It told judges in
-      two places that the image-OCR pass was "deliberately deferred"; it has
-      been built since, so the rehearsed answer was one we would have delivered
-      confidently and wrongly. Corrected to what the evidence supports — the
-      capability exists, the adversarial fixture has NOT been re-run since, and
-      the script now says exactly that rather than claiming the case is caught.
-      Added: the whole-page scan and its record (absent entirely, despite being
-      the answer to the most obvious question about a one-screen agent), the
-      audit log, and the two limits that go with a scan.
-- [x] **Profile-edit fixture — built, and its DOM half already verified.**
-      DECISIONS.md 250. `test-screens/06-profile-edit.html`, TESTING.md Screen
-      6. The only page where the visual model, the DOM rules and the reasoner
-      must all work in one pass — Screens 1 and 2 have forms and no face,
-      Screen 3 has a face and the reasoner is meant to decline.
-      **Three claims tested nowhere else:** hiding a field's value must not
-      prevent acting on it (the action target's value IS redacted); detection
-      must fire again on the re-capture, which no unit test can catch because
-      each runs one pass; and the repeat guard must hold against a real Save
-      button.
-      **The DOM predictions were checked before any browser run** —
-      `tests/profile-edit-fixture.test.ts`, 9 assertions, all correct including
-      the one written down as uncertain: the default-to-hide rule does reach
-      `type="date"` inputs. What is left for Chrome is the face, the action
-      sequence, the re-capture and the repeat guard, so a failed run now points
-      at one of those rather than at a rule decidable in a second.
-      **Needs `test-screens/face-a.jpg`**, which is not and must not be
-      committed.
-- [x] **Configurable redaction aggressiveness — built.** FR-14, DECISIONS.md
-      234. `redactionLevel` in settings, 12 tests. **The range only goes up:**
-      `standard` is the floor, not the middle, because a lax end would violate
-      CLAUDE.md's uncertainty rule and `dom-rules.ts`'s refusal to gate on
-      confidence. What is configurable is the geometric image floor, which was
-      always a judgement call — `standard` 140x80, `thorough` 100x57, `maximum`
-      40x23, each a measured row from the sweep (1.00x / 1.23x / 2.54x crops at
-      69.2% / 56.3% / 27.3% precision). Every failure direction — typo,
-      corruption, missing key, forgotten argument — lands on `standard` or
-      above, with a test for each.
-- [ ] Edge verification (Chromium, expected to pass as-is)
+**Deferred past the event**, because they are evidence rather than capability
+and none of them changes what the product does: the 20-site sweep beyond the
+nine rows recorded, task types beyond login, a second machine for contrast, and
+face pixel truth. The failure register closes with the sweep.
 
 ---
 
@@ -927,3 +723,72 @@ reason before moving on.
 
 End: append to SESSION_LOG.md — what was done, blockers, exactly what the next
 session starts with.
+
+---
+
+## T4 — Recall to 90%, written down before the code exists
+
+**Pre-registered 2026-09-22, before any pattern is written.** The rule this
+project keeps: a change measured against a target chosen afterwards measures
+nothing. Predictions below; the benchmark decides.
+
+**Constraint: additive only.** Every change is a NEW pattern. No existing rule
+is retuned, reordered or removed, so nothing that currently works can regress
+through a change that was never made to it. A new pattern that hurts is deleted,
+not tuned.
+
+**Baseline: recall 83.5%, precision 83.5%, 142 of 170 found, 28 missed.**
+**To reach 90% recall: 153 found. Eleven more.**
+
+### Prediction 1 — a currency-amount pattern catches 7
+
+`Rs.` / `₹` / `INR` followed by digits. Named individually so a partial result
+is still readable:
+
+| Page | Label | The text |
+|---|---|---|
+| bank-07 | `t1` | `02 Aug · Blue Tokai Coffee, Bandra · Rs. 640.00` |
+| bank-07 | `t2` | `11 Aug · IRCTC Rail Connect · Rs. 2,145.00` |
+| bank-07 | `t3` | `19 Aug · Apollo Pharmacy, Vile Parle · Rs. 1,890.00` |
+| bank-07 | `due` | `Total due Rs. 12,430.00 by 05 Sep 2026` |
+| bank-03 | `a2` | `Credit Card XXXX ... · Outstanding Rs. 12,430.00` |
+| svc-02 | `prem` | `Next premium Rs. 18,240 due 01 Oct 2026` |
+| tel-03 | `due` | `Amount payable Rs. 712.00 by 12 Sep 2026` |
+
+This closes the gap DECISIONS.md already recorded: *"amounts are missed as text
+and over-flagged as fields"* — the same quantity treated two ways depending on
+how the page renders it.
+
+### Prediction 2 — a name gazetteer catches 6
+
+Common Indian given names and surnames, matched against capitalised tokens.
+Cheaper than the NER model we do not ship, and it does not need one.
+
+| Page | Label | The text |
+|---|---|---|
+| bank-03 | `who` | `Welcome back, Rohan Mehra` |
+| tel-03 | `who` | `Billed to Rohan Mehra, Flat 3B, ...` |
+| svc-02 | `life` | `Life assured: Meera Pillai, DOB 12 Mar 1990` |
+| svc-02 | `nom` | `Nominee: Arjun Pillai (Son), DOB 04 Jul 2016` |
+| gov-09 | `r1` | a name on the voter record |
+| 05-adversarial | `t4` | **the case we have always said is unfixable** |
+
+**`t4` is the one to watch, and it cuts both ways.** SECURITY_PRIVACY.md 4.1
+and the demo Q&A both say a name in prose cannot be separated from other
+capitalised words without a model we do not ship. **A gazetteer is not that
+model** — it recognises names it has seen, and misses every name it has not,
+which is a different and weaker claim. If `t4` starts passing, the honest
+statement becomes "we catch common names from a list, and still miss unusual
+ones", and **both documents have to change in the same commit.** An adversarial
+fixture that goes green without its explanation being rewritten is how a test
+stops measuring anything.
+
+### Expected cost, stated in advance
+
+7 + 6 = 13 against 11 needed, so **91.2% recall if both land whole**. Over-flags
+should rise — amounts will fire on `ctl-03-invoice-footer`, which is a control
+page that is supposed to stay clean. **Precision is predicted to fall to about
+80%**, inside the 78-82% band DECISIONS.md 224 set for exactly this trade.
+
+**Abort conditions, fixed now:** recall below baseline, or precision below 78%.
+Either one and the pattern that caused it is deleted rather than adjusted.

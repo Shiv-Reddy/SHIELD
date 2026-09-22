@@ -774,3 +774,90 @@ would later have to re-derive it, or worse, re-make the same mistake.
    **Not reproducible builds, and the checksum should not be read as one.** The zip metadata is fixed, but `__SHIELD_BUILD__` embeds a timestamp, so two clean builds of the same commit differ. That stamp exists for a good reason — telling which build is actually running — and the checksums identify *a* build rather than *the* build. Worth stating, because a published sha256 implies more than this one delivers.
    **The AMO validator: 0 errors, 0 notices, 13 warnings — and every warning is now attributed.** The "zero errors" claim in 220–222 stands. Of the warnings, **none are in code we wrote**: 4 `DANGEROUS_EVAL` and 3 `UNSAFE_VAR_ASSIGNMENT` come from Tesseract's regenerator polyfill, ONNX Runtime's wasm loader and React; 4 more are Chrome-only APIs (`runtime.getContexts`, `offscreen.*`) that the Firefox path never calls, which is the same bundle serving both browsers behaving correctly.
    **The two that are real, and are not resolved here.** `strict_min_version` is `121.0`, but `data_collection_permissions` was introduced in Firefox **140** (142 on Android). **On Firefox 121–139 the "we collect nothing" declaration is silently ignored by the browser.** The code guarantees still hold — the declaration is a statement to the vendor, not the mechanism — but PRIVACY.md leans on it and a floor that predates the key it carries is an inconsistency. Raising the floor to 140 would abandon the reason 121 was chosen, which is a documented decision, so this is **recorded and left open rather than changed unilaterally.**
+
+263. **The consent gate worked exactly once per popup session, and only a browser could have found it**
+   — Found 2026-09-22 running the runbook's B2, which existed because 22 tests covered the gate and no browser had ever shown it. **The gate itself was never wrong. The bug was in who owns the status afterwards.**
+   **What happens.** Starting a second run while the first is still waiting is legitimate — `askForConsent` opens with `resolve('stale')`, which abandons the first, and that is the design. The abandoned run then unwinds through the ordinary path and calls `setStatus('done')`. The popup clears the consent card on any status that is not `awaiting-consent`, which is correct on its own terms: a card left over from a finished run invites a click that authorises nothing. **But by then the card on screen belongs to the second run, which is still waiting.** It is wiped, nothing can answer it, and it can only time out.
+   The console reads exactly as it should and still misleads, because the lines belong to a different run than the one the user is looking at:
+
+   ```
+   18:20:00.840  payload sealed - 14 elements, 3 manifest entries
+   18:20:00.840  not transmitted - stale          <- run 1, abandoned by run 2
+   18:20:00.842  finished without acting          <- run 1 setting the status
+   ```
+
+   **The reported symptom was "the second time I ran it, it did not ask".** That is precisely right, and the two-millisecond gap between those last lines is the whole defect.
+   **Nothing leaked, and that is not luck.** Every abandoned run resolved to `stale`, `mayTransmit('stale')` is false, and no request was sent on any of the three runs. The gate failed closed exactly as 240 designed it to. What failed was usability: with "ask before sending" on, only the first run of a popup session could ever be answered.
+   **The fix is that a superseded run writes nothing.** `StepOutcome` gains `superseded`, set only where `decision === 'stale'`, and the run loop returns on it before any branch that calls `setStatus`. The replacement owns the status; a run that has been replaced owns nothing. It logs nothing either — the user did not do anything, they started another run, and that run reports itself.
+   **Why the fix could not go in the popup.** The popup receives `CONSENT_REQUESTED` for run 2 and then `STATE_CHANGED(done)` from run 1, in that order, with nothing in either message identifying which run it came from. **It genuinely cannot tell them apart.** Only the worker knows the first run was superseded, so only the worker can act on it.
+   **Pinned by a test that was made to fail first.** Two tests cover the gate's side (a second ask abandons the first, the abandoned id cannot be approved afterwards). The fix itself is in the service worker, which cannot be imported under Node, so it is read as text — the same approach as 246's dev gate and for the same reason. The assertion is about ORDER: the superseded branch must precede every branch that sets a terminal status. Moving it below them was injected deliberately and the suite went to one failure, then passed again on restore. A first attempt at that test passed for the wrong reason, matching the word `setStatus` inside the branch's own explanatory comment; comments are now stripped before the check.
+   **The general lesson, which is the same one as 246.** Both defects lived in code with tests around it, and both were invisible because the tests exercised the unit rather than the seam. 246's dev-gate tests guarded a file that had stopped being a build entry; these consent tests drove a gate in a world with no popup in it. **A component can be completely correct and still be wired to something that undoes it**, and only running it somewhere real shows that.
+
+264. **Firefox keeps its vision session for ten minutes, Chrome still drops it after two, and the asymmetry is now measured rather than assumed**
+   — 222 deferred this pending one number and set the test itself: *"a 10s rebuild is only worth avoiding if the resident session turns out cheap."* The number arrived 2026-09-22 and **both halves of the premise were wrong.**
+   **The rebuild is not ~10s. It is 16.5s, 16.7s and 17.0s** across three separate sessions on the same laptop — 15.9s, 16.0s and 16.3s of that shader warm-up alone. The three agree closely with each other and not at all with the single ~10s reading from 2026-09-17, so **~17s is the figure and ~10s should not be quoted again.** Warm inference is unaffected and stayed at 177-299ms throughout.
+   **The resident session is cheap — cheap enough that disposal buys nothing measurable.** Firefox's extension process sits at 65MB idle, rises to 290MB at a run's peak and 415MB during a scan, and **returns to 60-61MB on its own within about a minute**, which is at or below where it started. Readings 4 and 6 both land there.
+   **So the trade inverts.** Disposing early on Firefox reclaims no memory the browser was not going to reclaim anyway, and charges **seventeen seconds** for it. On a demo with a pause between steps that is the difference between a gap and a failure. Raised to 600_000ms.
+   **Chrome is untouched at 120s and that is not an oversight.** Its rebuild is ~1s and its offscreen document closes *itself*, taking the WASM module and GPU buffers out of the process entirely — a genuine saving for a trivial cost, which is the opposite trade. Two browsers, two numbers, one criterion applied to both.
+   **Still finite.** A browser left open overnight should not hold a model it stopped needing hours ago. Ten minutes covers a rehearsal or a working session and nothing longer.
+   **One thing is still unexplained and is recorded as such.** Reading 4 was taken roughly a minute after the run, well inside even the old 120s timer, and was already at baseline. Either the session releases earlier than the timer intends, or reading 2's 256MB was largely transient load buffers rather than steady resident cost. Two readings cannot separate those, and they imply different things. The decision above holds under both — in either case disposal reclaims nothing that idling would not — which is why it was taken without settling it. Settling it needs readings at 30s and 150s after a run.
+
+265. **The pixel-layer gains are not Firefox-specific — Chrome reproduces both of them exactly**
+   — 255 and 259 recorded two improvements measured only on Firefox, and both carried an unstated risk: that a different rasteriser, JPEG encoder and GPU had flattered the OCR, in the way 256 showed face detection can be flattered near a threshold. Re-run on Chrome 2026-09-22. **Both reproduce, finding for finding and reason string for reason string.**
+   **`01-login.html`, whole-page scan — four findings, the same four:**
+
+   | Finding | Reason string | Path |
+   |---|---|---|
+   | `email` | autocomplete="username", content looks like email | dom |
+   | `password` | input type="password" | dom |
+   | `id_number` | *text in image — visible text matched Aadhaar number format* | image-crop OCR |
+   | `id_number` | *text on screen with no element — visible text matched PAN format* | whole-frame OCR |
+
+   **DOM coverage 69.2% (9 agreed, 4 markup-only) — identical to Firefox's figure to one decimal place.** Two pixel paths, two sample documents, two browsers, same answer.
+   **`05-adversarial.html` — six of eight, and case 6 is caught here too**, by the same route: `id_number`, source `ocr`, *"text on screen with no element"*. Case 4 (a name in prose) is still missed, as it should be, and case 8 (the control) stayed clean. DOM coverage 65.4% (17 agreed, 9 markup-only).
+   **What this settles.** 255's claim — that the visual layer earns its place because case 6 has no element to find — no longer needs "on Firefox" attached to it, and neither does 259's two-distinct-pixel-paths result. **These are properties of the pipeline, not of one browser's graphics stack.** That distinction is exactly what 256 showed cannot be assumed, which is why it was worth the re-run rather than assumed.
+   **A cost figure came with it.** Screen 1's scan: 6.0s over 2 stops, 3.0s per stop, of which **screen text is 57% and image OCR 23% — the pixel layer is 80% of a scan's wall clock.** Consistent with 237's finding on real pages, now measured on a fixture small enough to reason about.
+
+266. **The fixture set is complete on both browsers, and a Chrome CPU figure that has been in the table since 2026-09-14 is wrong by about ninety times**
+   — All six screens scanned on Chrome 2026-09-22, closing "run the full fixture set on both browsers". Results first, then the correction, which matters more.
+
+   | Screen | Findings | Verdict |
+   |---|---|---|
+   | 1 login | 4 — incl. **two `id_number` from two different OCR paths** | matches Firefox exactly (265) |
+   | 2 signup | **11** — 3 names, 2 addresses, 2 passwords, email, phone, PAN, one default-to-hide | the 11-field claim in DEMO_SCRIPT is real |
+   | 3 faces | **7 of 8** | **up from 6; both browsers now agree** |
+   | 4 clean | **0** | the control stays clean |
+   | 5 adversarial | 6 of 8, case 6 caught via OCR | matches Firefox exactly (265) |
+   | 6 profile edit | 8 — 7 DOM fields **plus a face at 100%** | matches the pre-registered prediction exactly |
+
+   **Screen 6 is the one worth noting for its own sake.** `profile-edit-fixture.test.ts` asserted seven DOM regions before the page was ever opened — name, email, phone, and four default-to-hide — and the browser returned exactly those seven plus the face. A prediction written down in advance and met without adjustment.
+   **Screen 3 moved and it is not the noise 256 described.** Chrome returned 6 of 8 on 2026-09-07 with its smallest kept box at 32x30 and **confidence 0.312**, against a 0.30 threshold — a verdict sitting 0.012 from falling either way. It now returns 7, and the smallest kept is 29x44 at **0.44**, which is not marginal. Confidences run 100/100/100/87/85/81/44. Firefox's 7 came in at 0.33, so **the two browsers now agree on the count while disagreeing on how comfortably.** The 2.0x scan upscale (212) landed between the two Chrome readings and is the obvious candidate; it is not proven, because the earlier run's scale was not recorded. **What is settled: 8 of 8 is still not reached, and the 36px rung is still missed.**
+
+   **THE CORRECTION, AND IT IS NOT SMALL**
+
+   RESOURCES.md has recorded Chrome's CPU during a whole-page scan as **0.4% and 1.1%** since 2026-09-14. Measured on four consecutive scans today: **87.4%, 92.7%, 90.0%, and 1.5%.**
+   **The old figures were sampled at the wrong moment.** A scan stop is a burst — 1.5-2.2s of OCR — and Chrome's task manager refreshes about once a second. Reading it once, without catching a stop, reports the gap between stops rather than the work. The 1.5% above is that same mistake reproduced, in the same session as three readings twenty times larger, which is what makes the diagnosis certain rather than a guess.
+   **This also dissolves a caution recorded earlier today.** Firefox's 75% and 97% were flagged as not comparable to Chrome's ~1%, on the grounds that two task managers normalise differently. They do, but that was not the discrepancy: **Chrome is 87-93% during a scan, Firefox 75-97%, and the two agree.** The instruments were not the problem; one of the readings was.
+   **Metric 4 is 20% of the score and this is the second time its Chrome column has been wrong in the flattering direction** — 209 found the JS heap reporting 8% of the real memory cost. Both errors understated the cost, and both survived because a single reading was taken as a measurement. **A burst cost needs sampling during the burst, and one sample is not a measurement.**
+   Memory during the same four scans: 250,616K, 279,076K, 280,076K, 286,752K. Consistently above the 217,140K on record, and consistent with the 241-263K measured earlier today.
+
+267. **Edge runs the Chrome bundle unmodified, and the run it produced exercised the repeat refusal rather than just loading**
+   — Verified 2026-09-22 on `extension/dist`, the same directory Chrome loads, with no Edge-specific build and no manifest change. 214 predicted this and it is now tried rather than assumed, which was the whole point of keeping the item open.
+   **The run went further than the check required.** 14 elements mapped, 3 manifest entries, a 70KB sealed frame, **a 9ms server round trip**, and then:
+
+   ```
+   stopped after 1 action(s): the assistant repeated the same action,
+   so there was no further progress to make.
+   ```
+
+   So Edge executed the action, re-captured, was offered the same action again, and **refused it before executing** — the third item on DEMO_SCRIPT's ranked list, the one that separates a demo from something a person could run, now demonstrated on a third browser. It also confirms `observeOnly` is back off, since the action was performed rather than described.
+   **Three browsers, one bundle, two builds.** Chrome and Edge share `dist` byte for byte; Firefox takes `dist-firefox`, which differs only in the keys `make-firefox-manifest.mjs` generates.
+
+268. **Rebranded to Team Anarchy as an independent project, and 32KB of dead code went with the rebrand**
+   — The next event is a 30-hour national college hackathon where judges inspect the repository in person, so the project is presented as its own work rather than as an entry to anything else. Every reference removed 2026-09-22 across ten files, verified by a repository-wide search returning nothing.
+   **The one a judge would actually have hit** was `browser_specific_settings.gecko.id`, which read `shield@sih26171` and is written into `dist-firefox/manifest.json` on every build. Now `shield@teamanarchy`. Safe to change because nothing is published under the old id.
+   **The committed idea presentation is untracked**, not deleted — the file survives on disk and is ignored from here on. A 266KB PDF named for another competition is the single most conspicuous thing in a file listing.
+   **The rubric stayed, and its framing changed.** EVALUATION_CRITERIA.md now reads as the weighting this project holds itself to. **The weights are not restated as ours to move** — they were fixed before any number existed, which is the only reason the rubric has ever told us something we did not want to hear (236 and 266 are both cases of it doing exactly that). Deleting a rubric to remove an attribution would have thrown away the instrument.
+   **`popup.ts` and `popup-legacy.html` are gone**, 32KB of it. 246 recorded them as dead code awaiting deletion: not a build entry since the React rebuild, reachable only from an HTML file nothing builds.
+   **Two tests went with them, and that is the point rather than a cost.** `dev-gate`'s legacy-gate test guarded a file that does not ship. `popup-parity`'s legacy comparison already began `if (!existsSync(...)) return;` — so from the moment the file went it would have **passed while checking nothing**, which is the precise failure mode 183, 241 and 246 each recorded separately. A test that cannot fail is worse than no test, because it reports coverage that is not there. 396 tests remain, all of them able to fail.
+   **Nothing else was removed.** A scan for unreferenced modules flagged `baselines.ts` and `tradeoff.ts`; both are reached from `benchmark/run.ts` and both have their own tests, so the scan was wrong and they stayed. Cutting them on a bad signal would have been the more expensive mistake.

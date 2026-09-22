@@ -94,7 +94,7 @@ not the path this class of machine takes.
 | 2 | Model ready | *not recorded* | 8,160K (6,094K live) | 8,814K | 0.0 |
 | 3 | Run, peak | *not recorded* | 20,584K (12,882K live) | **18,970K** | 0.1 |
 | 5 | Whole-page scan | **217,140K** | 18,536K (12,676K live) | **12,379K** | 0.4 |
-| 5 | Whole-page scan (earlier run) | *not recorded* | 21,096K (13,297K live) | 7,326K | **1.1** |
+| 5 | Whole-page scan (earlier run) | *not recorded* | 21,096K (13,297K live) | 7,326K | ~~1.1~~ **see the correction below** |
 | 4a | Settled after a scan, host still alive | 146,072K | 8,672K (4,815K live) | 1,056K | 1.0 |
 | 4b | Settled after a run, host still alive | **122,684K** | 4,576K (4,123K live) | 1,154K | 2.1 |
 | 6 | Settled, offscreen document gone | *not recorded* | 10,600K (9,161K live) | **0K** | 0.0 |
@@ -105,6 +105,97 @@ far above the JS heap. Reading 6 was taken before the footprint column existed,
 so the one figure still missing is the footprint *after* the host disposes of
 itself. That is the number that says whether the WASM arena is genuinely
 returned or merely idle.
+
+### The Chrome CPU figures above are wrong, and by about ninety times
+
+**Corrected 2026-09-22.** The table records 0.4% and 1.1% CPU during a
+whole-page scan. Four consecutive scans measured that day, watching the counter
+rather than glancing at it: **87.4%, 92.7%, 90.0%** and 1.5%.
+
+**A scan stop is a burst.** Screen text costs 1.5-2.2s per stop and Chrome's
+task manager refreshes about once a second, so a single reading taken without
+catching a stop reports the quiet gap between stops. The 1.5% in that list is
+the same mistake happening again, in the same session as three readings twenty
+times larger - which is what makes this a diagnosis rather than a guess.
+
+**Quote 87-93% for a Chrome scan.** The old numbers should not be repeated.
+
+This is the second flattering error in metric 4's Chrome column, after the JS
+heap reporting 8% of real memory (209). Both understated the cost and both
+survived because one sample was treated as a measurement. **A burst cost has to
+be sampled during the burst.**
+
+It also retires a caution recorded earlier the same day: Firefox's 75-97% was
+flagged as incomparable to Chrome's ~1% on the grounds that two task managers
+normalise differently. They do - but that was not the gap. **Chrome is 87-93%,
+Firefox is 75-97%, and they agree.**
+
+### Chrome, scan-time footprint — 2026-09-22
+
+Two `Extension: Shield` rows, the service worker and the offscreen host, as the
+table above describes. Footprint during whole-page scans:
+
+| Moment | Footprint | CPU | GPU memory | JS memory |
+|---|---|---|---|---|
+| Scan of `01-login.html` | **263,208K** | 0.1 | 6,798K | 24,680K (12,646K live) |
+| Scan of `05-adversarial.html` | **241,572K** | 0.4 | 30,241K | 18,792K (12,960K live) |
+
+**Both are above the 217,140K recorded on 2026-09-14**, on the same machine and
+the same class of work. The upscale to 2.0x landed between those dates and is
+the obvious candidate, which matches the 217MB-was-before-the-upscale note in
+TASKS.md. Not offered as a controlled comparison - different pages, different
+stop counts - but it is the right direction for the wrong reason to be ignored.
+
+**The settled-after-two-minutes figure is still missing.** These were taken
+during scans. That one number remains the last gap in metric 4 on Chrome.
+
+### Machine A — the same laptop, Firefox
+
+Measured 2026-09-22, 18:07-18:12, one reading a minute, same hardware as the
+Chrome table above. Firefox's process view is `about:processes`.
+
+**Read the process names before the numbers.** Firefox runs every add-on in one
+shared `Extensions` process, so the absolute figures include whatever else is
+installed. **The deltas are Shield's**, because nothing else changed between
+readings a minute apart. The `GPU` process is shared with the whole browser for
+the same reason, and is reported here because it moves with the work.
+
+| # | Moment | Extensions | Extensions CPU | GPU process | GPU CPU |
+|---|---|---|---|---|---|
+| 1 | Loaded, no run | **65MB** | idle | 243MB | 0.28% |
+| 2 | First run's model init | **256MB** | 1.1% | 437MB | 3.1% |
+| 3 | Run, peak | **290MB** | **75%** | 552MB | 10% |
+| 4 | Run finished, settled | **61MB** | idle | 328MB | 3.9% |
+| 5 | Whole-page scan | **415MB** | **97%** | 583MB | 11% |
+| 6 | Idle after the scan | **60MB** | idle | 214MB | 0.2% |
+
+**The headline: Firefox returns to baseline on its own, and fast.** Reading 4 is
+61MB and reading 6 is 60MB, both at or just under reading 1's 65MB. Whatever the
+run and the scan allocated - 225MB and 350MB above baseline respectively - is
+given back within about a minute of the work finishing. **There is no idle
+burden to reclaim on this browser**, which is the opposite of the defect 206
+recorded and 216 fixed.
+
+**One thing here is not explained and should not be smoothed over.**
+`IDLE_DISPOSE_MS` is 120s, but reading 4 was taken roughly *one* minute after
+reading 3 and is already at baseline. Two readings cannot distinguish the
+possible causes: the session may be released earlier than the timer intends, or
+reading 2's 256MB may be largely transient model-loading buffers rather than a
+steady resident cost, with the real resident figure far below 191MB. **Both are
+consistent with these six numbers and they imply different things**, so neither
+is asserted. Settling it needs one more pass with readings at 30s and 150s after
+a run.
+
+**CPU is the figure that stands out, not memory.** 75% during a run and **97%
+during a scan**. That was first read as a browser difference against Chrome's
+recorded ~1%, and flagged as two instruments normalising differently. **It was
+neither.** Chrome measures 87-93% during a scan once the counter is watched
+rather than glanced at, and the ~1% was a sampling error - see the correction
+above. **The two browsers agree**, and the honest statement is that a
+whole-page scan is CPU-bound on both.
+
+**Reading 3 was taken once, not five times** - the same gap the Chrome run has.
+The spread is still unknown on both browsers.
 
 ### The JS heap was showing 8% of the cost
 

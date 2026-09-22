@@ -707,6 +707,19 @@ interface StepOutcome {
   signature: string | null;
   /** True when an action was refused because it repeated the previous one. */
   repeated: boolean;
+  /**
+   * True when a newer run took this one's place while it waited for consent.
+   *
+   * It exists so a superseded run does not write the status on its way out.
+   * Without it the teardown reports `done`, the popup reads that as "the run
+   * left the pause" and clears the consent card — except the card on screen
+   * belongs to the run that replaced it, which is still waiting. The result is
+   * a second run that never asks and can only time out, which is exactly what
+   * a browser found on 2026-09-22 and no test had covered.
+   *
+   * The replacement owns the status. A run that has been replaced owns nothing.
+   */
+  superseded: boolean;
 }
 
 /** What an action does and to what, ignoring anything incidental. */
@@ -1104,6 +1117,9 @@ async function runStep(
           summary: declineReason(decision),
           signature: null,
           repeated: false,
+          // 'stale' means only one thing: a newer run called askForConsent and
+          // took the pause. Every other decision here is this run's own ending.
+          superseded: decision === 'stale',
         };
       }
     }
@@ -1150,6 +1166,7 @@ async function runStep(
         summary: response.reasoningSummary,
         signature: null,
         repeated: false,
+        superseded: false,
       };
     }
 
@@ -1169,6 +1186,7 @@ async function runStep(
         summary: response.reasoningSummary,
         signature,
         repeated: true,
+        superseded: false,
       };
     }
 
@@ -1193,6 +1211,7 @@ async function runStep(
         summary: response.reasoningSummary,
         signature,
         repeated: false,
+        superseded: false,
       };
     }
 
@@ -1209,6 +1228,7 @@ async function runStep(
       summary: response.reasoningSummary,
       signature,
       repeated: false,
+      superseded: false,
     };
   } finally {
     // Drop the reference to the raw screenshot as soon as the step is over,
@@ -1547,6 +1567,25 @@ async function runTask(taskQuery: string): Promise<void> {
       setState({ step });
 
       const outcome = await runStep(tab, tabId, taskQuery, lastSignature);
+
+      if (outcome.superseded) {
+        /*
+         * A newer run took the consent pause while this one was waiting, so
+         * this run is over and the newer one is now showing its own card.
+         *
+         * It returns WITHOUT touching the status, which is the whole point.
+         * `setStatus('done')` here would reach the popup after the replacement
+         * had already displayed its card, and the popup clears the card on any
+         * status that is not `awaiting-consent` — correctly, since a card left
+         * over from a finished run invites a click that authorises nothing.
+         * The card it would clear, though, belongs to the run still waiting,
+         * which would then never be answerable and could only time out.
+         *
+         * Nothing is logged either. The user did not do anything here; they
+         * started another run, and that run will report itself.
+         */
+        return;
+      }
 
       if (outcome.repeated) {
         // The assistant asked for the same action again, so the previous one
