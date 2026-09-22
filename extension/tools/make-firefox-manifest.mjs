@@ -61,7 +61,7 @@ delete manifest.minimum_chrome_version;
 
 manifest.browser_specific_settings = {
   gecko: {
-    id: 'shield@sih26171',
+    id: 'shield@teamanarchy',
     /**
      * What Shield collects, declared to the browser: nothing.
      *

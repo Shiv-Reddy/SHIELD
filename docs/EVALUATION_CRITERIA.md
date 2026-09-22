@@ -1,8 +1,12 @@
-# Evaluation Criteria — Shield (SIH26171)
+# Evaluation Criteria — Shield
 
-Official weighted scoring, as published in the problem statement. Use this to
-prioritize engineering effort — build order and polish time should follow
-these weights, not gut feeling.
+The weighted scoring this project is measured against. Use it to prioritize
+engineering effort — build order and polish time should follow these weights,
+not gut feeling.
+
+The weights are not ours to move. They were fixed before the numbers existed,
+which is the only way a rubric can tell you anything you did not already want
+to hear.
 
 | Metric | Weight | What "good" looks like |
 |---|---|---|

@@ -4,8 +4,7 @@
 
 A Chrome extension that lets an AI agent read and act on your screen without
 ever sending your private information (passwords, faces, personal details)
-to a server unprotected. Built for Smart India Hackathon 2026,
-Problem Statement SIH26171 (ISRO).
+to a server unprotected. Built by Team Anarchy.
 
 ## What It Does
 
@@ -336,7 +335,7 @@ Production deployment is explicitly out of scope for the hackathon submission
 and should not be attempted prematurely — see [DECISIONS.md](./docs/DECISIONS.md) for why the
 hackathon build stays deliberately minimal in infrastructure terms.
 
-## Team
+## Team Anarchy
 
 | Name | Owns |
 |---|---|

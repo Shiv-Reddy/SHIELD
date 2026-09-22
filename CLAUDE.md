@@ -6,8 +6,10 @@ Chrome MV3 extension. An AI agent reads and acts on the user's screen without
 sensitive data ever reaching a server. A local vision model redacts on-device;
 only sanitized context is sent; the cloud model returns one allowlisted action.
 
-Smart India Hackathon 2026, SIH26171 (ISRO, Smart Automation).
-**Deadline: 2026-09-09.**
+Team Anarchy. An independent project.
+
+**Next milestone: a 30-hour national college hackathon, 25-26 September 2026.
+Code freezes 23 September.**
 
 ## Hard Constraints — never violate
 

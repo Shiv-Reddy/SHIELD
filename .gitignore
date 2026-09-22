@@ -17,3 +17,4 @@ server/.venv/
 server/__pycache__/
 **/__pycache__/
 *.pyc
+Shield_*_Idea_Presentation.pdf

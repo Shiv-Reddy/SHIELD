@@ -1,5 +1,5 @@
 /**
- * Measuring detection and redaction — SIH metrics 2 and 3, forty percent of the
+ * Measuring detection and redaction — metrics 2 and 3, forty percent of the
  * score.
  *
  * WHY A SCORER RATHER THAN MORE TESTS

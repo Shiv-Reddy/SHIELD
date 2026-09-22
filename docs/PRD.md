@@ -1,7 +1,7 @@
 # PRD — Shield
 
 Screen-level Hiding of Identifiable Elements using Local Detection.
-SIH 2026, SIH26171 (ISRO, Smart Automation). Deadline 2026-09-09.
+Team Anarchy.
 
 ## 1. Problem
 
@@ -32,7 +32,7 @@ Arbitrary server-supplied instructions.
 Multi-browser was a non-goal and is no longer one: the problem statement names
 Chrome and Firefox, and DECISIONS.md 214 supersedes the Chrome-only choice.
 
-## 5. Success Metrics — official SIH weighting
+## 5. Success Metrics — the weighting we hold ourselves to
 
 | Criterion | Weight |
 |---|---|
@@ -49,7 +49,7 @@ Optimize latency **after** correctness, never instead of it.
 |---|---|
 | Everyday browser user | An agent that helps without seeing their password |
 | Privacy-conscious employee | Provable non-transmission, not a promise |
-| SIH judge / ISRO evaluator | Verifiable claims — the bytes, not assurances |
+| Technical evaluator | Verifiable claims — the bytes, not assurances |
 | Security reviewer (full product) | A threat model and an audit trail |
 
 ## 7. Scope
