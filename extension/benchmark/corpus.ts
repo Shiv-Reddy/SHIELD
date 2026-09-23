@@ -151,7 +151,9 @@ const FIXTURES: CorpusEntry[] = [
       // markup can find this; it is labelled because it is a password.
       { elementId: 'c2', category: 'password' },
       { elementId: 't3', category: 'email' },
-      // A name in prose. A known structural limit, not an oversight — see
+      // A name in prose. Missed until 2026-09-23 and caught since, by a
+      // gazetteer of common given names — a list, not a model, so it still
+      // misses any name the list does not carry — see
       // SECURITY_PRIVACY.md Section 5.
       { elementId: 't4', category: 'name' },
       { elementId: 't5', category: 'id_number' },

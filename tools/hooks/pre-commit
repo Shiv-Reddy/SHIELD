@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Refuses a commit that would publish a secret or a face photograph.
+#
+# WHY A HOOK AND NOT JUST .gitignore
+#
+# .gitignore only protects a path nobody has staged. `git add -f`, an editor
+# that stages for you, or a file that arrives under a name the ignore rules do
+# not predict all get past it. This is the second line, and it checks staged
+# CONTENT as well as staged paths — a key pasted into a source file is not a
+# path problem and .gitignore has never had an opinion about it.
+#
+# WHY IT FAILS THE COMMIT RATHER THAN WARNING
+#
+# A key committed once is a key leaked forever: rewriting history does not
+# recall a clone somebody already has. The cost of a false positive is one
+# --no-verify; the cost of a false negative is rotating a credential and
+# trusting that nobody fetched in between. Those are not symmetric.
+#
+# Install per device (hooks are not cloned):
+#   git config core.hooksPath tools/hooks
+
+fail=0
+note() { echo "pre-commit: $1" >&2; fail=1; }
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+# --- Paths that must never enter history -------------------------------------
+for path in $staged; do
+  case "$path" in
+    .env.example) ;;                       # the template, deliberately tracked
+    .env|.env.*|*/.env|*/.env.*)
+      note "$path is an environment file. Keys belong in .env, which is ignored." ;;
+    *.key|*.pem|*.p12|*.pfx)
+      note "$path looks like a private key or certificate." ;;
+    test-screens/face-a.jpg|test-screens/face-b.png)
+      note "$path is a real face photograph. test-screens/README.md keeps these local." ;;
+  esac
+done
+
+# --- Content that must never enter history -----------------------------------
+# tools/hooks is excluded because this file quotes the patterns it searches for.
+secrets=$(git diff --cached -U0 -- . ':(exclude)tools/hooks' \
+  | grep -E '^\+' \
+  | grep -E 'AIza[0-9A-Za-z_-]{27,}|sk-[A-Za-z0-9_-]{20,}|SHIELD_MODEL_KEY=[^[:space:]]' \
+  | head -3)
+
+if [ -n "$secrets" ]; then
+  note "a staged line looks like a credential:"
+  echo "$secrets" | sed 's/^/  /' >&2
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "" >&2
+  echo "Nothing was committed. Unstage the file, or run again with --no-verify" >&2
+  echo "if you are certain — but read the line above first." >&2
+  exit 1
+fi

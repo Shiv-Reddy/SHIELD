@@ -861,3 +861,85 @@ would later have to re-derive it, or worse, re-make the same mistake.
    **`popup.ts` and `popup-legacy.html` are gone**, 32KB of it. 246 recorded them as dead code awaiting deletion: not a build entry since the React rebuild, reachable only from an HTML file nothing builds.
    **Two tests went with them, and that is the point rather than a cost.** `dev-gate`'s legacy-gate test guarded a file that does not ship. `popup-parity`'s legacy comparison already began `if (!existsSync(...)) return;` — so from the moment the file went it would have **passed while checking nothing**, which is the precise failure mode 183, 241 and 246 each recorded separately. A test that cannot fail is worse than no test, because it reports coverage that is not there. 396 tests remain, all of them able to fail.
    **Nothing else was removed.** A scan for unreferenced modules flagged `baselines.ts` and `tradeoff.ts`; both are reached from `benchmark/run.ts` and both have their own tests, so the scan was wrong and they stayed. Cutting them on a bad signal would have been the more expensive mistake.
+
+269. **Currency amounts in prose are detected, recall 83.5% to 88.2%, and every number landed where it was predicted to**
+   — The first change in this project measured against a target written down in full beforehand: the eight labels it would catch, the three it would wrongly catch, and both resulting percentages, all recorded in TASKS.md before a line of it existed.
+
+   | | Predicted | Measured |
+   |---|---|---|
+   | Recall | 88.2% | **88.2%** |
+   | Precision | ~82.9% | **82.9%** |
+   | New finds | 8, named individually | **8, exactly those** |
+   | New over-flags | 3, named individually | **3, exactly those** |
+   | Regressions | 0 | **0** |
+
+   **The gap it closes was recorded long before the fix.** The same figure was hidden by the default-to-hide rule when it sat in a form field and passed through untouched when the page rendered it as text — one quantity, two answers, decided by markup rather than by sensitivity. A card statement's transaction lines are a record of where somebody was and what they bought, and they were travelling intact.
+   **Additive only, which is why there are no regressions.** The pattern is appended to the END of `CONTENT_PATTERNS`, which is ordered and first-match-wins, so every existing pattern keeps first claim and the amount rule can only fire on text nothing else wanted. No existing rule was retuned, reordered or removed — so nothing that worked could break through a change that was never made to it. The empty regression list is that constraint working, not luck.
+   **The cost was named in advance and taken knowingly.** `ctl-04-tender-notice` is a control page that over-flagged nothing and now over-flags once, on `Estimated cost Rs. 4,85,00,000`. A currency pattern cannot tell a public tender's budget from a private balance, because that distinction is not in the text. Under SECURITY_PRIVACY.md Section 4 the safe direction is to hide, and a broken-clean control that was predicted is a result rather than a surprise. `tel-01` (a published tariff) and `svc-04` (button text) are the other two.
+   **A test passed for the wrong reason and was caught before it was trusted.** The ordering guarantee was pinned with two strings carrying both an account number and an amount — then the pattern was moved to the front of the array and the test **passed anyway**. `strongestIndianId` runs before the `CONTENT_PATTERNS` loop and short-circuits, so those two never reach the array at all. The comment claimed a guarantee the assertion did not make.
+   Replaced with `'Call Rs. 98765 43210 now'`, which is an amount and a phone number by shape and is decided purely by declaration order: **phone with the rule appended, `other` with it moved.** Re-run against the moved pattern and it fails, restored and it passes. Same discipline as 246 and 263, and the third time in this project that a green check turned out to be checking something other than what it said.
+
+270. **The hosted model path is live: Gemini 3.5 Flash Lite at 1.6s, and the frame is read there too**
+   — T1.3 proved the redacted frame reaches a model's reasoning on a local 7B (260). That result was about the *contract*, not about any one provider, and it is now reproduced on a hosted model with no code change — three environment variables, which is the whole claim 195 made about provider-agnosticism.
+   **The verification harness returned PROVEN again**, on a different model, a different vendor and a different continent. Identical PAGE CONTEXT, different screenshot, and the action moved with the pixels. The model's own words on the banner frame: *"Accept the cookie banner obstructing the sign-in form."* — describing something that exists nowhere but in the image. Control with the frame withheld returned the same action both times.
+   **Measured over five calls each:**
+
+   | | min | median | max |
+   |---|---|---|---|
+   | With the frame | 1.53s | **1.60s** | 1.71s |
+   | Text only | 1.11s | 1.44s | 1.68s |
+
+   **The image costs about 0.16s**, against 2-6s on the local 7B. This is the demo path; the local model is the offline fallback and the rules are the fallback below that.
+   **`SHIELD_MODEL_TIMEOUT` drops from 12s to 5s for the demo.** 12s was chosen when no latency figure existed. Against a measured worst case of 1.71s, 5s is roughly three times the slowest observed call and still short enough that a dead venue network reads as a pause rather than a freeze — the fallback to rules is instant once the timeout fires, and twelve seconds of nothing in front of a judge is indistinguishable from a crash.
+   **Model choice was made on evidence, not on size.** `gemini-3.5-flash`, `gemini-3.6-flash` and `gemini-3-flash-preview` all returned **HTTP 503** on this key while `gemini-3.5-flash-lite` answered every call. The larger models are capacity-constrained on a free tier, which is a fact about the tier rather than about the models, and a demo cannot depend on a model that refuses one call in one. The smallest one that works is the right one.
+   **Two things were found on the way and are worth keeping.** A thinking model spends its token budget before emitting content: at `max_tokens: 10` the reply came back `finish_reason: "length"` with **zero completion tokens and no `content` field at all**, which `_extract_text` correctly reports as an unexpected shape. The adapter's 400 is comfortably enough. And model names expire — `gemini-2.0-flash` now 404s with a message naming its replacement, so a pinned model name is a thing that rots and the endpoint should be re-checked before the event rather than on the day.
+   **The key is not in this repository and cannot be.** `.env`, `.env.*` and `*.key` are now gitignored — they were not before, which on a project whose entire claim is about data not leaking was the wrong default. `.env.example` is tracked, carries the working endpoint and model, and has an empty key field.
+
+271. **`.env` is loaded by fifteen lines of standard library, and an exported variable still wins**
+   — A `.env` file was the obvious way to keep the key off the command line, and without this it does **nothing**: the server reads `os.environ`, so a correctly written `.env` produced a server that answered from the rule path while its author believed the model was configured. **Silent degradation, which is the failure mode this project least wants** — it looks identical to working.
+   `python-dotenv` does this in one line and is not worth an install step on somebody else's laptop on demo morning. Same reasoning that keeps `urllib` in the adapter.
+   **`setdefault`, never assignment.** An exported variable beats the file, because overriding for one run — a different provider, a container injecting a secret — is the thing an operator expects to work. A file that quietly won would be a trap whose only symptom is *"why is it still using the old key"*. That precedence is the one property pinned by test, and the test was verified by turning `setdefault` into assignment and watching it fail.
+   **It runs before `model_reasoner` is imported**, because that module reads its configuration at import time. The module-level imports below it are deliberate and marked, not an oversight.
+   **Verified end to end with nothing exported**: `/health` reports `reasoner: model`, `vision: on`, and `/analyze` answers in 1.5-1.8s off the `.env` alone.
+   **Two checks were nearly lost to where they were written.** Appended to the end of `test_prompt.py`, they sat *after* the summary line and its `sys.exit` and never ran — the suite reported "all checks pass" with three checks that had never executed, and the only visible symptom was a count that had not gone up. Found by comparing the number, moved above the summary. The same lesson as 246, 263 and 269 arriving by a new route: **a check that does not run is indistinguishable from a check that passes.**
+
+272. **Names in prose are detected by a gazetteer: recall 88.2% to 91.8%, no new false positives, and a claim this project made for months is now wrong**
+   — The 90% target is met. Predicted before the list existed: 6 catches, recall 91.8%. Measured: **6 catches, recall 91.8%, precision 83.4%.**
+
+   | | Before | After |
+   |---|---|---|
+   | Recall | 88.2% | **91.8%** (156/170) |
+   | Precision | 82.9% | **83.4%** |
+   | Over-flagged | 31 | **31 — none added** |
+   | Regressions | — | **0** |
+
+   **Precision went up, which was not predicted.** The gazetteer added six true positives and zero false ones, so the ratio improved. The pre-registration declined to predict over-flags on the grounds that guessing them would need the corpus; the honest record is that the cost was zero and nobody knew that in advance.
+   **The list was written before looking at which names the corpus contains.** It holds Priya, Rohan, Arjun, Meera and Vikram because those are among the commonest given names in India, not because they are the answers. A gazetteer assembled by reading the answer sheet scores perfectly on it and generalises to nothing — the fixture trap DECISIONS.md has recorded twice already.
+   **Given names only, and the surname is checked against nothing.** That asymmetry is the design: a few hundred given names cover a large share of people, while surnames run to tens of thousands. "Raghunathan" and "Sundaram" are in no list and both are caught, because the rule is *a listed given name followed by any capitalised word*. Requiring the second token is also what keeps the ambiguous entries safe — "Raj", "Dev" and "Tara" are ordinary words in Indian English and none fires alone.
+   **Appended last, after every pattern including the amount rule**, so nothing that already worked could change category. The cost of being last is named in the code: a line carrying both a name and a figure is recorded as `other` rather than `name`. Both are redacted; the label is less precise than it could be. No corpus page exercises it.
+
+   **WHAT HAD TO CHANGE WITH IT, AND WHY THAT IS THE REAL RESULT**
+
+   **A test fired that was written to fire.** `integration.test.ts` asserted `t4` was NOT detected, with the failure message *"a name in prose is now detected — SECURITY_PRIVACY.md 4.1 needs updating"*. Someone left a tripwire on a documented limit so that closing it could not happen quietly. It went off on the first run and named the document to fix.
+   **Five documents said something that is no longer true** and were rewritten in the same commit as the detector: SECURITY_PRIVACY.md 4.1, PRIVACY.md, README.md, the demo Q&A, and the comment in `corpus.ts`. All of them said a name in prose cannot be detected without a named-entity model.
+   **The replacement wording is weaker than "we detect names", on purpose.** This is a list. It misses every given name not on it — most non-Indian names, unusual spellings — a surname used alone, ALL CAPS, and any non-Latin script. **A name is either on the list or invisible, with nothing in between**, which is precisely what an NER model would fix and this is not one. The demo answer now says "a list, not a model" before a judge can ask.
+   **The limit is pinned by test as carefully as the capability**, because the privacy policy now rests on it: an unlisted given name and a non-Latin name must both stay undetected, and a surname alone must not match. And `t4`'s assertion is inverted rather than deleted — a list can silently stop matching, and that would be a regression in something PRIVACY.md makes a promise about.
+   **05-adversarial is now seven of eight**, from five, then six, then seven. Neither improvement came from loosening a rule: case 6 arrived with the pixel layer, case 4 with this list, and case 8 — the control that looks like PII and is not — has stayed clean throughout.
+
+273. **Onboarding is documented and the secret rule is enforced by a hook, because `.gitignore` was never the thing protecting the key**
+
+   Bringing the build up on other machines raised the question of what a clone actually exposes. An audit of all 62 commits found **no credential has ever entered history** — no `AIza…`, no `sk-…`, no populated `SHIELD_MODEL_KEY`. `.env` and the face photographs have never been committed and are invisible in a clone.
+
+   **`.gitignore` is not a control, and treating it as one is the mistake worth naming.** It protects a path nobody has staged. It is silent about `git add -f`, about an editor that stages on save, and about a key pasted into a `.ts` file, which is not a path problem at all. So the rule is enforced by a pre-commit hook in `tools/hooks/`, checking staged **content** as well as staged paths, and refusing rather than warning: a false positive costs one `--no-verify`, a false negative costs a rotation plus the hope nobody fetched in between. Those are not symmetric.
+
+   **The hook is committed but installation is per machine**, via `git config core.hooksPath tools/hooks`, because Git does not clone hooks. That is the one setup step in SETUP.md with no substitute, and it is stated as such.
+
+   **Tested in both directions before being trusted** — an ordinary file, `.env.example`, and the hook itself must pass; a `.env`, a key pasted into source, and a face photograph must all fail. The sixth case exists because the hook quotes the patterns it searches for, so it would otherwise refuse its own commit; `tools/hooks` is excluded from the content scan for exactly that reason.
+
+   **A CRLF checkout would have broken it on every Windows machine** and only on those, failing as `/bin/sh^M: bad interpreter` — which reads like a broken hook rather than a line-ending problem. `.gitattributes` now pins `tools/hooks/*` to LF. The repo had no `.gitattributes` before this.
+
+   **The key is not distributed.** The rule path runs the whole demo with no model, no key and no network, so *no key* is the normal state of a new machine; a machine that needs the model path generates its own. One key shared five ways is one key revoked five ways.
+
+   **Two published counts were stale** and were corrected while the guide was being written against them: `npm test` is 405, not 394, and the server suites are 82 + 56 = 138, not 135.
+
+   **The SIH presentation stays in history.** It is reachable at `d0ddcc3` despite being deleted in `f2ce082`, because deleting a file does not remove it from history — only a rewrite does. The repository is private until the event, and goes public afterwards so that SIH evaluation can see it, which makes the blob's presence intended rather than a leak. No rewrite, therefore no force-push and no coordinated re-clone.

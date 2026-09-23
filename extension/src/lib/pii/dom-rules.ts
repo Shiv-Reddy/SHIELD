@@ -17,6 +17,7 @@
  */
 
 import type { DomElement, SensitiveCategory, SensitiveRegion } from '../types';
+import { GIVEN_NAMES } from './given-names';
 
 /**
  * Confidence attached to each rule, strongest first.
@@ -197,6 +198,37 @@ export const CONTENT_PATTERNS: ReadonlyArray<readonly [SensitiveCategory, RegExp
   // leading +, or a bracketed code, or at least three groups, so that dates and
   // "1,234" do not match.
   ['phone', /(\+\d{1,3}[\s-]?)?(\(\d{2,4}\)[\s-]?)?\d{3,5}[\s-]\d{3,5}([\s-]\d{3,5})?/],
+  /*
+   * A currency amount, and it is LAST on purpose.
+   *
+   * This array is ordered and the first match wins, so appending means every
+   * pattern above keeps first claim on any text it wants. That matters here:
+   * "Savings A/c 402711558903 · Available balance Rs. 1,84,220.55" carries both
+   * an account number and an amount, and it must stay an `id_number` — the
+   * account number is the identifier, the balance is a detail about it.
+   *
+   * WHY AMOUNTS ARE SENSITIVE AT ALL
+   *
+   * Individually an amount is dull. A statement's worth of them is a record of
+   * where somebody was and what they bought, and DECISIONS.md already recorded
+   * the asymmetry this fixes: the same figure was hidden in a form field by the
+   * default-to-hide rule and passed through untouched in prose. One quantity,
+   * two answers, decided by markup rather than by sensitivity.
+   *
+   * WHAT IT COSTS, KNOWINGLY
+   *
+   * A currency marker is required, which keeps it far from ordinary prose. It
+   * still cannot tell a public tender's budget from a private balance, because
+   * that distinction is not in the text. It therefore over-flags a tender
+   * notice and a published tariff in the corpus, both of them correct pages to
+   * get wrong in the safe direction (SECURITY_PRIVACY.md Section 4: when
+   * uncertain, hide). Named in TASKS.md before this was written.
+   *
+   * Categorised `other` rather than given a category of its own: the taxonomy
+   * is fixed by API_SPEC.md and adding a member is a contract change, not a
+   * detector change.
+   */
+  ['other', /(?:₹|\bRs\.?|\bINR\b)\s?\d[\d,]*(?:\.\d{1,2})?/i],
 ];
 
 /**
@@ -355,6 +387,42 @@ export function classifyElement(element: DomElement): DomRuleHit | null {
 }
 
 /**
+ * A person's name in running prose, found by a gazetteer of given names.
+ *
+ * Separate from CONTENT_PATTERNS because it is not a regular expression over
+ * the string — it is a lookup per capitalised token, and expressing a few
+ * hundred alternatives as one pattern would be slower to run and impossible to
+ * read.
+ *
+ * THE SHAPE: a listed given name, then another capitalised word.
+ *
+ * The second token is the surname and is deliberately NOT checked against
+ * anything, which is what lets this find surnames the list has never seen —
+ * "Raghunathan" and "Sundaram" are not in it and both are caught. Requiring
+ * that second token is also what keeps the ambiguous entries safe: "Raj",
+ * "Dev" and "Tara" are ordinary words in Indian English, and none of them
+ * fires without a surname after it.
+ *
+ * WHAT IT MISSES, WHICH IS THE PART TO SAY OUT LOUD
+ *
+ * Every name not on the list. Most non-Latin scripts. A surname used alone
+ * ("Mr Sundaram"). A name in ALL CAPS. **This is a gazetteer, not a named-entity
+ * model**, and SECURITY_PRIVACY.md Section 4.1 states it that way.
+ */
+export function findPersonName(text: string): boolean {
+  // Two adjacent capitalised words. Unicode-aware so an accented name is not
+  // silently skipped, though the list itself is Latin.
+  const pairs = text.matchAll(/\b(\p{Lu}\p{Ll}+)\s+(\p{Lu}\p{Ll}+)\b/gu);
+
+  for (const pair of pairs) {
+    const given = pair[1];
+    if (given && GIVEN_NAMES.has(given.toLowerCase())) return true;
+  }
+
+  return false;
+}
+
+/**
  * True when a phone-shaped match carries enough digits to be believed.
  *
  * Split out so the classifier and the scrubber apply exactly the same rule. Two
@@ -412,6 +480,30 @@ export function classifyTextContent(text: string): DomRuleHit | null {
       // to the console and shown in the trust overlay, and quoting the value
       // back would leak exactly what was just detected as sensitive.
       reason: `visible text matched ${category} format`,
+    };
+  }
+
+  /*
+   * The gazetteer runs LAST, after every pattern above has declined.
+   *
+   * Same reasoning as appending the amount rule: everything already here keeps
+   * first claim, so this can only fire on text nothing else wanted, and no
+   * existing detection can change category because of it.
+   *
+   * The cost of being last is narrow and worth naming. A line carrying both a
+   * name and a figure — "Billed to Rohan Mehra ... Rs. 712.00" — is recorded as
+   * `other` rather than `name`, because the amount rule is declared above and
+   * claims it first. Both are redacted either way, so this is a label being
+   * less precise than it could be, not a value escaping. No page in the corpus
+   * exercises it; if one ever does, the fix is to move this above the amount
+   * rule, and the two tests below say which way round they are.
+   */
+  if (findPersonName(text)) {
+    return {
+      category: 'name',
+      confidence: CONFIDENCE.textPattern,
+      // Says what matched — a listed given name — without quoting the name.
+      reason: 'visible text matched a known given name followed by a surname',
     };
   }
 

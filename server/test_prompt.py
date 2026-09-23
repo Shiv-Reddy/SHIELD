@@ -602,5 +602,68 @@ check(
 )
 
 print()
+# --- .env loading ------------------------------------------------------------
+#
+# The property worth pinning is not "it reads a file" but "a real environment
+# variable still wins". A file that silently overrode an exported variable is a
+# trap whose only symptom is "why is it still using the old key", and the
+# override is what an operator uses to switch provider for one run.
+
+import os as _os
+import tempfile as _tempfile
+from pathlib import Path as _Path
+
+import main as _main
+
+
+def _check_dotenv():
+    with _tempfile.TemporaryDirectory() as tmp:
+        env = _Path(tmp) / ".env"
+        env.write_text(
+            "# a comment\n"
+            "\n"
+            "SHIELD_TEST_FROM_FILE=file-value\n"
+            'SHIELD_TEST_QUOTED="quoted-value"\n'
+            "SHIELD_TEST_ALREADY_SET=file-should-not-win\n",
+            encoding="utf-8",
+        )
+        _os.environ["SHIELD_TEST_ALREADY_SET"] = "env-wins"
+        for name in ("SHIELD_TEST_FROM_FILE", "SHIELD_TEST_QUOTED"):
+            _os.environ.pop(name, None)
+
+        original = _main.Path
+        try:
+            # The loader looks beside main.py and one directory up.
+            _main.Path = lambda *a, **k: _Path(str(env.parent / "server" / "main.py"))
+            (env.parent / "server").mkdir(exist_ok=True)
+            _main._load_dotenv()
+        finally:
+            _main.Path = original
+
+        check(
+            "a value is read out of .env",
+            _os.environ.get("SHIELD_TEST_FROM_FILE") == "file-value",
+            f"got {_os.environ.get('SHIELD_TEST_FROM_FILE')!r}",
+        )
+        check(
+            "surrounding quotes are stripped",
+            _os.environ.get("SHIELD_TEST_QUOTED") == "quoted-value",
+            f"got {_os.environ.get('SHIELD_TEST_QUOTED')!r}",
+        )
+        check(
+            "an exported variable beats the file, so an override actually overrides",
+            _os.environ.get("SHIELD_TEST_ALREADY_SET") == "env-wins",
+            f"got {_os.environ.get('SHIELD_TEST_ALREADY_SET')!r}",
+        )
+        for name in (
+            "SHIELD_TEST_FROM_FILE",
+            "SHIELD_TEST_QUOTED",
+            "SHIELD_TEST_ALREADY_SET",
+        ):
+            _os.environ.pop(name, None)
+
+
+_check_dotenv()
+
 print(f"{len(failures)} failing check(s)" if failures else "all checks pass")
 sys.exit(1 if failures else 0)

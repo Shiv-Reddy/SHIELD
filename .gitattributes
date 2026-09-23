@@ -1,0 +1,5 @@
+# Hooks are executed by sh, so they must keep LF endings even when checked out
+# on Windows with core.autocrlf=true. A CRLF shebang fails as
+# "/bin/sh^M: bad interpreter", which reads like a broken hook rather than a
+# line-ending problem and costs somebody an afternoon.
+tools/hooks/* text eol=lf

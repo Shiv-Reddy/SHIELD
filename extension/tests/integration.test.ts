@@ -210,14 +210,30 @@ test('Screen 5 — the adversarial cases land exactly where they were predicted'
   // Declared a nickname, holds an email: the more sensitive reading wins.
   assert.equal(categoryOf(regions, 'c7'), 'email', 'lying autocomplete attribute');
 
-  // Missed, deliberately and on the record. These assertions exist so that if
-  // either limit is ever closed, the suite says so out loud instead of a fixed
-  // gap passing silently and staying documented as open.
+  /*
+   * `t4` was one of these tripwires and it fired on 2026-09-23, which is the
+   * whole reason they are written this way.
+   *
+   * A name in prose is now caught by the given-name gazetteer, and the failure
+   * message said which document to go and fix. SECURITY_PRIVACY.md 4.1,
+   * PRIVACY.md, README.md, the demo Q&A and the corpus comment were all
+   * rewritten in the same commit as the detector — which is what the tripwire
+   * was for. A fixture that goes green while its explanation still says
+   * "impossible" has stopped measuring anything.
+   *
+   * It is now asserted in the other direction, and the reason is the same: this
+   * is a LIST, so if it ever stops finding a name it used to find, that is a
+   * silent regression in something the privacy policy makes a claim about.
+   */
   assert.equal(
     categoryOf(regions, 't4'),
-    null,
-    'a name in prose is now detected — SECURITY_PRIVACY.md 4.1 needs updating',
+    'name',
+    'a name in prose is no longer detected — the gazetteer has regressed',
   );
+
+  // Still missed, deliberately and on the record. This assertion exists so that
+  // if the limit is ever closed, the suite says so out loud instead of a fixed
+  // gap passing silently and staying documented as open.
   assert.equal(
     categoryOf(regions, 't6'),
     null,

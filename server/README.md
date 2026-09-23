@@ -16,7 +16,7 @@ python -m venv .venv
 Then `curl http://127.0.0.1:8787/health`.
 
 Run the checks with `.venv/Scripts/python test_reasoner.py` (82) and
-`.venv/Scripts/python test_prompt.py` (53) — 135 in total. No pytest, no
+`.venv/Scripts/python test_prompt.py` (56) — 138 in total. No pytest, no
 network, no key: they run anywhere the server runs.
 
 ## Connecting a reasoning model

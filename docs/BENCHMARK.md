@@ -4,7 +4,7 @@
 
 Measures metric 2 (recall and precision of PII detection) and metric 3 (precision of redaction) against a hand-labelled corpus. Labels describe the PAGE, never the detector output — several are things the DOM path structurally cannot see, and they are counted as misses because they are.
 
-Last run: 2026-09-22T14:14:04.023Z
+Last run: 2026-09-22T20:28:35.225Z
 
 ## Headline
 
@@ -12,15 +12,15 @@ Last run: 2026-09-22T14:14:04.023Z
 |---|---|
 | Pages | 50 |
 | Sensitive elements labelled | 170 |
-| **Recall** | **83.5%** |
-| **Precision** | **83.5%** |
-| F1 | 83.5% |
-| Category accuracy | 83.8% |
-| Missed | 28 |
-| Over-flagged | 28 |
-| Redaction coverage | 60.4% |
-| **Redaction precision** | **83.9%** |
-| Area painted / area needed | 0.72x |
+| **Recall** | **91.8%** |
+| **Precision** | **83.4%** |
+| F1 | 87.4% |
+| Category accuracy | 85.3% |
+| Missed | 14 |
+| Over-flagged | 31 |
+| Redaction coverage | 65.9% |
+| **Redaction precision** | **83.8%** |
+| Area painted / area needed | 0.79x |
 
 Coverage is the share of sensitive AREA painted — but a blanket blur also scores 100% there, so it is never quoted alone. **Redaction precision** is what metric 3 asks: of everything covered, how much needed covering. A blanket blur scores near zero. The area ratio is signed — above 1.00x means more was painted than needed, below means some was left visible.
 
@@ -34,7 +34,7 @@ The same corpus, scored through the same `scorePage`, against four strategies so
 | Blanket blur | 100.0% | 16.0% | 100.0% | 32.9% | 3.04x | 0.0% |
 | Hide every field | 77.1% | 75.3% | 56.2% | 77.1% | 0.73x | 95.2% |
 | Hide every value | 94.1% | 28.8% | 67.5% | 39.4% | 1.71x | 55.6% |
-| **Shield** | 83.5% | 83.5% | 60.4% | 83.9% | 0.72x | 96.9% |
+| **Shield** | 91.8% | 83.4% | 65.9% | 83.8% | 0.79x | 96.5% |
 
 | Strategy | What it is |
 |---|---|
@@ -44,7 +44,7 @@ The same corpus, scored through the same `scorePage`, against four strategies so
 | Hide every value | Fields and rendered text alike — all-inputs, once somebody notices printed data. |
 | Shield | Per-element detection, semantic placeholders. Measured on the same corpus. |
 
-**Read the last two columns together.** Blanket blur scores 100.0% coverage — a perfect score on the metric read alone — by painting 3.04x the area that needed painting and leaving 0.0% of the page readable. It destroys 891 of 891 non-sensitive elements, which is every heading, button and label an agent needs in order to act. Shield covers 60.4% at 83.9% precision and keeps 96.9% of the page usable. **A redactor that hides everything has not solved the problem, it has moved it** — from "the model sees private data" to "the model sees nothing".
+**Read the last two columns together.** Blanket blur scores 100.0% coverage — a perfect score on the metric read alone — by painting 3.04x the area that needed painting and leaving 0.0% of the page readable. It destroys 891 of 891 non-sensitive elements, which is every heading, button and label an agent needs in order to act. Shield covers 65.9% at 83.8% precision and keeps 96.5% of the page usable. **A redactor that hides everything has not solved the problem, it has moved it** — from "the model sees private data" to "the model sees nothing".
 
 `Context kept` counts non-sensitive elements still readable. It is the only column here under which hiding everything scores zero, and it is why the 60.4%-style coverage figure is not the failure it reads as.
 
@@ -56,7 +56,7 @@ The problem statement asks for the balance explicitly. **The obvious study is no
 
 | Layer | Cost | Labels it owns | Found | Source of the cost figure |
 |---|---|---|---|---|
-| DOM rules | 4.4ms | 160 | 142 | SESSION_LOG.md, one full pass on Chrome |
+| DOM rules | 4.4ms | 160 | 156 | SESSION_LOG.md, one full pass on Chrome |
 | Face detection | 34ms | 3 | *needs a browser* | DECISIONS.md 218, Chrome document host, WebGPU |
 | Image OCR | *unmeasured* | 10 | *needs a browser* | Never isolated on a real page — the scan profile of DECISIONS.md 231 read 0ms because that page had no image candidates |
 | Whole-frame text | 2900ms/stop | 0 | *needs a browser* | DECISIONS.md 231, 82% of a scan, income-tax login |
@@ -96,22 +96,21 @@ What is printed inside an image, scored against boxes measured on the document r
 |---|---|
 | Documents scored | 2 |
 | Regions labelled | 11 |
-| Recall | 27.3% |
+| Recall | 36.4% |
 | Precision | 100.0% |
 | Category accuracy | 100.0% |
-| Coverage | 40.9% |
-| Redaction precision | 64.3% |
+| Coverage | 51.8% |
+| Redaction precision | 64.4% |
 
 A match needs an intersection-over-union of 0.5 against the labelled box, so a rectangle covering the whole card does not count as having found the number on it.
 
 | Document | Labelled | Found | Missed | Over-flagged |
 |---|---|---|---|---|
-| doc-01-aadhaar-card | 7 | 2 | 5 | 0 |
+| doc-01-aadhaar-card | 7 | 3 | 4 | 0 |
 | doc-02-pan-card | 4 | 1 | 3 | 0 |
 
 | Document | Not found | Should have been |
 |---|---|---|
-| doc-01-aadhaar-card | name printed on the Aadhaar card | name |
 | doc-01-aadhaar-card | date of birth on the Aadhaar card | other |
 | doc-01-aadhaar-card | gender on the Aadhaar card | other |
 | doc-01-aadhaar-card | address line 1 on the Aadhaar card | address |
@@ -133,8 +132,8 @@ Faces carry no boxes here at all. `test-screens/face-a.jpg` and `face-b.png` are
 | Category | Labelled | Found | Wrongly claimed | Recall | Precision | F1 |
 |---|---|---|---|---|---|---|
 | id_number | 51 | 37 | 19 | 72.5% | 66.1% | 69.2% |
-| other | 28 | 15 | 17 | 53.6% | 46.9% | 50.0% |
-| name | 25 | 16 | 6 | 64.0% | 72.7% | 68.1% |
+| other | 28 | 23 | 20 | 82.1% | 53.5% | 64.8% |
+| name | 25 | 22 | 6 | 88.0% | 78.6% | 83.0% |
 | phone | 17 | 10 | 2 | 58.8% | 83.3% | 69.0% |
 | email | 16 | 16 | 2 | 100.0% | 88.9% | 94.1% |
 | password | 16 | 15 | 2 | 93.8% | 88.2% | 90.9% |
@@ -150,7 +149,7 @@ Reported per category because the aggregate hides what matters. A detector that 
 | 01-login | fixture | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
 | 02-signup | fixture | 10 | 10 | 0 | 1 | 100.0% | 90.9% |
 | 04-clean | fixture | 0 | 0 | 0 | 0 | 100.0% | 100.0% |
-| 05-adversarial | fixture | 7 | 5 | 2 | 0 | 67.8% | 100.0% |
+| 05-adversarial | fixture | 7 | 6 | 1 | 0 | 81.6% | 100.0% |
 | gov-01-itr-login | synthetic | 2 | 2 | 0 | 1 | 100.0% | 68.0% |
 | gov-02-itr-personal | synthetic | 9 | 9 | 0 | 0 | 100.0% | 100.0% |
 | gov-03-epfo-passbook | synthetic | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
@@ -159,30 +158,30 @@ Reported per category because the aggregate hides what matters. A detector that 
 | gov-06-gst-registration | synthetic | 4 | 4 | 0 | 2 | 100.0% | 66.7% |
 | gov-07-nsp-scholarship | synthetic | 6 | 6 | 0 | 1 | 100.0% | 85.7% |
 | gov-08-parivahan-dl | synthetic | 3 | 3 | 0 | 0 | 100.0% | 100.0% |
-| gov-09-voter-epic | synthetic | 4 | 1 | 3 | 1 | 16.3% | 50.0% |
+| gov-09-voter-epic | synthetic | 4 | 2 | 2 | 1 | 31.6% | 66.0% |
 | gov-10-cpgrams | synthetic | 4 | 4 | 0 | 0 | 100.0% | 100.0% |
 | bank-01-netbanking-login | synthetic | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
 | bank-02-add-beneficiary | synthetic | 5 | 5 | 0 | 1 | 100.0% | 83.3% |
-| bank-03-account-summary | synthetic | 4 | 1 | 3 | 0 | 25.0% | 100.0% |
+| bank-03-account-summary | synthetic | 4 | 3 | 1 | 0 | 75.0% | 100.0% |
 | bank-04-kyc-update | synthetic | 5 | 4 | 1 | 2 | 43.2% | 66.7% |
 | bank-05-upi-pay | synthetic | 3 | 3 | 0 | 1 | 100.0% | 75.0% |
 | bank-06-loan-application | synthetic | 8 | 8 | 0 | 0 | 100.0% | 100.0% |
-| bank-07-card-statement | synthetic | 6 | 1 | 5 | 0 | 16.7% | 100.0% |
+| bank-07-card-statement | synthetic | 6 | 5 | 1 | 0 | 83.3% | 100.0% |
 | bank-08-cheque-deposit | synthetic | 3 | 1 | 2 | 2 | 7.1% | 33.3% |
-| tel-01-recharge | synthetic | 1 | 1 | 0 | 1 | 100.0% | 50.0% |
+| tel-01-recharge | synthetic | 1 | 1 | 0 | 2 | 100.0% | 34.0% |
 | tel-02-sim-kyc | synthetic | 5 | 4 | 1 | 0 | 38.4% | 100.0% |
-| tel-03-postpaid-bill | synthetic | 6 | 4 | 2 | 0 | 66.7% | 100.0% |
+| tel-03-postpaid-bill | synthetic | 6 | 6 | 0 | 0 | 100.0% | 100.0% |
 | tel-04-broadband-order | synthetic | 5 | 5 | 0 | 0 | 100.0% | 100.0% |
-| tel-05-electricity-bill | synthetic | 4 | 3 | 1 | 0 | 75.4% | 100.0% |
+| tel-05-electricity-bill | synthetic | 4 | 4 | 0 | 0 | 100.0% | 100.0% |
 | svc-01-abha-appointment | synthetic | 6 | 5 | 1 | 0 | 83.3% | 100.0% |
-| svc-02-insurance-policy | synthetic | 4 | 1 | 3 | 1 | 25.0% | 50.0% |
+| svc-02-insurance-policy | synthetic | 4 | 4 | 0 | 1 | 100.0% | 80.0% |
 | svc-03-job-application | synthetic | 6 | 6 | 0 | 0 | 100.0% | 100.0% |
-| svc-04-checkout | synthetic | 6 | 6 | 0 | 0 | 100.0% | 100.0% |
+| svc-04-checkout | synthetic | 6 | 6 | 0 | 1 | 100.0% | 86.4% |
 | svc-05-profile-edit | synthetic | 5 | 4 | 1 | 1 | 65.5% | 80.0% |
 | ctl-01-ifsc-directory | synthetic | 0 | 0 | 0 | 4 | 100.0% | 0.0% |
 | ctl-02-pnr-help | synthetic | 0 | 0 | 0 | 1 | 100.0% | 0.0% |
 | ctl-03-invoice-footer | synthetic | 0 | 0 | 0 | 3 | 100.0% | 0.0% |
-| ctl-04-tender-notice | synthetic | 0 | 0 | 0 | 0 | 100.0% | 100.0% |
+| ctl-04-tender-notice | synthetic | 0 | 0 | 0 | 1 | 100.0% | 0.0% |
 | doc-01-aadhaar-card | fixture | 1 | 0 | 1 | 0 | 0.0% | 100.0% |
 | doc-02-pan-card | fixture | 1 | 0 | 1 | 0 | 0.0% | 100.0% |
 | axis-home | real | 2 | 2 | 0 | 0 | 100.0% | 100.0% |
@@ -204,31 +203,17 @@ A miss is a sensitive field that would have been transmitted. Each is listed ind
 
 | Page | Element | Should have been |
 |---|---|---|
-| 05-adversarial | t4 | name |
 | 05-adversarial | t6 | id_number |
 | gov-04-uidai-update | letter | id_number |
-| gov-09-voter-epic | r1 | name |
 | gov-09-voter-epic | r2 | other |
 | gov-09-voter-epic | photo | face |
-| bank-03-account-summary | who | name |
-| bank-03-account-summary | a2 | other |
 | bank-03-account-summary | a3 | other |
 | bank-04-kyc-update | proof | id_number |
 | bank-07-card-statement | addr | address |
-| bank-07-card-statement | t1 | other |
-| bank-07-card-statement | t2 | other |
-| bank-07-card-statement | t3 | other |
-| bank-07-card-statement | due | other |
 | bank-08-cheque-deposit | front | id_number |
 | bank-08-cheque-deposit | back | id_number |
 | tel-02-sim-kyc | selfie | face |
-| tel-03-postpaid-bill | who | name |
-| tel-03-postpaid-bill | due | other |
-| tel-05-electricity-bill | r2 | other |
 | svc-01-abha-appointment | dept | other |
-| svc-02-insurance-policy | life | name |
-| svc-02-insurance-policy | nom | name |
-| svc-02-insurance-policy | prem | other |
 | svc-05-profile-edit | avatar | face |
 | doc-01-aadhaar-card | card | id_number |
 | doc-02-pan-card | card | id_number |

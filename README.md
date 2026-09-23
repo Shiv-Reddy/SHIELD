@@ -53,8 +53,9 @@ a score goes up.
 
 Known limits are documented rather than discovered:
 [SECURITY_PRIVACY.md](./docs/SECURITY_PRIVACY.md) Section 4.1 lists what Shield
-does not detect, and why. A person's name in ordinary prose is still missed and
-is expected to stay missed. Face detection is reliable at 110px and above and
+does not detect, and why. A person's name in ordinary prose is now caught when
+its given name is one of the few hundred Shield ships a list of — a gazetteer,
+not a named-entity model, so a name that is not on the list is still invisible. Face detection is reliable at 110px and above and
 marginal below roughly 80px — and *marginal* was recently shown to mean it can
 differ between two browsers on the same laptop, not that there is a fixed
 cutoff.
@@ -82,8 +83,14 @@ if you're new to the project:
 15. [RESOURCES.md](./docs/RESOURCES.md) — how memory and CPU were measured, and the protocol for repeating it
 16. [OPERATOR_RUNBOOK.md](./docs/OPERATOR_RUNBOOK.md) — every task that needs a browser, a key or a second machine
 17. [SESSION_LOG.md](./docs/SESSION_LOG.md) — what happened each work session
+18. [SETUP.md](./docs/SETUP.md) — getting a new machine building and running, step by step
 
 ## Setup Instructions (Hackathon Build)
+
+Setting up a machine that has never built Shield before?
+[SETUP.md](./docs/SETUP.md) covers the same ground with the prerequisites
+pinned, the commit guard, and a table of what each failure on a fresh install
+actually means. The summary below assumes the toolchain is already there.
 
 ### Prerequisites
 - **Google Chrome** (latest). Firefox is also supported — see below. Edge runs
@@ -246,7 +253,7 @@ fallback can be exercised on a machine where it would otherwise never run.
 ## Testing
 
 ```bash
-cd extension && npm test        # 394 checks, no test framework dependency
+cd extension && npm test        # 405 checks, no test framework dependency
 cd server && .venv/Scripts/python test_reasoner.py
 cd server && .venv/Scripts/python test_prompt.py
 ```

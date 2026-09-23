@@ -18,3 +18,11 @@ server/__pycache__/
 **/__pycache__/
 *.pyc
 Shield_*_Idea_Presentation.pdf
+
+# Provider credentials. The server reads these from the environment and nothing
+# here ever needs a file — but a key committed once is a key leaked forever, so
+# the pattern is ignored defensively rather than relying on nobody creating one.
+.env
+.env.*
+!.env.example
+*.key

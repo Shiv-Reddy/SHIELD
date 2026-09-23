@@ -17,16 +17,61 @@ it later is a second line rather than the only one.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 import time
+from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-from model_reasoner import decide_with_model, is_configured, vision_state
-from prompt import PROMPT_VERSION
-from schemas import (
+def _load_dotenv() -> None:
+    """Read `.env` into the environment, if one exists.
+
+    WHY THIS EXISTS AND WHY IT IS NOT A DEPENDENCY
+
+    The provider is configured by three environment variables, and the obvious
+    way to keep a key off the command line is a `.env` file. Without this, that
+    file does nothing at all: the server reads `os.environ`, so a correctly
+    written `.env` produces a server that silently answers from the rule path —
+    configured, as far as its author knows, and not actually using the model.
+    Silent degradation is the failure this project least wants.
+
+    `python-dotenv` would do this in one line and is not worth an install step
+    on somebody else's laptop on demo morning, which is the same reasoning that
+    keeps `urllib` in model_reasoner.py.
+
+    A REAL ENVIRONMENT VARIABLE ALWAYS WINS
+
+    `setdefault`, never assignment. Exporting a variable to override the file is
+    the thing an operator expects to work — switching provider for one run, or a
+    container injecting a secret — and a file that quietly overrode it would be
+    a trap that only shows up as "why is it still using the old key".
+    """
+    here = Path(__file__).resolve().parent
+    for candidate in (here / ".env", here.parent / ".env"):
+        if not candidate.is_file():
+            continue
+        for line in candidate.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            name, _, value = line.partition("=")
+            # Values are never logged. This file holds the one secret the
+            # server ever sees, and a startup line echoing it would put it in
+            # exactly the place SECURITY_PRIVACY.md Section 3 warns about.
+            os.environ.setdefault(name.strip(), value.strip().strip("\"'"))
+
+
+# Before importing model_reasoner, which reads its configuration at import time.
+# Module-level imports below this line are deliberate, not an oversight.
+_load_dotenv()
+
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+
+from model_reasoner import decide_with_model, is_configured, vision_state  # noqa: E402
+from prompt import PROMPT_VERSION  # noqa: E402
+from schemas import (  # noqa: E402
     ALLOWED_ACTIONS,
     ActionReadyResponse,
     AnalyzeRequest,

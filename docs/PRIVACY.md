@@ -128,9 +128,11 @@ collects no information from anyone, including children.
 
 We would rather you heard these from us.
 
-- **Detection is not perfect.** A person's name written in ordinary prose is not
-  reliably detected, because separating it from other capitalised words needs a
-  model we do not ship. Details in SECURITY_PRIVACY.md Section 4.1.
+- **Names are detected from a list, so unfamiliar ones are missed.** Shield
+  recognises a few hundred common given names and hides the name that follows
+  one. A name whose first name is not on that list — many non-Indian names,
+  unusual spellings, a surname on its own — is not detected at all. Details in
+  SECURITY_PRIVACY.md Section 4.1.
 - **Only English text is read from images.** We ship `eng` training data only. On
   a page in another script, the text recogniser produces Latin-shaped guesses —
   which fails towards hiding too much rather than too little, and is still not

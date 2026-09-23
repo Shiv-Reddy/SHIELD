@@ -40,11 +40,24 @@ transport layer. Only sanitized payloads cross it.
 
 Stated plainly: a boundary a reviewer discovers is worse than one we declare.
 
-**Names in page text are not detected.** Shield redacts declared PII fields,
-formatted identifiers and faces. A person's name as ordinary text or a link
-label is indistinguishable from any other words without a named-entity model,
-which this build does not carry. Verified against a real social feed: names in
-link and button labels produced no DOM detections.
+**Names in page text are detected only when the given name is one we ship a
+list of.** Changed 2026-09-23, and the change is narrower than it sounds.
+
+Shield carries a gazetteer of a few hundred common Indian given names and flags
+a listed given name followed by any capitalised word — the surname is not
+checked against anything, so unfamiliar surnames are caught. "Account holder:
+Priya Raghunathan" is now found; neither Raghunathan nor the sentence around it
+is in any list.
+
+**This is a gazetteer, not a named-entity model, and the difference is the
+limit.** It misses every given name absent from the list — most non-Indian
+names, rare and unusually spelled ones — a surname used alone ("Mr Sundaram"),
+a name in ALL CAPS, and any name in a non-Latin script. A name is either on the
+list or invisible, with nothing in between, which is exactly what an NER model
+would fix and this is not one.
+
+The earlier finding stands where it applies: verified against a real social
+feed, names in link and button labels produced no DOM detections.
 
 **Faces below ~80px wide are missed, and 80px is marginal.** Measured at the
 0.3 threshold on `03-faces.html`, which renders one face at eight sizes: found

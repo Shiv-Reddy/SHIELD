@@ -158,13 +158,14 @@ the popup.
 
 **Q: "What happens if someone tries to trick your system?"**
 Open `test-screens/05-adversarial.html` and run it. Eight cases, with what we
-expected written down *before* the first run. Six are caught, including a
+expected written down *before* the first run. Seven are caught, including a
 masked field with no `type="password"` and a field whose `autocomplete`
 attribute claims a nickname while it holds an email — where the more sensitive
 reading wins.
 
-**Re-measured 2026-09-21 on Firefox, and it moved: six of eight.** The case
-that changed is the interesting one.
+**Re-measured twice and it has moved twice: five of eight, then six on
+2026-09-21, then seven on 2026-09-23.** Both cases that changed are worth
+naming, and neither came from loosening a rule.
 
 **Case 6 — an ID number rendered inside an image — is now caught**, by the
 pixel layer rather than by any rule: `id_number`, source `ocr`, reason *"text on
@@ -175,10 +176,18 @@ single clearest demonstration on any fixture of why the visual model earns its
 place** — every other finding on the page could in principle have come from
 markup, and this one could not.
 
-**Case 4 — a person's name in ordinary prose — is still missed, and will be.**
-It cannot be separated from other capitalised words without a named-entity
-model we do not ship. Written into SECURITY_PRIVACY.md Section 4.1, and it
-should be volunteered rather than conceded.
+**Case 4 — a person's name in ordinary prose — is now caught, as of
+2026-09-23, and the honest version of that is worth more than the win.**
+`Account holder: Priya Raghunathan` is found by a gazetteer of a few hundred
+common given names: a listed given name followed by any capitalised word, with
+the surname checked against nothing. Raghunathan is in no list.
+
+**Say "a list, not a model" before a judge asks.** It misses every given name
+not on the list — most non-Indian names, unusual spellings — a surname used
+alone, ALL CAPS, and non-Latin scripts. A name is either on the list or
+invisible, with nothing in between. That is precisely what a named-entity model
+would fix, and this is not one. Claiming "we detect names" would be the kind of
+overstatement the rest of this document exists to avoid.
 
 **Case 8 is a control and it stayed clean** — the thing that looks like PII and
 is not was correctly left alone, so the improvement above did not come from
@@ -248,7 +257,8 @@ tampering, information disclosure and elevation of privilege for this specific
 architecture, including limits we have not solved. It was not an afterthought.
 
 **Q: "What would you do with more time?"**
-A phased roadmap: a named-entity model so names in prose are detectable at all,
+A phased roadmap: a named-entity model, so a name is detectable because it is a
+name rather than because it is on our list,
 a wider PII taxonomy, non-Latin OCR — `eng.traineddata` is all we ship, so a
 Devanagari page returns Latin-shaped guesses and we do not count them as
 evidence — then formal security review and the Chrome Web Store. We

@@ -16,7 +16,7 @@ next.
 | 2 | Recall & precision of PII detection | 20% | **Measured.** 83.5% / 83.5% over 50 pages, 12 of them real |
 | 3 | Precision of redaction | 20% | **Measured.** 83.9% precision, 60.4% coverage |
 | 4 | Client-side resource utilization | 20% | **Measured on both browsers, one machine.** Chrome scan peak 250-287MB, run peak ~144MB. Firefox 65MB idle, 415MB scan peak, **back to 60MB on its own**. **CPU during a scan is 87-93% on Chrome and 75-97% on Firefox** — the ≤1.1% in the table until 2026-09-22 was a sampling error, not a measurement (DECISIONS.md 266). Five scans back to back do not climb — not a leak. Chrome's settled-after figure is the one gap left |
-| 5 | End-to-end task latency | 15% | **Measured on both browsers.** Chrome ~150ms/pass; Firefox warm 253-259ms inference across three runs 2026-09-22, consistent with the 228ms recorded before. **Cold start is worse than recorded: 16.7s and 17.0s model init on two separate 2026-09-22 sessions, against ~10s on 2026-09-17**, shader warm-up alone accounting for 16.0s and 16.3s. The two new readings agree closely with each other and not with the old one, so **~17s is the figure and ~10s should not be quoted again.** Warm is inside budget on both |
+| 5 | End-to-end task latency | 15% | **Measured on both browsers and both model paths.** Chrome ~150ms/pass on the rule path; Firefox warm 253-259ms inference. **Hosted model (Gemini 3.5 Flash Lite) 1.60s median with the redacted frame, 1.71s worst of five** — the image costs ~0.16s. Local 7B is ~20s and is the offline fallback, not the demo path. Firefox cold start ~17s for shader warm-up, one-time per session |
 
 **Metric 1 rests on one page.** 25% of the score, one data point. A page is a
 data point, not a rate.
@@ -685,8 +685,11 @@ limit because it was written to be reached from the same machine. DECISIONS.md
 
 ## Known limits — say these before someone else finds them
 
-- Names in prose are not detected. Only in fields. The same is true of
-  addresses and dates of birth, which is most of what a bill or a statement is.
+- Names in prose are detected only when the given name is on a list we ship —
+  a gazetteer of a few hundred, not a model — so an unfamiliar first name, a
+  surname alone or a non-Latin script is still missed. Addresses and dates of
+  birth in prose are still missed entirely, which is most of what a bill or a
+  statement is.
 - Amounts are missed as text and hidden as fields. A balance in a sentence
   passes; the same figure in a box is covered by the default-to-hide rule.
 - Face floor is soft: reliable at 110px+, marginal at 80px (0.312 against a 0.3
@@ -755,9 +758,38 @@ is still readable:
 | svc-02 | `prem` | `Next premium Rs. 18,240 due 01 Oct 2026` |
 | tel-03 | `due` | `Amount payable Rs. 712.00 by 12 Sep 2026` |
 
+**Refined to 8 before writing the code, not after.** A sweep of every
+amount-bearing element in the corpus found one more already on the miss list:
+`tel-05` `r2`, *"Units consumed 214 · Bill Rs. 2,318.00 · Due 20 Sep 2026"*.
+
 This closes the gap DECISIONS.md already recorded: *"amounts are missed as text
 and over-flagged as fields"* — the same quantity treated two ways depending on
 how the page renders it.
+
+**The cost is named in advance too, from the same sweep.** Three elements carry
+an amount and are correctly NOT labelled sensitive, so each becomes a false
+positive:
+
+| Page | Label | Why it is not PII |
+|---|---|---|
+| ctl-04 | `t2` | `Estimated cost Rs. 4,85,00,000` — a public tender value |
+| tel-01 | `plan` | `Rs. 299 · 1.5 GB per day` — a published tariff |
+| svc-04 | `pay` | `Pay Rs. 6,214.00` — button text |
+
+**`ctl-04` is a control page that currently over-flags nothing.** Breaking a
+clean control is the cost of this pattern and it is being taken knowingly: an
+amount pattern cannot tell a tender's budget from a person's balance without
+context it does not have. Recorded here so the control's score changing is a
+predicted result rather than a surprise.
+
+**Appended to the END of `CONTENT_PATTERNS`, deliberately.** The array is
+ordered and first match wins, so appending means every existing pattern keeps
+first claim and the amount rule can only fire on text nothing else wanted.
+`bank-03` `a1` and `svc-02` `pol` both carry an amount AND a long account
+number; they are found as `id_number` today and must stay that way.
+
+**Predicted after this pattern alone: recall 88.2% (150/170), precision ~82.9%.**
+Short of 90 on purpose — the gazetteer is what closes it.
 
 ### Prediction 2 — a name gazetteer catches 6
 
@@ -792,3 +824,45 @@ page that is supposed to stay clean. **Precision is predicted to fall to about
 
 **Abort conditions, fixed now:** recall below baseline, or precision below 78%.
 Either one and the pattern that caused it is deleted rather than adjusted.
+
+### Prediction 2, restated with the six exact strings — recorded before the list exists
+
+Baseline after the amount pattern: **recall 88.2%, 150 of 170, 20 DOM misses.**
+Six of those twenty are names:
+
+| Page | Label | The text | The name |
+|---|---|---|---|
+| 05-adversarial | `t4` | `Account holder: Priya Raghunathan` | Priya Raghunathan |
+| gov-09 | `r1` | `Elector: Vikram Sundaram, Age 41` | Vikram Sundaram |
+| bank-03 | `who` | `Welcome back, Rohan Mehra` | Rohan Mehra |
+| tel-03 | `who` | `Billed to Rohan Mehra, Flat 3B, ...` | Rohan Mehra |
+| svc-02 | `life` | `Life assured: Meera Pillai, DOB 12 Mar 1990` | Meera Pillai |
+| svc-02 | `nom` | `Nominee: Arjun Pillai (Son), ...` | Arjun Pillai |
+
+**Predicted: 6 catches, recall 91.8% (156/170).**
+
+**The design, fixed before measuring, so it cannot be fitted afterwards.**
+
+*Given names only, not surnames.* Given names are a far smaller and
+higher-coverage set — a few hundred cover most of the population, while
+surnames run to tens of thousands. The list is written from common Indian given
+names generally, **not from the corpus**; it contains Priya, Rohan, Arjun, Meera
+and Vikram because those are among the commonest names in India, not because
+they appear on these pages. A list assembled by reading the answer sheet would
+score well here and generalise to nothing.
+
+*Shape: a listed given name followed by another capitalised word.* That second
+token is the surname and is NOT checked against anything, which is what lets it
+catch surnames the list has never seen — Raghunathan and Sundaram are not in it.
+
+**What this is NOT, and the claim that has to change with it.** A gazetteer is
+not a named-entity model. It recognises names on a list and misses every name
+that is not, including most non-Indian names and any unusual one.
+SECURITY_PRIVACY.md 4.1 and the demo Q&A both currently say a name in prose
+cannot be detected at all. **If `t4` flips, both change in the same commit** —
+from "we cannot detect names in prose" to "we catch common given names from a
+list and still miss the rest", which is weaker and is the truth.
+
+**Over-flags are not predicted, because predicting them would need the corpus.**
+The honest position is that the list is written blind and the false positives
+are whatever they are. **Abort if precision falls below 78%.**
