@@ -33,7 +33,8 @@ transport layer. Only sanitized payloads cross it.
    complete and is not.
 4. Semantic placeholders preserve meaning without content: `[PASSWORD]`,
    `[EMAIL]`, `[NAME]`, `[PHONE]`, `[ADDRESS]`, `[ID_NUMBER]`, `[FACE]`.
-5. Labels are scrubbed like values — a label can carry an account address.
+5. Labels are scrubbed like values, by the same rules — a label can carry an
+   account address or a person's name rather than describing one.
 6. A failed redaction stops the run.
 
 ## 5. Known Detection Limits
@@ -56,8 +57,28 @@ a name in ALL CAPS, and any name in a non-Latin script. A name is either on the
 list or invisible, with nothing in between, which is exactly what an NER model
 would fix and this is not one.
 
-The earlier finding stands where it applies: verified against a real social
-feed, names in link and button labels produced no DOM detections.
+**Names in labels are now scrubbed too, and that correction came from a real
+page rather than from the corpus.** Superseding the earlier finding that names
+in link and button labels produced no DOM detections: the gazetteer had been
+given to the classifier alone, so a name was replaced with `[NAME]` in a field's
+value and sent intact inside a control's accessible name. The zero-leak sweep
+refused the transmission — the invariant held and nothing left the machine — but
+it held at the last possible moment, which is not where a defect should be
+caught.
+
+Two things were wrong, and the second was the larger. The scrubber did not know
+about names at all. And the match itself used non-overlapping pairs of
+capitalised words, so **any name preceded by a capitalised word was invisible to
+both paths** — "Message Priya Sharma" scanned as "Message Priya", which is not a
+listed name, with "Priya" already consumed. Names at the start of a string
+matched, which is why every fixture passed. Not one page in the 50-page corpus
+places a name after a capitalised word, so the corpus could not see this class
+at all; the numbers were unchanged by the fix, in both directions.
+
+The classifier and the scrubber now share one implementation, and a test asserts
+the general property — whatever `classifyTextContent` calls sensitive,
+`scrubTextContent` must remove — so a category taught to one and not the other
+fails immediately instead of on a live page.
 
 **Faces below ~80px wide are missed, and 80px is marginal.** Measured at the
 0.3 threshold on `03-faces.html`, which renders one face at eight sizes: found

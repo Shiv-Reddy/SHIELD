@@ -7,7 +7,7 @@ Reasoning behind choices lives in docs/DECISIONS.md, not here.
 
 ---
 
-## Current state — 2026-09-20
+## Current state — 2026-09-23
 
 **Core is complete, and for the first time every one of the five scored metrics
 has a number against it.** Phases 1–3 closed. Every module A–G built and
@@ -16,20 +16,21 @@ verified in Chrome against the live backend.
 | Metric | Weight | Measured |
 |---|---|---|
 | 1 — visual context from screen | 25% | **18.4% agreement / 22.2% DOM coverage**, pooled over **10 real pages**, range 8.5–37.4% |
-| 2 — PII recall / precision | 20% | **83.5% / 83.5%**, 50 pages, 12 real |
-| 3 — redaction precision | 20% | **83.9%**, coverage 60.4% |
-| 4 — client resource use | 20% | **Scan peak ~285MB, run ~144MB, CPU ≤1.1%**, Chrome, one machine |
+| 2 — PII recall / precision | 20% | **91.8% / 83.4%**, 50 pages, 12 real |
+| 3 — redaction precision | 20% | **83.8%**, coverage 65.9%, context kept 96.5% |
+| 4 — client resource use | 20% | **Scan peak ~285MB, run ~144MB, scan CPU 87-93%**, Chrome, one machine. The ~1.1% was a sampling error, corrected — RESOURCES.md |
 | 5 — end-to-end latency | 15% | **Chrome ~150ms, Firefox 364ms warm**, every stage inside budget |
 
 | Measure | Value |
 |---|---|
-| Client tests | 346 |
+| Client tests | 413 |
 | Reasoner checks | 82 |
-| Prompt checks | 53 |
+| Prompt checks | 56 |
 | One full pass | 27.4ms capture · 4.4ms DOM · 52.0ms inference · 40.2ms redaction · 10.5ms network |
 | Backend on an integrated-graphics laptop | **WebGPU**, 31.7ms inference |
-| CPU fallback, proved by self-test | 135ms init, 17ms inference |
+| CPU fallback, proved by self-test | 135ms init, 17ms inference; re-verified 2026-09-23 under the Worker host at 126ms / 55ms |
 | Face detection | 6 of 8; reliable 110px+, marginal at 80px (0.312 vs 0.3) |
+| Adversarial screen | 7 of 8, predictions recorded before each run |
 
 **Done 2026-09-20 — three scan-path changes built, then all three measured in
 one Chrome run. Two produced results; one of those was a null, and the null is
@@ -292,6 +293,69 @@ every run for as long as it is true.
 ---
 
 ## Next session starts with
+
+### 2026-09-23 — a live page found a leak path the corpus could not
+
+**A real run refused to transmit, and the refusal was correct.** The zero-leak
+sweep — which searches the *whole* payload rather than only where a value is
+expected — found a flagged name still present after redaction and stopped the
+run. Nothing left the machine. Two defects sat behind it, and the second was
+the larger.
+
+*The scrubber did not know about names.* The gazetteer had been added to
+`classifyTextContent` alone, so a name was tokenised in a field's value and
+transmitted intact inside a control's accessible label. The comment above
+`scrubTextContent` had predicted exactly this, having been written after the
+same bug with an email address.
+
+*The matcher was positional.* `matchAll` returns non-overlapping matches, so a
+capitalised word in front of a name consumed it — "Message Priya Sharma"
+scanned as "Message Priya", not a listed name, with "Priya" already spent.
+**Any name preceded by a capitalised word was invisible to both paths.** Names
+at the start of a string matched, which is why every fixture passed. Now
+tokenises capitalised words and tests each adjacent pair.
+
+**The benchmark did not move — recall 91.8%, precision 83.4%, over-flags 31,
+byte-identical.** Not one of the 50 corpus pages places a name after a
+capitalised word. A fix with zero corpus effect and a real effect on real pages
+is a statement about the corpus, so the case went in as a unit test and
+deliberately **not** into the corpus. DECISIONS.md 274.
+
+**The general property is now asserted**: whatever `classifyTextContent` calls
+sensitive, `scrubTextContent` must remove. A category taught to one path and
+not the other fails in a second rather than on a live page. Both fixes verified
+by removal — six tests fail without them. 413 client checks, 138 server.
+
+**Three stale or contradicted numbers corrected**, all of which a judge could
+have found: `RESOURCES.md` still repeated "CPU never exceeded 1.1%" in its
+summary while the same file's correction says to quote 87-93%; the README and
+server README carried stale test counts; and this file's Current state block
+held the pre-gazetteer metrics. The CPU-fallback verdict was re-taken under the
+Worker host (126ms init, 55ms inference) and recorded as **not** like-for-like
+with the earlier offscreen reading rather than presented as a comparison.
+
+**Onboarding and the commit guard.** `docs/SETUP.md` takes a new machine from
+clone to a verified run; `tools/hooks/pre-commit` refuses a commit staging a
+`.env`, a key pasted into source, or a face photograph, and is installed per
+machine with `git config core.hooksPath tools/hooks`. Tested in both
+directions. `.gitattributes` pins the hook to LF, without which it fails on
+Windows as `/bin/sh^M: bad interpreter`. An audit of all 62 commits found no
+credential has ever entered history. DECISIONS.md 273.
+
+**`docs/HACKATHON_BRIEF.md`** collects the numbers, the three ways to misquote
+them, the limits to volunteer first, judge questions by category, and a
+recovery table for when the demo breaks. Team roster is now five.
+
+**Blockers:** none technical. **Not done and owed:** the settled-after-two-
+minutes memory figure on Chrome, the backup video, one full rehearsal, and the
+Firefox `strict_min_version` decision (recommendation on record: keep 121, add
+a sentence to PRIVACY.md).
+
+**Next session starts with** re-running the page that failed, in a browser,
+against a fresh build — the fix passes 413 tests and has not yet run where it
+broke. Then two more real sites, since that activity found this defect in a
+minute where the corpus never could.
+
 
 ### 2026-09-21 (later) — packaged as a product; hosting declined
 

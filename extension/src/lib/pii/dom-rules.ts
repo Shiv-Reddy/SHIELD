@@ -409,17 +409,64 @@ export function classifyElement(element: DomElement): DomRuleHit | null {
  * ("Mr Sundaram"). A name in ALL CAPS. **This is a gazetteer, not a named-entity
  * model**, and SECURITY_PRIVACY.md Section 4.1 states it that way.
  */
-export function findPersonName(text: string): boolean {
-  // Two adjacent capitalised words. Unicode-aware so an accented name is not
-  // silently skipped, though the list itself is Latin.
-  const pairs = text.matchAll(/\b(\p{Lu}\p{Ll}+)\s+(\p{Lu}\p{Ll}+)\b/gu);
+export function findPersonNames(text: string): string[] {
+  // Every capitalised word, then each adjacent pair — NOT a regex for the pair
+  // itself.
+  //
+  // WHY, BECAUSE THE OBVIOUS VERSION IS WRONG AND WAS SHIPPED
+  //
+  // `matchAll(/(\p{Lu}\p{Ll}+)\s+(\p{Lu}\p{Ll}+)/gu)` returns NON-OVERLAPPING
+  // matches, so a capitalised word in front of a name swallows it: in "Message
+  // Priya Sharma" the first match is "Message Priya", "Message" is not a listed
+  // name, and "Priya" has already been consumed by the time the scan resumes.
+  // "Priya Sharma" alone matched, which is why every fixture passed — and any
+  // name after a capitalised word did not, which on a real page is the common
+  // case: "Dear …", "Contact …", "Message …", a heading, a table cell.
+  //
+  // Scanning tokens and testing each pair considers "Priya" as a given name
+  // whatever precedes it, so position in the sentence stops mattering.
+  const tokens = [...text.matchAll(/\p{Lu}\p{Ll}+/gu)];
 
-  for (const pair of pairs) {
-    const given = pair[1];
-    if (given && GIVEN_NAMES.has(given.toLowerCase())) return true;
+  const found: string[] = [];
+  for (let i = 0; i < tokens.length - 1; i += 1) {
+    const given = tokens[i];
+    const surname = tokens[i + 1];
+    if (given?.index === undefined || surname?.index === undefined) continue;
+
+    if (!GIVEN_NAMES.has(given[0].toLowerCase())) continue;
+
+    // Only whitespace may separate the two. This is what keeps "McDonald" —
+    // which tokenises as "Mc" + "Donald" with nothing between — from being read
+    // as a given name and a surname, and stops the pair spanning a comma or any
+    // other punctuation that means the two words are unrelated.
+    //
+    // A newline counts as whitespace, deliberately. A name wrapped across two
+    // lines, or split by a table cell's markup, is still a name, and the
+    // uncertainty rule resolves toward hiding. This matches the behaviour
+    // before the tokeniser replaced the pair regex, which also used `\s+`.
+    const between = text.slice(given.index + given[0].length, surname.index);
+    if (!/^\s+$/u.test(between)) continue;
+
+    found.push(text.slice(given.index, surname.index + surname[0].length));
   }
 
-  return false;
+  return found;
+}
+
+/**
+ * True when the text contains a name this gazetteer recognises.
+ *
+ * Delegates rather than duplicating the match, for the reason
+ * `phoneMatchIsCredible` exists: the classifier asks *whether*, the scrubber in
+ * placeholders.ts asks *which spans*, and two implementations of "is this a
+ * name" would eventually disagree. The disagreement is not hypothetical — it is
+ * the defect this split was written to fix. A name recognised here but not by
+ * the scrubber is hidden in a field's value and transmitted inside a label,
+ * which the zero-leak sweep then refuses, turning a silent asymmetry into a
+ * blocked run on a real page.
+ */
+export function findPersonName(text: string): boolean {
+  return findPersonNames(text).length > 0;
 }
 
 /**

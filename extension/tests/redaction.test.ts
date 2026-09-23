@@ -17,6 +17,7 @@ import {
   scrubTextContent,
 } from '../src/lib/redaction/placeholders';
 import { buildSanitizedPayload } from '../src/lib/redaction/payload';
+import { classifyTextContent } from '../src/lib/pii/dom-rules';
 import type { DomElement, SensitiveRegion } from '../src/lib/types';
 
 function element(overrides: Partial<DomElement> = {}): DomElement {
@@ -333,4 +334,163 @@ test('scrubbing runs on labels as elements are redacted', () => {
   assert.ok(entry !== undefined);
   assert.ok(!entry.label?.includes('casey.tan@example.com'));
   assert.ok(entry.label?.includes(placeholderFor('email')));
+});
+
+// --- The classifier and the scrubber must agree ------------------------------
+//
+// These were written after a live page refused to transmit. The gazetteer had
+// been added to classifyTextContent and not to scrubTextContent, so a name was
+// tokenised in a field's value and sent verbatim in a link's accessible name.
+// The zero-leak sweep caught it, which is the system working — but it caught it
+// on a real page rather than here, which is this file not working.
+
+test('a name in a label is scrubbed, not passed through', () => {
+  const out = scrubTextContent('Message Priya Sharma');
+
+  assert.ok(!out.includes('Priya'));
+  assert.ok(!out.includes('Sharma'));
+  assert.equal(out, `Message ${placeholderFor('name')}`);
+});
+
+test('the words around a name survive, because only the name was sensitive', () => {
+  // A label is how the model tells one control from another. Discarding the
+  // whole string would hide the leak and the affordance together.
+  assert.equal(
+    scrubTextContent('Open chat with Rohan Mehra now'),
+    `Open chat with ${placeholderFor('name')} now`,
+  );
+});
+
+test('a longer name is replaced whole, never half-substituted', () => {
+  // Longest-first ordering. "Priya Sharma" is a substring of "Priya Sharma
+  // Iyer"'s first two tokens, so a shortest-first pass would leave "Iyer".
+  const out = scrubTextContent('Signed by Priya Sharma Iyer');
+
+  assert.ok(!out.includes('Priya'));
+  assert.ok(!out.includes('Sharma'));
+});
+
+test('a name and an amount on one line are both removed', () => {
+  // classifyTextContent labels this `other`, because the amount rule is declared
+  // above the gazetteer and claims the line first. The scrubber does not have to
+  // choose, and removes both — more thorough than the label it is given, which
+  // is the safe direction for the two to differ.
+  const out = scrubTextContent('Billed to Rohan Mehra Rs. 712.00');
+
+  assert.ok(!out.includes('Rohan'));
+  assert.ok(!out.includes('712'));
+});
+
+test('an unlisted name is missed by BOTH paths, so the two still agree', () => {
+  // The documented limit, pinned on this side too. The scrubber must not be
+  // weaker than the classifier; it must also not be stronger, or a name the
+  // classifier ignores would vanish from labels for no stated reason.
+  const text = 'Message Bartholomew Fanshawe';
+
+  assert.equal(classifyTextContent(text), null);
+  assert.equal(scrubTextContent(text), text);
+});
+
+test('a placeholder cannot be re-read as a name', () => {
+  // Names are scrubbed after CONTENT_PATTERNS, so tokens are already in place.
+  // [EMAIL] is all caps and the pattern needs a capital followed by lowercase,
+  // which is what makes that ordering safe rather than lucky.
+  const out = scrubTextContent('Reply to priya@example.com');
+
+  assert.equal(out, `Reply to ${placeholderFor('email')}`);
+  assert.ok(!out.includes(placeholderFor('name')));
+});
+
+test('whatever the classifier calls sensitive, the scrubber removes', () => {
+  // The general guard, and the reason this section exists. Both functions read
+  // free text; a category taught to one and not the other is invisible until a
+  // real page puts the same string in a value and a label. Adding a row here is
+  // the cheapest way to keep that from happening a third time.
+  const samples = [
+    'Reply to someone@example.com',
+    'Call +91 98200 11223',
+    'PAN ABCDE1234F on file',
+    'Aadhaar 2345 6789 0124 on file',
+    'Branch SBIN0001234',
+    'Refund of Rs. 712.00 issued',
+    'Message Priya Sharma',
+  ];
+
+  for (const text of samples) {
+    const hit = classifyTextContent(text);
+    assert.ok(hit !== null, `classifier found nothing in: ${text}`);
+    assert.notEqual(
+      scrubTextContent(text),
+      text,
+      `classifier called this ${hit?.category} but the scrubber left it intact: ${text}`,
+    );
+  }
+});
+
+test('the live failure: a name in a flagged value and in another label seals', () => {
+  // Reconstructed from a real page that refused to transmit. One element held
+  // the name as its value and was flagged; a control elsewhere carried the same
+  // name inside its accessible name and was not. Before the gazetteer reached
+  // the scrubber this threw, which is the zero-leak sweep doing its job at the
+  // last possible moment — after detection, redaction and encoding had all run.
+  const elements: DomElement[] = [
+    {
+      elementId: 'e104',
+      elementType: 'text',
+      selector: 'html > body #e104',
+      label: null,
+      value: 'Priya Sharma',
+      inputType: null,
+      autocomplete: null,
+      name: null,
+      placeholder: null,
+      position: { x: 0, y: 0, width: 100, height: 20 },
+    },
+    {
+      elementId: 'e211',
+      elementType: 'button',
+      selector: 'html > body #e211',
+      // The capitalised word in front is the whole point: it is what the old
+      // non-overlapping pair regex could not see past.
+      label: 'Message Priya Sharma',
+      value: null,
+      inputType: null,
+      autocomplete: null,
+      name: null,
+      placeholder: null,
+      position: { x: 0, y: 40, width: 100, height: 20 },
+    },
+  ];
+
+  const regions: SensitiveRegion[] = [
+    {
+      regionId: 'r-e104',
+      elementId: 'e104',
+      category: 'name',
+      confidence: 0.8,
+      source: 'dom',
+      reason: 'visible text matched a known given name followed by a surname',
+      position: { x: 0, y: 0, width: 100, height: 20 },
+    },
+  ];
+
+  const redactedDom = redactDomElements(elements, regions);
+
+  const payload = buildSanitizedPayload({
+    requestId: 'r1',
+    taskQuery: 'open the chat',
+    redactedFrame: 'ZnJhbWU=',
+    redactedDom,
+    manifest: buildManifest(regions),
+    regions,
+    flaggedRawValues: ['Priya Sharma'],
+  });
+
+  const wire = JSON.stringify(payload);
+  assert.ok(!wire.includes('Priya'), 'the name reached the wire');
+  assert.ok(!wire.includes('Sharma'), 'the surname reached the wire');
+
+  // The label keeps its shape, so the model can still tell this control apart.
+  const button = payload.redacted_dom_summary.find((e) => e.elementId === 'e211');
+  assert.equal(button?.label, `Message ${placeholderFor('name')}`);
 });

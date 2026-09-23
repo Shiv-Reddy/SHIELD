@@ -632,9 +632,11 @@ construction.
 | **22 Sep** | Firefox and Chrome both measured. Fixture set closed on both browsers. Edge verified. Consent gate defect found and fixed. Disposal window decided |
 | **23 Sep** | **Freeze.** README and deck current, judge Q&A said out loud, one full rehearsal, backup video recorded. No new measurement |
 
-**Two short measurements are still owed**, both on Chrome and both about five
-minutes: the settled-after-two-minutes memory figure, and a CPU-fallback
-verdict under the worker host that is dated today rather than cached.
+**One short measurement is still owed** on Chrome, about five minutes: the
+settled-after-two-minutes memory figure. The CPU-fallback verdict was taken
+**2026-09-23 23:41 under the Worker host** — 126ms init, 55ms inference,
+recorded in RESOURCES.md with the caveat that it is not like-for-like with the
+earlier offscreen reading.
 
 **Deferred past the event**, because they are evidence rather than capability
 and none of them changes what the product does: the 20-site sweep beyond the

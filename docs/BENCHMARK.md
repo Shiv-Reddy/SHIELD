@@ -4,7 +4,7 @@
 
 Measures metric 2 (recall and precision of PII detection) and metric 3 (precision of redaction) against a hand-labelled corpus. Labels describe the PAGE, never the detector output — several are things the DOM path structurally cannot see, and they are counted as misses because they are.
 
-Last run: 2026-09-22T20:28:35.225Z
+Last run: 2026-09-23T18:52:17.966Z
 
 ## Headline
 

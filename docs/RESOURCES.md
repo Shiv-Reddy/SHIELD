@@ -288,6 +288,18 @@ CPU fallback, proved on this machine by the start-up self-test: 135ms init,
 17ms inference. Roughly half the WebGPU inference time on a 320x240 self-test
 input, which says the fallback is viable rather than merely present.
 
+**Re-verified 2026-09-23 23:41 under the Worker host — 126ms init, 55ms
+inference.** Dated rather than cached, which is what the open item asked for.
+Init matches; inference is **three times** the earlier 17ms. The two readings
+were taken under different inference hosts, so this is not a like-for-like
+comparison and the difference is not offered as a regression. What it does
+settle is the claim that matters: the fallback **runs** on this machine, today,
+without a GPU — 55ms is still an order of magnitude inside the 500ms local
+inference budget, so a judge's machine refusing WebGPU costs latency nobody
+watching would notice. Which of the two inference figures is representative is
+unresolved and stays that way; one number per host, on one machine, is not a
+comparison and labelling it as one would be the flattering reading.
+
 ### What these numbers say
 
 - **Installed and idle costs 8MB of JS heap and no GPU memory at all.** The
@@ -295,8 +307,12 @@ input, which says the fallback is viable rather than merely present.
 - **Having a model resident costs ~8.8MB of GPU memory**, and using it peaks at
   **~19MB**. On a machine with 15.7GB of RAM and shared graphics memory, that
   is not a number anyone will notice.
-- **CPU never exceeded 1.1%**, and that peak was the whole-page scan, which is
-  the heaviest path Shield has.
+- **A whole-page scan costs 87-93% of a core on Chrome, in bursts.** This
+  bullet used to read "CPU never exceeded 1.1%", which was a sampling error
+  rather than a measurement — see the correction above, and quote 87-93%. The
+  scan is the heaviest path Shield has, it transmits nothing, and it is the one
+  the user starts deliberately. **A run** — the path a demo actually exercises —
+  is a different cost: ~135ms end to end, with local inference 52ms of it.
 - **The offscreen document really does dispose of itself.** Reading 6 is the
   one that proves DECISIONS.md 141 rather than assuming it: two minutes after
   the last work, the second process row is gone and GPU memory is back to

@@ -108,11 +108,10 @@ Read the relevant one before starting related work.
 
 | Name | Role | Owns |
 |---|---|---|
-| Shivkumar Reddy | Lead, ML/Vision | Local model, integration, demo |
+| Shivkumar Reddy | Lead, ML/Vision; Testing & Data | Local model, integration, demo; test screens, zero-leak runs, latency |
 | Shashank Kumar | PII Detection | DOM rules, UltraFace + OCR, placeholders |
 | Ayush Verma | Backend | FastAPI, prompt builder, action builder |
 | Satyanand Gupta | Extension & UI | MV3 shell, executor, consent UI, inspector |
-| Vanshika Chamoli | Testing & Data | Test screens, zero-leak runs, latency |
 | Isha Kumari | Docs & Demo | TASKS/SESSION_LOG upkeep, README, deck |
 
 Ownership areas — who a question about that module goes to. Not a record of who

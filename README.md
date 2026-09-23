@@ -84,6 +84,7 @@ if you're new to the project:
 16. [OPERATOR_RUNBOOK.md](./docs/OPERATOR_RUNBOOK.md) — every task that needs a browser, a key or a second machine
 17. [SESSION_LOG.md](./docs/SESSION_LOG.md) — what happened each work session
 18. [SETUP.md](./docs/SETUP.md) — getting a new machine building and running, step by step
+19. [HACKATHON_BRIEF.md](./docs/HACKATHON_BRIEF.md) — the numbers, the limits and the judge questions, in one file
 
 ## Setup Instructions (Hackathon Build)
 
@@ -346,11 +347,10 @@ hackathon build stays deliberately minimal in infrastructure terms.
 
 | Name | Owns |
 |---|---|
-| Shivkumar Reddy | Lead. Local model, integration, demo |
+| Shivkumar Reddy | Lead. Local model, integration, demo. Testing and data — test screens, zero-leak runs, latency |
 | Shashank Kumar | PII detection — DOM rules, UltraFace + OCR, placeholders |
 | Ayush Verma | Backend — FastAPI, prompt builder, action builder |
 | Satyanand Gupta | Extension and UI — MV3 shell, executor, consent UI, inspector |
-| Vanshika Chamoli | Testing and data — test screens, zero-leak runs, latency |
 | Isha Kumari | Docs and demo — task upkeep, README, deck |
 
 ## Third-party components

@@ -943,3 +943,21 @@ would later have to re-derive it, or worse, re-make the same mistake.
    **Two published counts were stale** and were corrected while the guide was being written against them: `npm test` is 405, not 394, and the server suites are 82 + 56 = 138, not 135.
 
    **The SIH presentation stays in history.** It is reachable at `d0ddcc3` despite being deleted in `f2ce082`, because deleting a file does not remove it from history — only a rewrite does. The repository is private until the event, and goes public afterwards so that SIH evaluation can see it, which makes the blob's presence intended rather than a leak. No rewrite, therefore no force-push and no coordinated re-clone.
+
+274. **A real page found what 405 tests and a 50-page corpus could not: the gazetteer reached the classifier and not the scrubber, and its match was positional**
+
+   A live run refused to transmit — `Zero-leak check failed`. The pipeline had completed: 13 regions detected, 13 redacted onto the frame, `e104=[NAME]` replaced. The sweep in payload.ts searches the *whole* payload for every flagged raw value, found the name still present, and stopped the run. **Nothing left the machine.** The invariant held, at the last possible moment, which is exactly where a defect should not be caught.
+
+   **Two defects, and the second was the larger.**
+
+   *The scrubber did not know about names.* `scrubTextContent` applied `findIndianIds` and `CONTENT_PATTERNS`; the gazetteer went into `classifyTextContent` alone. So a name was tokenised in a field's value and transmitted verbatim inside a control's accessible name. The comment above that function had predicted this in so many words — *"an identifier the classifier now recognises but the scrubber does not would be hidden in the value and transmitted in the label"* — written after the same bug with an email address. **The same mistake, a second time, in the function whose comment describes it.**
+
+   *The match itself was positional.* `matchAll` returns non-overlapping matches, so a capitalised word in front of a name consumed it: "Message Priya Sharma" scanned as "Message Priya", not a listed name, with "Priya" already spent. **Any name preceded by a capitalised word was invisible to both paths** — "Dear …", "Contact …", a heading, a table cell. Names at the start of a string matched, which is why every fixture passed. Replaced by tokenising capitalised words and testing each adjacent pair, so position in the sentence stops mattering.
+
+   **The corpus is blind to this class, and that is the finding worth keeping.** The benchmark did not move — recall 91.8%, precision 83.4%, over-flags 31, all identical — because not one of the 50 pages places a name after a capitalised word. A fix with zero measurable effect on the corpus and a real effect on real pages is a statement about the corpus. The case was added as a unit test and deliberately **not** to the corpus: a case added because it is known to pass stops measuring generalisation.
+
+   **The general property is now asserted, not just the instance.** One test says that whatever `classifyTextContent` calls sensitive, `scrubTextContent` must change — a table of one line per category. A category taught to one path and not the other now fails in a second rather than on a live page. Both fixes were verified by removal: six tests fail without them.
+
+   `findPersonName` delegates to `findPersonNames` rather than repeating the match, for the reason `phoneMatchIsCredible` exists — the classifier asks *whether*, the scrubber asks *which spans*, and two implementations would drift.
+
+   A newline still counts as whitespace between the two tokens, unchanged and deliberate: a name wrapped across two lines is still a name, and the uncertainty rule resolves toward hiding.

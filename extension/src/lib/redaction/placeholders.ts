@@ -14,7 +14,7 @@
  * Pure: no Chrome APIs, no canvas, no I/O.
  */
 
-import { CONTENT_PATTERNS, phoneMatchIsCredible } from '../pii/dom-rules';
+import { CONTENT_PATTERNS, findPersonNames, phoneMatchIsCredible } from '../pii/dom-rules';
 import { findIndianIds } from '../pii/indian-ids';
 import type {
   DomElement,
@@ -113,6 +113,25 @@ export function scrubTextContent(text: string): string {
         ? match
         : placeholderFor(category),
     );
+  }
+
+  // Names last, mirroring the classifier, which runs the gazetteer after the
+  // whole CONTENT_PATTERNS loop for the same reason: a span already replaced by
+  // a token cannot be re-read as something else.
+  //
+  // This exists because the gazetteer was added to the classifier alone. On a
+  // real page a name sat in both a flagged field and a link's accessible name;
+  // the value became [NAME] and the label went out intact, and the zero-leak
+  // sweep refused the run. The lesson is the one written above about identifiers
+  // and it arrived a second time: **anything the classifier learns, this must
+  // learn in the same change.**
+  //
+  // A token cannot be mistaken for a name, so ordering is safe: the pattern
+  // needs a capital followed by lowercase letters, and [EMAIL] has none.
+  //
+  // Longest-first, so "Priya Sharma Iyer" is not half-substituted by an overlap.
+  for (const name of findPersonNames(scrubbed).sort((a, b) => b.length - a.length)) {
+    scrubbed = scrubbed.split(name).join(placeholderFor('name'));
   }
 
   return scrubbed;
