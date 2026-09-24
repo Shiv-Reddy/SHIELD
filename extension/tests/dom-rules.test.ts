@@ -267,7 +267,7 @@ test('the amount rule is last, so every pattern above it keeps first claim', () 
 /*
  * Names in prose, by gazetteer — added 2026-09-23.
  *
- * SECURITY_PRIVACY.md Section 4.1 said for months that this could not be done
+ * SECURITY_PRIVACY.md Section 5.1 said for months that this could not be done
  * without a named-entity model. It still cannot: what ships is a list, and the
  * tests below pin the limit as carefully as the capability, because the limit
  * is what the demo answer and the privacy policy now rest on.
@@ -298,7 +298,7 @@ test('the limit is real: an unlisted given name is invisible', () => {
    * "looks like a name" — a name is on the list or it is nothing, with nothing
    * in between, and that is exactly what a named-entity model would fix.
    *
-   * If these ever start passing, SECURITY_PRIVACY.md 4.1, PRIVACY.md and the
+   * If these ever start passing, SECURITY_PRIVACY.md 5.1, PRIVACY.md and the
    * demo Q&A are all overstating or understating something and must be re-read.
    */
   assert.notEqual(classifyTextContent('Account holder: Bartholomew Quibblesworth')?.category, 'name');

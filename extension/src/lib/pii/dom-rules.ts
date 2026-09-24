@@ -407,7 +407,7 @@ export function classifyElement(element: DomElement): DomRuleHit | null {
  *
  * Every name not on the list. Most non-Latin scripts. A surname used alone
  * ("Mr Sundaram"). A name in ALL CAPS. **This is a gazetteer, not a named-entity
- * model**, and SECURITY_PRIVACY.md Section 4.1 states it that way.
+ * model**, and SECURITY_PRIVACY.md Section 5.1 states it that way.
  */
 export function findPersonNames(text: string): string[] {
   // Every capitalised word, then each adjacent pair — NOT a regex for the pair

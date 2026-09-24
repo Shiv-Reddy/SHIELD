@@ -175,7 +175,7 @@ test('the prose paragraph catches the email and misses the name', () => {
   // Both sides of the documented limit, in one value. An email is
   // high-precision enough to match in prose; a person's name is not separable
   // from other capitalised words without a model we do not ship
-  // (SECURITY_PRIVACY.md 4.1).
+  // (SECURITY_PRIVACY.md 5.1).
   assert.equal(categoryOf('bio'), 'email');
 
   const bio = found.get('bio');
@@ -183,7 +183,7 @@ test('the prose paragraph catches the email and misses the name', () => {
   assert.equal(
     bio.category === 'name',
     false,
-    'If a name in prose is now detected, SECURITY_PRIVACY.md 4.1 needs updating ' +
+    'If a name in prose is now detected, SECURITY_PRIVACY.md 5.1 needs updating ' +
       'and so does the demo script answer built on it.',
   );
 });

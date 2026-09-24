@@ -1,6 +1,6 @@
 # Architecture — Shield
 
-## 1. System Overview
+## 1. How the pieces fit
 
 ```
 ┌─ CLIENT (Chrome MV3) ──────────────────────────────┐
@@ -19,7 +19,7 @@
 └────────────────────────────────────────────────────┘
 ```
 
-## 2. Components
+## 2. The parts
 
 | # | Component | Where | Responsibility |
 |---|---|---|---|
@@ -33,7 +33,7 @@
 | 2.8 | Action Builder | Server | Emits only click / type / scroll |
 | 2.9 | Action Executor | Client | Re-verifies the target against the capture before acting |
 
-## 3. Sequence — login autofill
+## 3. What happens, in order
 
 1. User enters a task; worker injects the content script (`activeTab`).
 2. Capture frame + extract DOM map.
@@ -44,53 +44,59 @@
 7. Client re-verifies the target, acts, re-captures.
 8. Repeat until no action is proposed, or the step cap is hit.
 
-## 4. Trust Boundary
+## 4. The line nothing private crosses
 
-**Everything before transmission is local.** Three independent guarantees:
+**Everything before sending happens on your own computer.** Three separate
+guards, because one guard can have a bug:
 
 | Guarantee | Catches | When |
 |---|---|---|
-| `Sanitized<T>` type seal | Wiring mistakes — unsanitized data reaching transport | Compile time |
-| Stage-order guard | A stage skipped, thrown past, or returned early | Run time |
-| Zero-leak sweep | A raw value surviving redaction | Per request |
+| A type the code must produce | Uncleaned data reaching the sending code | Before the program runs |
+| An order check | A step skipped, crashed past, or returned early | While running |
+| A search of the whole message | A real value that survived redaction | Every single request |
 
-Fail closed. A failed redaction stops the run; it never degrades to sending raw.
+**Fail shut.** A failed redaction stops the run. It never falls back to
+sending the real thing.
 
-## 5. Design Principles
+## 5. The rules we build by
 
-1. Redact before transmit. No exceptions, no code path.
-2. DOM first, vision second.
-3. Uncertain ⇒ hide.
-4. Fixed allowlist. Never execute what the server invents.
-5. Every claim measurable — timings, payload inspector, overlay.
-6. Fail loudly. No silent degradation.
+1. **Cover it before sending it.** No exceptions, no code path.
+2. **Trust the page's own code first**, the picture second.
+3. **If unsure, hide it.**
+4. **A fixed list of allowed actions.** Never do what the server invents.
+5. **Every claim must be checkable** — timings, the sent-message view, the overlay.
+6. **Fail loudly.** Never quietly do a worse job.
 
-## 6. Latency Budget
+## 6. Speed budget
 
-| Stage | Budget | Measured 2026-09-07 |
+Every stage has a limit. If a stage goes over, it is logged and shown in the
+popup, so slowdown is visible when it happens rather than discovered before a
+demo.
+
+| Stage | Limit | Measured on Chrome |
 |---|---|---|
-| Screen capture | < 100ms | 24–49ms |
-| DOM scan | < 100ms | 1.6–7.2ms |
-| Model init | < 3000ms | ~900ms WebGPU, ~96ms CPU |
-| Local inference | < 500ms | 40–63ms |
-| Detection + redaction | < 200ms | 36–75ms |
-| Network round trip | < 1000ms | 6.4–87ms |
-| Action execution | < 100ms | not separately instrumented |
-| **Total** | **A few seconds** | **≈150–200ms per pass** |
+| Screen capture | 100ms | 27ms |
+| DOM scan | 100ms | 4ms |
+| Model start-up | 3000ms | ~900ms on WebGPU, ~126ms on CPU |
+| Local AI | 500ms | 52ms |
+| Covering it up | 200ms | 40ms |
+| Network round trip | 1000ms | 11ms |
+| **Whole pass** | **a few seconds** | **~135ms** |
 
-Two stages are budgeted separately on purpose:
+Firefox runs the same pipeline at 364ms once warm.
 
-- **DOM scan apart from capture** — different performance characteristics,
-  different fixes. Together they say something is slow without saying what.
-- **Model init apart from inference** — paid once per offscreen document, not
-  per capture. Conflating them makes every first run look like a regression.
-  This is how the 2122ms first inference was found and fixed with a warm-up.
+Two stages are timed separately on purpose:
 
-Measured is one machine on one day, not a guarantee. Every stage is timed on
-every run, logged when over budget, and shown in the popup — so drift is
-visible when it happens, not discovered before a demo.
+- **DOM scan apart from capture.** They behave differently and break
+  differently. Timed together, they tell you something is slow without telling
+  you what.
+- **Model start-up apart from running it.** Start-up is paid once, not per
+  capture. Mixing them makes every first run look like a fault. That is exactly
+  how a 2122ms first run was found and fixed with a warm-up.
 
-## 7. Failure Modes
+These are one machine on one day, not a promise.
+
+## 7. When things go wrong
 
 | Failure | Response |
 |---|---|
@@ -103,7 +109,7 @@ visible when it happens, not discovered before a demo.
 | Page unreadable (chrome://) | Plain message, not an internal error |
 | Network/model transient | Retry with backoff |
 
-## 8. Production Scaling (Full Product)
+## 8. Scaling it, if it ever ships for real
 
 Stateless backend behind a load balancer; per-user rate limiting; model
 inference pooled or hosted; audit log to org-controlled storage; signed model

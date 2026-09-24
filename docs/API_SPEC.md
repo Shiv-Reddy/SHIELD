@@ -1,19 +1,22 @@
-# API Specification — Shield
+# What the extension sends, and what it gets back
 
-Full contract between the client extension and the backend server.
+The agreement between the extension and the server. Section 5 is the important
+one: it lists the only three things the server is allowed to reply with, and the
+code refers to this document by that number.
 
-## 1. Base
+## 1. Where it lives
 
-- **Hackathon:** `http://localhost:<port>` (local dev server)
-- **Full Product:** `https://api.<project-domain>/v1`
+- **Now:** `http://127.0.0.1:8787` — your own machine
+- **A real product:** `https://api.<domain>/v1`
 
-## 2. Authentication
+## 2. Logging in
 
-- **Hackathon:** None required (local-only, trusted dev environment).
-- **Full Product:** API key or token-based auth per installed extension
-  instance; rate limiting applied per key to prevent abuse.
+- **Now:** nothing. The server is only reachable from the same machine, which
+  is also why it must never be exposed to a network — it has no login and no
+  rate limit by design
+- **A real product:** a key per installed extension, with a rate limit
 
-## 3. Endpoint: `POST /analyze`
+## 3. `POST /analyze` — the one request Shield makes
 
 **Purpose:** Client sends sanitized screen context and task query; server
 returns a structured action.
@@ -94,7 +97,7 @@ The server should treat `other` exactly as it treats the named categories.
 }
 ```
 
-## 4. Endpoint: `GET /health`
+## 4. `GET /health` — is it up?
 
 **Purpose:** Simple liveness check for the backend service.
 
@@ -103,7 +106,7 @@ The server should treat `other` exactly as it treats the named categories.
 { "status": "ok", "model_backend": "string identifying current reasoning model" }
 ```
 
-## 5. Action Vocabulary (Fixed Allowlist)
+## 5. The only actions allowed
 
 | Action Type | Required Fields | Notes |
 |---|---|---|
@@ -115,7 +118,7 @@ Any action type not in this table must be rejected by both the server's
 Action Response Builder and the client's Action Executor as a defense-in-depth
 measure (see SECURITY_PRIVACY.md Section 3, Elevation of Privilege).
 
-## 6. Error Codes
+## 6. Errors
 
 | Code | Meaning | Client Behavior |
 |---|---|---|
@@ -124,13 +127,13 @@ measure (see SECURITY_PRIVACY.md Section 3, Elevation of Privilege).
 | `ACTION_REJECTED` | Model's proposed action failed validation against the allowlist | Show "couldn't determine a safe action" error, do not retry blindly |
 | `INTERNAL_ERROR` | Unexpected server-side failure | Show generic error, log request_id for debugging (never log payload contents) |
 
-## 7. Rate Limiting (Full Product)
+## 7. Rate limiting — a real product only
 
 Per-key request rate limits should be enforced to prevent abuse and control
 cost on the reasoning-model backend. Specific limits to be defined based on
 expected usage patterns once real user data is available.
 
-## 8. Versioning
+## 8. Versions
 
 API version is included in the URL path (`/v1`) for Full Product. Breaking
 changes to the request/response schema require a new version path; the

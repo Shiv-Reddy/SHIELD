@@ -807,7 +807,7 @@ Cheaper than the NER model we do not ship, and it does not need one.
 | gov-09 | `r1` | a name on the voter record |
 | 05-adversarial | `t4` | **the case we have always said is unfixable** |
 
-**`t4` is the one to watch, and it cuts both ways.** SECURITY_PRIVACY.md 4.1
+**`t4` is the one to watch, and it cuts both ways.** SECURITY_PRIVACY.md 5.1
 and the demo Q&A both say a name in prose cannot be separated from other
 capitalised words without a model we do not ship. **A gazetteer is not that
 model** — it recognises names it has seen, and misses every name it has not,
@@ -860,7 +860,7 @@ catch surnames the list has never seen — Raghunathan and Sundaram are not in i
 **What this is NOT, and the claim that has to change with it.** A gazetteer is
 not a named-entity model. It recognises names on a list and misses every name
 that is not, including most non-Indian names and any unusual one.
-SECURITY_PRIVACY.md 4.1 and the demo Q&A both currently say a name in prose
+SECURITY_PRIVACY.md 5.1 and the demo Q&A both currently say a name in prose
 cannot be detected at all. **If `t4` flips, both change in the same commit** —
 from "we cannot detect names in prose" to "we catch common given names from a
 list and still miss the rest", which is weaker and is the truth.

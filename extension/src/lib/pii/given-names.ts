@@ -6,7 +6,7 @@
  * A gazetteer. It recognises names on this list and misses every name that is
  * not on it — most non-Indian names, most rare ones, and anything spelled
  * unusually. **It is not a named-entity model and must never be described as
- * one.** SECURITY_PRIVACY.md Section 4.1 carries the honest wording.
+ * one.** SECURITY_PRIVACY.md Section 5.1 carries the honest wording.
  *
  * WHY GIVEN NAMES AND NOT SURNAMES
  *

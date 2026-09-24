@@ -132,7 +132,7 @@ We would rather you heard these from us.
   recognises a few hundred common given names and hides the name that follows
   one. A name whose first name is not on that list — many non-Indian names,
   unusual spellings, a surname on its own — is not detected at all. Details in
-  SECURITY_PRIVACY.md Section 4.1.
+  SECURITY_PRIVACY.md Section 5.1.
 - **Only English text is read from images.** We ship `eng` training data only. On
   a page in another script, the text recogniser produces Latin-shaped guesses —
   which fails towards hiding too much rather than too little, and is still not

@@ -41,6 +41,8 @@ transport layer. Only sanitized payloads cross it.
 
 Stated plainly: a boundary a reviewer discovers is worse than one we declare.
 
+### 5.1 Names come from a list, not a model
+
 **Names in page text are detected only when the given name is one we ship a
 list of.** Changed 2026-09-23, and the change is narrower than it sounds.
 
@@ -80,6 +82,8 @@ the general property — whatever `classifyTextContent` calls sensitive,
 `scrubTextContent` must remove — so a category taught to one and not the other
 fails immediately instead of on a live page.
 
+### 5.2 Small faces
+
 **Faces below ~80px wide are missed, and 80px is marginal.** Measured at the
 0.3 threshold on `03-faces.html`, which renders one face at eight sizes: found
 6 of 8 — both portraits plus 200, 150, 110 and 80px; missed 55 and 36px. The
@@ -92,11 +96,15 @@ making this a **resolution limit, not a threshold one** — lowering the thresho
 gains nothing and costs false positives. A face needs roughly 4–6% of viewport
 width to be detected reliably.
 
+### 5.3 Text inside images
+
 **Text inside images is read, but only as well as the engine reads it.** OCR
 runs over image crops and feeds the same rules a form field goes through. Where
 a read fails the image is covered whole rather than let through — a candidate
 was already judged large enough to hold a document, and without reading it we
 cannot claim it does not.
+
+### 5.4 One screen at a time
 
 **A run examines one screen, and says so.** `dom-map.ts` filters the element
 scan to the viewport and capture is `captureVisibleTab`, so content below the
@@ -112,6 +120,8 @@ transmits nothing at all — it builds no payload and reaches no transport — w
 is what makes it affordable to spend several seconds and several captures on.
 A scan that stops early, on an endless page or a scroll-locked one, draws the
 line where it stopped on the page itself.
+
+### 5.5 What a whole-page scan keeps
 
 **The whole page, redacted, is kept locally and never sent.** The scan redacts
 each screen it examined and stores it, viewable as a filmstrip. A full-page
@@ -130,6 +140,8 @@ is staleness: a page that reflows underneath those coordinates will drift, the
 same limit a drawn mark has always carried. Drift over-redacts rather than
 under-redacts, which is the safe direction, but it is not a guarantee. A
 navigation destroys the content script and the findings with it.
+
+### 5.6 Prompt injection
 
 **Prompt injection is bounded, not prevented.** Page content is JSON-encoded as
 data and the allowlist is fixed at three verbs, so the blast radius is small.

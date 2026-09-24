@@ -257,7 +257,7 @@ export const SCREEN_5_ADVERSARIAL: DomElement[] = [
   }),
   // 3 — an email address rendered as ordinary text.
   text('t3', 'Account contact: casey.tan@example.com'),
-  // 4 — a person's name in prose. Expected miss (SECURITY_PRIVACY.md 4.1).
+  // 4 — a person's name in prose. Expected miss (SECURITY_PRIVACY.md 5.1).
   text('t4', 'Account holder: Priya Raghunathan'),
   // 5 — formatted identifiers in text.
   text('t5', 'PAN ABCDE1234F · Account 402711558903'),

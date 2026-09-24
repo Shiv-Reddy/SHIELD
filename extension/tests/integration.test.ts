@@ -215,7 +215,7 @@ test('Screen 5 — the adversarial cases land exactly where they were predicted'
    * whole reason they are written this way.
    *
    * A name in prose is now caught by the given-name gazetteer, and the failure
-   * message said which document to go and fix. SECURITY_PRIVACY.md 4.1,
+   * message said which document to go and fix. SECURITY_PRIVACY.md 5.1,
    * PRIVACY.md, README.md, the demo Q&A and the corpus comment were all
    * rewritten in the same commit as the detector — which is what the tripwire
    * was for. A fixture that goes green while its explanation still says

@@ -1,101 +1,102 @@
-# Tech Stack — Shield
+# What Shield is built with
 
-Two layers: what you build for the hackathon, and what a production version
-would add. Do not adopt Full Product infrastructure prematurely — it adds
-overhead the hackathon timeline can't absorb.
+Two parts: what is actually built, and what a real product would add later.
+Do not add the second part early — it costs time and buys nothing at this size.
 
-## 1. Hackathon Stack (Build This Now)
+---
 
-### Client (Browser Extension)
-| Layer | Choice |
+## 1. What is built
+
+### The browser extension
+
+| Part | Choice |
 |---|---|
-| Browser target | Chrome (primary demo) and Firefox; Edge runs the Chrome bundle. DECISIONS.md 214 |
-| Extension framework | WebExtensions API, Manifest V3. `npm run build:firefox` generates the Firefox manifest from Chrome's so the two cannot drift (DECISIONS.md 203) |
-| Language | JavaScript or TypeScript |
-| Local AI inference | ONNX Runtime Web + Transformers.js |
-| Acceleration | WebGPU, with WebAssembly/CPU fallback |
-| Vision model | Targeted at what DOM cannot see (faces, pixel-baked text) rather than generic element detection — see DECISIONS.md |
-| Face detection | UltraFace version-RFB-320 (native ONNX, MIT, WIDERFACE-trained) |
-| OCR | Tesseract.js, run only on image-element crops — see DECISIONS.md |
-| Popup UI | React 19 + Tailwind 4, popup only. Nothing else in the client uses either, and neither reaches the pipeline (DECISIONS.md 241) |
-| Redaction rendering | Canvas API |
-| DOM scanning | Native JavaScript |
+| Browsers | Chrome (main demo) and Firefox. Edge runs the Chrome bundle unchanged. DECISIONS.md 214 |
+| Extension format | WebExtensions, Manifest V3. `npm run build:firefox` generates the Firefox manifest from Chrome's, so the two cannot drift apart (DECISIONS.md 203) |
+| Language | TypeScript |
+| Local AI | ONNX Runtime Web |
+| Speed-up | WebGPU, falling back to CPU when it is missing |
+| Face detection | UltraFace RFB-320 — MIT licence, trained on WIDERFACE |
+| Reading text in pictures | Tesseract.js, run only on image crops, not the whole screen |
+| Popup interface | React 19 and Tailwind 4 — **popup only**. Nothing else in the extension uses either, and neither touches the pipeline (DECISIONS.md 241) |
+| Reading the page | Plain JavaScript |
 
-### Server (Backend)
-| Layer | Choice |
+The vision model is aimed at what page code **cannot** describe — faces, text
+baked into images — rather than at identifying buttons, which markup already
+does better and faster.
+
+### The server
+
+| Part | Choice |
 |---|---|
-| Framework | FastAPI (Python) or Express/NestJS (Node.js) |
-| Reasoning model | Free-tier hosted VLM API first; self-hosted open-weight model as fallback |
-| API style | REST, JSON (see API_SPEC.md) |
-| Hosting (demo) | Local machine during dev; free-tier PaaS (Render/Railway/Fly.io) for live demo reliability |
+| Framework | FastAPI (Python) |
+| Reasoning model | Any OpenAI-compatible provider. Currently Gemini 3.5 Flash Lite; a local model on Ollama works with no code change |
+| API | REST and JSON — see [API_SPEC.md](./API_SPEC.md) |
+| Where it runs | On your own machine, at `127.0.0.1:8787`. **Not hosted** — DECISIONS.md 262 explains why |
 
-### Dev & Testing
-| Tool | Purpose |
+**The server is not hosted on purpose.** It has no login and no rate limit
+because it was written to be reached from the same machine. Public, it would be
+an open relay. It also means the demo survives the venue wifi dying.
+
+### Testing
+
+| Tool | Why |
 |---|---|
-| Browser DevTools | Extension debugging, network inspection |
-| Postman or similar | Backend API testing |
-| `performance.now()` | Latency instrumentation |
-| Jest / PyTest | Unit testing (pick per language used) |
+| Node's own test runner | No test framework to install. 413 checks |
+| Node's own TypeScript support | No compiler step for tests |
+| Plain Python asserts | 138 server checks, no pytest |
+| `performance.now()` | Every stage timed on every run |
 
-## 2. Full Product Stack (Add Later, Architected For Now)
+**No test framework, no network, no API key.** The tests run anywhere the code
+runs. That was deliberate — a test suite that needs an install step is one that
+somebody eventually skips.
 
-### Infrastructure
-| Layer | Choice (Representative Options) |
-|---|---|
-| Cloud hosting | AWS, GCP, or Azure — containerized deployment |
-| Containerization | Docker, orchestrated with Kubernetes or a managed container service |
-| CI/CD | GitHub Actions or equivalent — automated test + deploy pipeline |
-| Model serving | Dedicated GPU-backed inference service (e.g. a managed model-serving platform), decoupled from the API gateway |
-| Database (for audit logs, org config) | PostgreSQL |
-| Caching | Redis, for repeatable prompt templates and rate-limit counters |
-| Secrets management | Cloud provider's secrets manager (never hardcoded keys) |
-| CDN | For serving extension update assets efficiently |
+---
 
-### Observability
-| Tool | Purpose |
-|---|---|
-| Structured logging (e.g. JSON logs to a log aggregator) | Request tracing, error rates |
-| Metrics dashboard (e.g. Grafana + Prometheus) | Latency, throughput, error-rate monitoring |
-| Alerting | Anomaly detection on error spikes, latency regressions |
+## 2. What a real product would add
 
-### Browser Store & Multi-Browser Support
-| Item | Notes |
-|---|---|
-| Chrome Web Store | Developer account, privacy disclosure form, store listing assets |
-| Firefox Add-ons | Manifest adjustments for Firefox's WebExtensions differences |
-| Edge Add-ons | Chromium-based, largely compatible with Chrome build with minor adjustments |
+Not built. Listed so the path is clear, not so it gets built early.
 
-### Security & Compliance Tooling
-| Tool | Purpose |
-|---|---|
-| Static analysis / dependency scanning | Catch vulnerable dependencies before release |
-| Third-party security review | Independent audit of the redaction pipeline and threat model (see SECURITY_PRIVACY.md) |
+**Infrastructure:** cloud hosting in containers; automated build and deploy; a
+GPU-backed model service separate from the API; PostgreSQL for audit logs and
+organisation settings; Redis for rate limiting; a proper secrets manager.
 
-## 3. Migration Path (Hackathon → Full Product)
+**Monitoring:** structured logs, a dashboard for speed and error rates, and
+alerts when either gets worse.
 
-1. Keep the client-side redaction logic framework-agnostic from day one, so
-   it ports cleanly if the extension is later rebuilt for Firefox/Edge.
-2. Keep the backend's reasoning-model integration behind a clean interface
-   (see API_SPEC.md), so swapping from a free-tier API to a production model
-   backend doesn't require rewriting the API Gateway or Prompt Builder.
-3. Introduce the database and audit-logging layer only when persistent
-   storage is actually needed (Full Product) — the hackathon build should
-   remain stateless by design.
-4. Introduce CI/CD and observability tooling before any public beta, not
-   during the hackathon.
+**Stores:** Chrome Web Store (developer account, privacy disclosure, listing
+assets), Firefox Add-ons, Edge Add-ons.
 
-## 4. Explicitly Not Using (Hackathon Phase)
+**Security:** dependency scanning on every release, and an independent review
+of the redaction pipeline by someone who did not build it.
 
-- Any paid LLM/VLM API by default (exploring free options first — see DECISIONS.md)
-- Cloud GPU training pipelines (no model training required, only inference
-  with pre-trained models)
-- Kubernetes, managed databases, or any production infrastructure — adds
-  overhead with no benefit at demo scale
+---
 
-## 5. Cost Note
+## 3. Getting from here to there
 
-The hackathon stack is free or near-free (pre-trained open models, free-tier
-hosting/compute). The Full Product stack introduces real infrastructure
-costs (cloud hosting, model serving, observability tooling) that should only
-be adopted once there's a validated reason to run at production scale — see
-ROADMAP.md for when that transition would realistically happen.
+1. **Keep redaction independent of any framework.** It already is, which is why
+   the Firefox port did not touch it.
+2. **Keep the model behind a clean interface.** Already proved — a local model
+   worked with no code change at all, just three environment variables.
+3. **Add a database only when something actually needs storing.** Today the
+   server keeps nothing, which is a privacy feature, not a gap.
+4. **Add monitoring and automated deploys before any public beta**, not now.
+
+---
+
+## 4. Deliberately not used
+
+- **Any paid API.** Everything runs on free tiers or locally
+- **Model training.** We only run pre-trained models
+- **Kubernetes, managed databases, any production infrastructure.** Overhead
+  with no benefit at this size
+
+---
+
+## 5. What it costs
+
+**Nothing.** Pre-trained open models, free-tier hosting, local compute.
+
+A real product would have real infrastructure costs, and those should start
+only when there is a reason to run at that scale — see
+[ROADMAP.md](./ROADMAP.md).

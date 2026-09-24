@@ -1,105 +1,104 @@
 # Roadmap — Shield
 
-Full timeline from today through the hackathon and, if pursued further, into
-a real production product.
+Where the project has got to, and where it would go next. The early phases are
+written as what happened, not as what was planned.
 
-## Phase 0: Pre-Hackathon Preparation (Weeks 1-4)
+---
 
-**Week 1**
-- Finalize all context docs (this set).
-- Assign team roles (see TASKS.md).
-- Set up dev environment, repo structure, and CI basics (lint/test on push).
-- Select and download the local vision model + face-detection model.
-- Build the 5 test screens (see TESTING.md Section 1).
+## Done — building it
 
-**Week 2**
-- Build Screen Perception + Local Vision Model integration.
-- Get WebGPU inference working end-to-end on at least one laptop.
-- Begin PII Detector (DOM rules first — fastest to build and highest reliability).
+**The detection rules first.** Patterns for email, phone, Aadhaar, PAN, IFSC,
+UPI, plus reading the page's own code for hints like `type="password"`. This
+part alone finds 160 of the 170 private items in our test set, in 4
+milliseconds.
 
-**Week 3**
-- Complete PII Detector (add visual face-detection layer).
-- Build Redaction Engine (Canvas-based, semantic placeholder tokens).
-- Stand up backend skeleton (FastAPI/Express), choose and test a free-tier
-  reasoning model.
+**Then redaction.** Black boxes on the picture and labels in the text. Both,
+always — covering the picture while leaving the real text in the message is
+redaction that looks finished and is not.
 
-**Week 4**
-- Wire full client-server round trip for the primary demo task (login/form
-  autofill).
-- Run first Zero-Leak Verification (see TESTING.md Section 6).
-- Begin work on Phase 2 stretch goal (multi-field signup form) if Phase 1 is solid.
+**Then the three guards** that make "nothing private leaves" a rule the code
+enforces rather than a promise.
 
-## Phase 1: Hackathon Event (36 Hours)
+**Then the eyes.** Face detection and image text reading, both inside the
+browser, for the things page code cannot describe.
 
-**Hours 0-12:** Finalize and stabilize the primary demo task end-to-end.
-Fix any environment-specific issues discovered on the actual event hardware.
+**Then the server** and the three allowed actions, checked in two places.
 
-**Hours 12-24:** Build stretch goals in priority order (signup form, then
-face detection) — only if Phase 1 is fully rehearsed and stable. Begin
-building differentiation features (live network inspector, explainable
-redaction overlay).
+**Then measurement.** 50 pages labelled by hand, a scorer, and four rival
+approaches scored the same way so our number means something.
 
-**Hours 24-32:** Add remaining differentiation features (semantic redaction
-polish, frame diffing if time allows, red-team adversarial test case).
-Complete Zero-Leak Verification on the actual demo laptop.
+**Then trying to break it.** A page built to defeat our own detector, with
+predictions written down before the first run.
 
-**Hours 32-36:** Rehearse the full demo script (see DEMO_SCRIPT.md)
-repeatedly. Finalize README, architecture doc (2-page limit), demo video
-(2-minute limit), and presentation (5-slide limit). Record backup demo video.
+## Done — making it a product
 
-## Phase 2: Post-Hackathon Hardening (If Continuing, Weeks 1-4 After Event)
+- Apache-2.0 licence and a NOTICE listing every third-party piece
+- A privacy policy written for whoever installs it, not for engineers
+- Store-ready archives for both browsers, checked by unpacking them again
+- The server in a 202MB container, running as a non-root user
+- Firefox passes Mozilla's own validator: 0 errors, 0 notices
 
-- Expand the PII taxonomy beyond the hackathon's core categories (see
-  SECURITY_PRIVACY.md Section 2).
-- Test against a rotating set of real, unmodified third-party websites
-  (TESTING.md Screen 6) to validate generalization claims.
-- Conduct an internal adversarial security review against the full threat
-  model (SECURITY_PRIVACY.md Section 3).
-- Add persistent, exportable audit logging.
-- Begin evaluating a stable, cost-predictable reasoning-model backend for
-  real (non-free-tier) usage.
+## Done — proving it
 
-## Phase 3: Closed Beta (Months 2-3 Post-Hackathon)
+- Both browsers measured on the same machine
+- The six test screens run on Chrome and Firefox
+- Edge verified on the Chrome bundle
+- An experiment proving the model actually reads the picture, rather than
+  assuming it because we send one
+- A full offline run on a local model, no key and no internet
 
-- Recruit a small group of real users (or one willing organization) for
-  hands-on feedback.
-- Instrument opt-in, privacy-respecting usage telemetry to understand real
-  task-success rates outside the curated demo set.
-- Iterate on detection accuracy and latency based on real-world usage patterns.
-- Draft Chrome Web Store submission materials (privacy disclosures, store
-  listing, screenshots).
+---
 
-## Phase 4: Public Launch — Chrome (Month 4)
+## Next — the two we scoped and chose not to build yet
 
-- Submit to Chrome Web Store, complete review process.
-- Public launch announcement.
-- Monitor stability, error rates, and user trust reception closely in the
-  first weeks (see ARCHITECTURE.md Section 7, Observability).
+Both were considered before the event and deliberately left alone, because
+neither adds anything to how the project is scored and both risk a working
+demo. Written down so the reasoning survives.
 
-## Phase 5: Multi-Browser Expansion (Months 5-6)
+**Shield in front of other agents.** Our server already speaks the common
+chat-completions shape, so any tool that lets you set its endpoint could route
+through us. The work is porting ~1,150 lines of detection rules to Python, and
+faces and image text cannot port at all — they run in the browser. Estimated
+2–4 days, and it creates two copies of the same rules in two languages, which
+is exactly the kind of drift that has already caused two real bugs here.
 
-- Port to Firefox (WebExtensions API differences) and submit to Firefox
-  Add-ons.
-- Port to Edge (largely Chromium-compatible, lower incremental effort).
+**Redacting the page itself.** Rather than intercepting an agent's traffic,
+change what there is to read: paint over the private parts in the live page so
+*anything* looking at that tab sees the redacted version. This is the more
+interesting product. It also has a sharp edge — you must never rewrite a form
+field's real value, or you break the user's actual login — and single-page apps
+re-render and undo your changes. Estimated 3–5 days.
 
-## Phase 6: Enterprise Features (Months 6-9)
+**Neither can be done by intercepting Chrome's built-in AI.** No extension can.
+Manifest V3 has no way to rewrite another component's request body, and
+browser-native AI never passes through extension networking at all. That is a
+platform limit, not a gap in this build.
 
-- Build the enterprise policy console (configurable redaction rules, action
-  vocabulary restrictions per organization).
-- Build organization-wide audit log export and compliance reporting.
-- Pilot with one or two privacy-conscious organizations.
+## Next — accuracy
 
-## Phase 7: Ongoing (Continuous)
+- A proper name model, so a name is found because it *is* a name rather than
+  because it is on our list
+- More languages read from pictures — today we ship English only
+- A wider set of private-data categories
+- Addresses and dates of birth in ordinary prose, which we miss entirely
 
-- Ongoing model quality iteration as detection accuracy data accumulates.
-- Ongoing security review cadence (e.g. before each major release).
-- Ongoing evaluation of a sustainability model (open-source core + optional
-  enterprise tier, or another approach, decided based on real adoption data
-  by this point — not decided prematurely now).
+## Next — reach
 
-## Decision Gates
+- A second machine measured, so the resource numbers are not from one laptop
+- 20 real sites swept rather than nine
+- More task types than login and sign-up
+- Chrome Web Store submission, once there is time for a review queue nobody
+  controls
 
-Each phase transition (especially Phase 2 → Phase 3, and Phase 4 → Phase 5)
-should be an explicit team decision, not an assumed default — continuing
-past the hackathon is optional and should be evaluated based on real
-interest and bandwidth at that time, documented in DECISIONS.md when decided.
+## Later — if it keeps going
+
+- A small group of real users, and honest numbers about whether it helps them
+- A security review by someone who did not build it
+- An enterprise version: configurable rules, audit export
+- A way to pay for it at scale, decided when there is real usage and not before
+
+---
+
+**Nothing past the event is committed.** Continuing is a choice to make with
+real interest and real time, not a default. When it is decided, it goes in
+DECISIONS.md with the reason.

@@ -1,9 +1,12 @@
-# Testing Strategy — Shield
+# How Shield is tested
 
-Covers hackathon-scope testing (must be done before the event) and Full
-Product testing practices (for anyone continuing this beyond the hackathon).
+What is tested now, and what a real product would add.
 
-## 1. Test Screen Set (Build Before Development Gets Serious)
+**413 checks in the extension and 138 on the server.** No test framework, no
+network, no API key — they run anywhere the code runs. That was deliberate: a
+suite that needs an install step is one somebody eventually skips.
+
+## 1. The test screens
 
 ### Screen 1: Basic Login Form
 Username, password, submit button.
@@ -173,26 +176,40 @@ procedure. Do it on the presentation laptop specifically.
   complete," "error occurred").
 - Color contrast check on the redaction overlay and status indicators.
 
-## 8. Browser Compatibility Matrix
+## 8. Which browsers are tested
 
-| Browser | Hackathon | Full Product |
-|---|---|---|
-| Chrome (latest stable) | Required, primary target | Required |
-| Chrome (previous major version) | Nice to test if time allows | Required |
-| Firefox | Not tested | Required |
-| Edge | Not tested | Required (Chromium-based, likely low incremental effort) |
+| Browser | Status |
+|---|---|
+| Chrome (latest) | **Main target.** All six screens run, fully measured |
+| Firefox | **Tested and measured.** All six screens run. 364ms per pass once warm |
+| Edge | **Verified** on the Chrome bundle, unchanged |
+| Chrome (previous version) | Not tested |
 
-## 9. Regression Suite Maintenance
+Chrome and Firefox were measured on the same laptop on the same day, so the
+figures can be compared. **Only one machine has been measured** — a second
+would either confirm the resource numbers or not, and we have not run it.
 
-Every bug found during testing or after a real-world report should get a
-corresponding regression test added before the fix is considered complete —
-this is especially important for any privacy-related fix (see
-SECURITY_PRIVACY.md Section 7, Incident Response Plan), where a regression
-could mean a real data leak recurring.
+## 9. Every bug gets a test
+
+A fix is not finished until there is a test that would have caught it. This
+matters most for anything privacy-related, where the same bug coming back means
+a real leak.
+
+Two recent examples, both found on real pages rather than by the tests:
+
+- A name hidden in a form field but still present in a button's label. The
+  outgoing-message search caught it and refused to send
+- A name matcher that missed any name preceded by a capitalised word
+
+Both now have tests, and one of those tests checks the **general** property —
+anything the detector flags, the text cleaner must remove — so the next
+category taught to one path and not the other fails immediately.
 
 ## 10. Test Data Management
 
-- Mock test screens (Section 1, Screens 1-5) should be version-controlled
-  alongside the codebase, not ad-hoc or recreated each time.
-- No real user data should ever be used in testing — synthetic data only,
-  designed to exercise the same detection patterns as real data would.
+- The test screens live in the repository alongside the code, not rebuilt each
+  time from memory.
+- **No real user data, ever.** Synthetic only, written to trigger the same
+  patterns real data would. The one exception is face photographs, which a
+  detector trained on photographs needs — those are kept off the repository and
+  each person supplies their own.
