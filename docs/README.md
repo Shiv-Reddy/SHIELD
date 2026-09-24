@@ -23,6 +23,7 @@ That is enough to understand the project and run it.
 | File | What it is |
 |---|---|
 | [HACKATHON_BRIEF.md](./HACKATHON_BRIEF.md) | The numbers, the three ways to misquote them, judge questions, what to do when the demo breaks |
+| [TEAM_GUIDE.md](./TEAM_GUIDE.md) | One file per person — your intro, what you own, and what to say when asked |
 | [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md) | What to record in the backup video, shot by shot |
 | [DEMO_SCRIPT.md](./DEMO_SCRIPT.md) | Demo conditions and the long-form judge answers |
 
