@@ -668,3 +668,17 @@ claim.
    on a page raised the corpus score. It was caught by a test written against
    the scorer, not against the detector. A benchmark nobody has checked is worse
    than none, because its output looks like evidence.
+
+## 2026-09-25 — Event day, between rounds 1 and 2
+
+**Round 1 feedback:** "Why would anyone use AI to log in?" Fair. The demo moved from login to real workplaces.
+
+**Done:**
+- Bank KYC console (Screen 7), now ten applications; college admissions (8), company payroll (9), customer support desk (10); hub page `test-screens/index.html`. All four run through the real detector and Gemini: 15 of 15 correct.
+- Server: login and sign-up go to the rules even with a model configured; everything else to the model. One retry on a model timeout, timeout 8s. Prompt 1.4.0 tells the model to stop when the task is done. A ParaBank sign-up is no longer blocked by its sidebar's empty login box.
+- Client: final clicks (approve, release, send, submit…) end the run, after the KYC console approved four customers in a row. Addresses written as text are now detected. Compliance report page. Voice input built (on-device, English and Hindi) and switched off for the round.
+- Tests: 439 client, 144 server, all passing. Decisions 279–290.
+
+**Blockers:** voice does not start on the demo laptop (290). BENCHMARK.md predates the address rule and was not regenerated.
+
+**Next session starts with:** regenerate BENCHMARK.md and check the figures quoted in the docs still hold; then find the voice failure from the error the listening window reports.

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ticket 48213 — Northwind Retail Customer Care</title>
+    <!--
+      Test screen 10: an e-commerce customer support desk.
+
+      Support agents paste customer conversations into chat assistants to draft
+      replies every day, and every one of those conversations carries a name, a
+      phone number, an address and often a payment ID. This is the everyday
+      leak Shield exists to stop, on the job that causes it.
+
+      THE TASK: "Tell the customer a free replacement will be delivered within
+      3 days, and send the reply." Two steps: TYPE a reply into the box, then
+      click "Send reply", which is final, so the run stops there.
+
+      The customer's message is one paragraph per line, as many helpdesks
+      render it. Shield hides a whole text block when any of it is private, so
+      the lines that carry the complaint stay readable and the lines that carry
+      who and where are hidden. The agent learns what went wrong without
+      learning who it went wrong for.
+
+      All data is synthetic. No external resources.
+    -->
+    <style>
+      :root {
+        --ink: #17202a; --muted: #5e6b78; --faint: #8f9ba6; --line: #e3e8ed; --bg: #f4f6f8; --card: #fff;
+        --brand: #b3261e; --ok: #1d7a4d; --soft: #f7f9fb; --me: #eef3ff;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      .topbar { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 20px; background: #1f2933; color: #fff; }
+      .logo { width: 24px; height: 24px; border-radius: 6px; background: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+      .topbar h1 { margin: 0; font-size: 14px; font-weight: 650; }
+      .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
+      .shell { display: grid; grid-template-columns: 270px 1fr 280px; height: calc(100vh - 46px); }
+      .list { background: var(--card); border-right: 1px solid var(--line); overflow: hidden; }
+      .list h2 { margin: 0; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--line); }
+      .ticket { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+      .ticket.on { background: var(--me); box-shadow: inset 3px 0 0 #3b5bdb; }
+      .ticket .row { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; }
+      .ticket strong { display: block; margin: 2px 0; font-size: 12.5px; }
+      .ticket small { color: var(--muted); }
+      .conv { display: flex; flex-direction: column; min-width: 0; }
+      .conv header { padding: 12px 18px; background: var(--card); border-bottom: 1px solid var(--line); }
+      .conv header h2 { margin: 0; font-size: 15px; }
+      .conv header p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+      .messages { flex: 1; padding: 16px 18px; overflow: auto; }
+      .msg { max-width: 560px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; }
+      .msg p { margin: 0 0 4px; }
+      .msg .meta { color: var(--faint); font-size: 11px; margin-bottom: 6px; }
+      .msg.agent { margin-left: auto; background: var(--me); border-color: #d7e1ff; }
+      .reply { padding: 12px 18px 14px; background: var(--card); border-top: 1px solid var(--line); }
+      .reply label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+      textarea { width: 100%; height: 74px; resize: none; padding: 9px 11px; border: 1px solid #cfd6de; border-radius: 8px; font: inherit; }
+      .buttons { display: flex; gap: 8px; margin-top: 8px; }
+      button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 7px; cursor: pointer; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      button.send { margin-left: auto; background: #3b5bdb; border-color: #3b5bdb; color: #fff; }
+      aside { background: var(--card); border-left: 1px solid var(--line); padding: 14px 16px; overflow: hidden; }
+      aside h3 { margin: 0 0 8px; font-size: 13px; }
+      aside dl { margin: 0 0 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+      aside dt { color: var(--muted); }
+      aside dd { margin: 0; }
+      .tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: #fdecea; color: var(--brand); font-size: 11px; font-weight: 600; }
+      .foot { color: var(--faint); font-size: 11px; margin-top: 8px; }
+      #toast[hidden] { display: none; }
+      #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; box-shadow: 0 6px 24px rgba(29,122,77,.35); z-index: 10; }
+    </style>
+  </head>
+  <body>
+    <p id="toast" role="status" hidden></p>
+    <header class="topbar">
+      <div class="logo" aria-hidden="true">N</div>
+      <h1>Northwind Retail · Customer Care</h1>
+      <span class="who">Support desk · Queue: Damaged items</span>
+    </header>
+    <div class="shell">
+      <section class="list" aria-label="Tickets">
+        <h2>Open tickets · 5</h2>
+        <div class="ticket on"><div class="row"><span>#48213</span><span>12 min</span></div><strong>Phone arrived with a cracked screen</strong><small>Neha Kapoor</small></div>
+        <div class="ticket"><div class="row"><span>#48207</span><span>31 min</span></div><strong>Refund not received yet</strong><small>Arjun Bose</small></div>
+        <div class="ticket"><div class="row"><span>#48199</span><span>1 h</span></div><strong>Wrong size delivered</strong><small>Kavya Iyer</small></div>
+        <div class="ticket"><div class="row"><span>#48190</span><span>2 h</span></div><strong>Change delivery address</strong><small>Rohan Mehta</small></div>
+        <div class="ticket"><div class="row"><span>#48184</span><span>3 h</span></div><strong>Charged twice for one order</strong><small>Priya Menon</small></div>
+      </section>
+
+      <section class="conv">
+        <header>
+          <h2>#48213 · Phone arrived with a cracked screen</h2>
+          <p>Order OD-44871 · Delivered yesterday · Priority: high</p>
+        </header>
+        <div class="messages" id="messages">
+          <div class="msg">
+            <p class="meta">Customer · 12 minutes ago</p>
+            <p>Hi, my order OD-44871 arrived yesterday and the phone screen is cracked.</p>
+            <p>The box was also damaged, I have photos.</p>
+            <p>I would like a replacement, not a refund.</p>
+            <p>This is Neha Kapoor, you can call me on +91 98201 33456.</p>
+            <p>Please deliver it to 12 Park Street, Kolkata 700016.</p>
+          </div>
+          <div class="msg agent">
+            <p class="meta">Auto-reply · 12 minutes ago</p>
+            <p>Thanks for writing to Northwind. An agent will reply shortly.</p>
+          </div>
+        </div>
+        <div class="reply">
+          <label for="reply">Reply to customer</label>
+          <textarea id="reply" placeholder="Write a reply"></textarea>
+          <div class="buttons">
+            <button type="button" id="refund">Issue refund</button>
+            <button type="button" class="send" id="send">Send reply</button>
+          </div>
+        </div>
+      </section>
+
+      <aside aria-label="Customer">
+        <h3>Customer</h3>
+        <dl>
+          <dt>Name</dt><dd>Neha Kapoor</dd>
+          <dt>Phone</dt><dd>+91 98201 33456</dd>
+          <dt>Email</dt><dd>neha.kapoor@example.com</dd>
+          <dt>Address</dt><dd>12 Park Street, Kolkata 700016</dd>
+          <dt>Refund UPI</dt><dd>neha.k@okaxis</dd>
+        </dl>
+        <h3>Order OD-44871</h3>
+        <dl>
+          <dt>Item</dt><dd>Aurora X2 smartphone, 128 GB</dd>
+          <dt>Paid</dt><dd>₹32,999</dd>
+          <dt>Warranty</dt><dd>Covered, 1 year</dd>
+          <dt>Replacement stock</dt><dd>Available</dd>
+        </dl>
+        <span class="tag">Damaged in transit</span>
+        <p class="foot">Fictional store, synthetic customers. Not a real service, not real people.</p>
+      </aside>
+    </div>
+    <script>
+      const reply = document.getElementById('reply');
+      const toast = document.getElementById('toast');
+      document.getElementById('send').addEventListener('click', () => {
+        const text = reply.value.trim();
+        if (!text) {
+          toast.textContent = 'Write a reply before sending.';
+          toast.hidden = false;
+          return;
+        }
+        const msg = document.createElement('div');
+        msg.className = 'msg agent';
+        msg.innerHTML = '<p class="meta">You · just now</p>';
+        const p = document.createElement('p');
+        p.textContent = text;
+        msg.append(p);
+        document.getElementById('messages').append(msg);
+        reply.value = '';
+        toast.textContent = '✓ Reply sent to the customer. Ticket #48213 updated.';
+        toast.hidden = false;
+      });
+      document.getElementById('refund').addEventListener('click', () => {
+        toast.textContent = 'Refund started for OD-44871.';
+        toast.hidden = false;
+      });
+    </script>
+  </body>
+</html>

@@ -12,6 +12,7 @@
  * and rebuildable.
  */
 
+import { isFinalClick } from '../lib/committing';
 import { captureViewport } from './capture';
 import {
   ensureVisionHost,
@@ -720,6 +721,12 @@ interface StepOutcome {
    * The replacement owns the status. A run that has been replaced owns nothing.
    */
   superseded: boolean;
+  /**
+   * True when the action just taken was a final one — approve, pay, submit —
+   * and the run ends here. See lib/committing.ts for the run that made this
+   * necessary.
+   */
+  final?: boolean;
 }
 
 /** What an action does and to what, ignoring anything incidental. */
@@ -1223,12 +1230,18 @@ async function runStep(
     if (!executed.ok) throw new Error(executed.message);
 
     console.info(`[shield] acted: ${response.action.type} — ${executed.message}`);
+    const target = snapshot.elements.find(
+      (candidate) =>
+        candidate.elementId === response.action?.selector ||
+        candidate.selector === response.action?.selector,
+    );
     return {
       acted: true,
       summary: response.reasoningSummary,
       signature,
       repeated: false,
       superseded: false,
+      final: isFinalClick(response.action, target),
     };
   } finally {
     // Drop the reference to the raw screenshot as soon as the step is over,
@@ -1621,6 +1634,18 @@ async function runTask(taskQuery: string): Promise<void> {
 
       actions += 1;
       lastSignature = outcome.signature;
+
+      if (outcome.final) {
+        // One commitment per request. The screen after an approval shows more
+        // things that could be approved, and a stateless reasoner cannot tell
+        // "done" from "next".
+        setStatus('done');
+        console.info(
+          `[shield] task complete after ${actions} action(s): the last one was final ` +
+            '(approve, pay, submit or similar), so Shield stopped there.',
+        );
+        return;
+      }
 
       // Re-capture on the next iteration rather than reusing the snapshot: the
       // page has just been changed by our own action, and acting again on a

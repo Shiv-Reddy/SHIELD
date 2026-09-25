@@ -18,3 +18,63 @@
   width: 100%;
   height: auto;
 }
+
+/* The plain-language layer above the evidence. */
+.headline {
+  margin: 8px 0 14px;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.2vw, 34px);
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--fg);
+  max-width: 900px;
+}
+
+.kinds { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.kinds li {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline-strong);
+  color: var(--fg);
+  font-size: 13.5px;
+}
+.kinds strong { font-variant-numeric: tabular-nums; margin-right: 4px; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.side { padding: 16px 18px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--hairline); }
+.side h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+.side ul { margin: 0; padding-left: 18px; color: var(--fg-muted); line-height: 1.7; }
+.side.got h3::before { content: '✓  '; color: #6fcf97; }
+.side.never h3::before { content: '✕  '; color: #ef7a7a; }
+.side q { color: var(--fg); }
+
+.row-block { margin-bottom: 20px; }
+.row-block h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.row {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--accent-tint);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+.row .token { color: var(--bg); background: var(--fg); padding: 1px 5px; border-radius: 4px; }
+
+.frame figcaption { padding: 10px 14px; color: var(--fg-muted); font-size: 13px; border-top: 1px solid var(--hairline); }
+
+.technical { margin-top: 22px; color: var(--fg-muted); }
+.technical summary { cursor: pointer; color: var(--fg); font-size: 14px; }
+.technical pre {
+  max-height: 420px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } }

@@ -31,37 +31,63 @@
     </header>
 
     <main class="body">
-      <p id="summary" class="summary"></p>
-
       <!--
-        The claim restated where the evidence is. Somebody shown this tab did
-        not necessarily see anything that came before it, and this is the one
-        picture in the product that DID cross the network — so the sentence has
-        to be exact rather than reassuring.
+        Written for someone who has never heard of a redacted payload: a judge,
+        a manager, a compliance officer. The first sentence is the whole claim
+        in numbers. Everything technical is still here, below, for whoever wants
+        to check it.
       -->
-      <p class="promise">
-        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M6 8.5V6a4 4 0 0 1 8 0v2.5"/>
-          <rect x="4" y="8.5" width="12" height="8.5" rx="2"/>
-        </svg>
-        This is the image itself, exactly as it was transmitted. Everything
-        under a black rectangle was removed on this computer before sending —
-        the original pixels never left it.
-      </p>
-
       <p id="empty" class="empty" hidden>
         Nothing has been sent yet. Run a task with Shield, then open this again.
       </p>
 
-      <p id="missing" class="empty" hidden>
-        A task was sent, but the image could not be kept — browser storage
-        refused it. The record of <em>what</em> was sent is still in the popup
-        under <strong>What was sent?</strong>
-      </p>
+      <section id="story" hidden>
+        <h2 id="headline" class="headline"></h2>
+        <ul id="kinds" class="kinds"></ul>
 
-      <figure id="figure" class="frame" hidden>
-        <img id="image" alt="The redacted screenshot that was transmitted" />
-      </figure>
+        <div class="split">
+          <section class="side got">
+            <h3>What the AI received</h3>
+            <ul>
+              <li>Your task: <q id="task"></q></li>
+              <li id="layout"></li>
+              <li>The picture below, with every private part blacked out</li>
+            </ul>
+          </section>
+          <section class="side never">
+            <h3>What the AI never received</h3>
+            <ul>
+              <li id="never-values"></li>
+              <li>The original screenshot</li>
+              <li>Anything about who you are or which site you are on</li>
+            </ul>
+          </section>
+        </div>
+
+        <section id="row-block" class="row-block" hidden>
+          <h3>How one part of the page looked to the AI</h3>
+          <p id="row" class="row"></p>
+        </section>
+
+        <p id="missing" class="empty" hidden>
+          A task was sent, but the image could not be kept because browser storage
+          refused it. The record of what was sent is below.
+        </p>
+        <figure id="figure" class="frame" hidden>
+          <img id="image" alt="The blacked-out screenshot the AI received" />
+          <figcaption>
+            This is the image exactly as it was sent. Everything under a black
+            rectangle was removed on this computer first. The original pixels never
+            left it.
+          </figcaption>
+        </figure>
+
+        <details class="technical">
+          <summary>For experts: the exact message that was sent</summary>
+          <p id="summary" class="summary"></p>
+          <pre id="json"></pre>
+        </details>
+      </section>
     </main>
 
     <script type="module" src="./sent.ts"></script>

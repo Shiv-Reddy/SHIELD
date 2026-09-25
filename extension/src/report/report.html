@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield — Privacy compliance report</title>
+    <link rel="stylesheet" href="./report.css" />
+  </head>
+  <body>
+    <!--
+      What an organisation's compliance or security team reads. Light and
+      document-shaped, because it is printed, saved as PDF and attached to an
+      audit file, and a dark screen UI prints as a slab of toner.
+
+      Everything on it comes from the audit log through lib/report.ts, and that
+      log holds categories, counts, rule names and timings only. So the report
+      is as safe to pass on as the log it is made from.
+    -->
+    <main class="page">
+      <header class="masthead">
+        <div class="brand">
+          <img src="/icons/shield-black.svg" alt="" width="28" height="28" />
+          <span>Shield</span>
+        </div>
+        <div class="actions">
+          <button type="button" id="download">Download data</button>
+          <button type="button" id="print" class="primary">Save as PDF</button>
+        </div>
+      </header>
+
+      <section class="title">
+        <h1>Privacy compliance report</h1>
+        <p class="meta" id="meta">Reading the activity log…</p>
+      </section>
+
+      <p id="empty" class="empty" hidden>
+        No activity yet. Run a task or scan a page with Shield, then open this report again.
+      </p>
+
+      <div id="report" hidden>
+        <section class="statement">
+          <p id="statement"></p>
+        </section>
+
+        <section class="kpis">
+          <div><strong id="k-protected">0</strong><span>private items protected</span></div>
+          <div><strong id="k-runs">0</strong><span>AI tasks run</span></div>
+          <div><strong id="k-scans">0</strong><span>page scans, nothing sent</span></div>
+          <div><strong id="k-time">–</strong><span>typical time on this device per task</span></div>
+        </section>
+
+        <div class="columns">
+          <section class="card">
+            <h2>What was protected</h2>
+            <ol class="bars" id="categories"></ol>
+          </section>
+
+          <section class="card">
+            <h2>Last 7 days</h2>
+            <div class="week" id="week"></div>
+            <p class="caption">Private items protected per day.</p>
+          </section>
+        </div>
+
+        <section class="card">
+          <h2>Controls in place</h2>
+          <table class="controls">
+            <thead>
+              <tr><th>Control</th><th>How Shield does it</th><th>Where to check it</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Data minimisation</td>
+                <td>Private data is hidden on the employee's own device. Only the redacted page ever reaches the AI.</td>
+                <td>Every request is searched for anything flagged before it is sent, and refused if one is found</td>
+              </tr>
+              <tr>
+                <td>Purpose limitation</td>
+                <td>The AI can only click, type or scroll. Anything else is rejected on the server and again on the device.</td>
+                <td>Action allowlist, checked twice</td>
+              </tr>
+              <tr>
+                <td>One decision at a time</td>
+                <td>Approve, pay, submit and similar actions end the task. A second one needs a new request from a person.</td>
+                <td>The activity log below</td>
+              </tr>
+              <tr>
+                <td>No retention</td>
+                <td>The server answers and forgets. Its logs hold a request ID and a time, never page content.</td>
+                <td>Server logs</td>
+              </tr>
+              <tr>
+                <td>Transparency</td>
+                <td>The exact last message sent to the AI can be opened and read.</td>
+                <td>"What was sent" in the Shield panel</td>
+              </tr>
+              <tr>
+                <td>Accountability</td>
+                <td>This report and its data file hold counts only: no values, no page text, no web addresses.</td>
+                <td>"Download data" above</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="caption">
+            These controls support the reasonable security safeguards the Digital Personal Data
+            Protection Act, 2023 expects of organisations handling personal data. This report
+            supports a compliance review. It is not a certification.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Recent activity</h2>
+          <table class="activity">
+            <thead>
+              <tr><th>When</th><th>What</th><th class="num">Items hidden</th><th>Sent to the AI</th><th class="num">Time on device</th></tr>
+            </thead>
+            <tbody id="activity"></tbody>
+          </table>
+          <p class="caption" id="activity-note"></p>
+        </section>
+      </div>
+
+      <footer class="foot">
+        Generated by Shield on this device. Categories, counts and timings only. No page
+        content, field values or web addresses are recorded, so this report is safe to share.
+      </footer>
+    </main>
+    <script type="module" src="./report.ts"></script>
+  </body>
+</html>

@@ -199,6 +199,22 @@ export const CONTENT_PATTERNS: ReadonlyArray<readonly [SensitiveCategory, RegExp
   // "1,234" do not match.
   ['phone', /(\+\d{1,3}[\s-]?)?(\(\d{2,4}\)[\s-]?)?\d{3,5}[\s-]\d{3,5}([\s-]\d{3,5})?/],
   /*
+   * A postal address written as text: a door number and a street word, or a
+   * city and a six-digit PIN code.
+   *
+   * Found on the support-desk page, 2026-09-25: "Please deliver it to 12 Park
+   * Street, Kolkata 700016" went through in a customer's message and in the
+   * customer panel, because an address was only ever caught in a form field
+   * whose markup declared it. Two shapes rather than one broad pattern, because
+   * a loose "capitalised words then a number" would black out ordinary prose.
+   * A PIN code never starts with 0, which keeps "Branch 0142" and zeroed-out
+   * sample cards clear of it.
+   */
+  [
+    'address',
+    /\b\d{1,4}[A-Za-z]?,?\s+(?:[A-Z][A-Za-z.]*\s+){1,3}(?:Street|St\.?|Road|Rd\.?|Lane|Marg|Nagar|Colony|Avenue|Layout|Sector|Block|Cross|Chowk|Bazaar|Enclave|Vihar|Society)\b|\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)?[,\s]+[1-9]\d{2}\s?\d{3}\b/,
+  ],
+  /*
    * A currency amount, and it is LAST on purpose.
    *
    * This array is ordered and the first match wins, so appending means every

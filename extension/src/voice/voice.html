@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield is listening</title>
+    <!--
+      Voice runs in its own small window, not in the side panel.
+
+      Chrome gives a side panel no way to show a microphone prompt, and speech
+      recognition there failed without a word — not an error, not a console
+      line — on the demo laptop, 2026-09-25. A window is an ordinary extension
+      page: it can ask for the microphone, it can show what it hears, and it can
+      put any failure on screen where the person holding the laptop sees it.
+      What it hears is sent to the panel as text; the audio never leaves this
+      window, and recognition runs on the device (see popup/voice.ts).
+    -->
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 20px 24px;
+        background: #1b1b1b;
+        color: #f5f5f5;
+        font: 14px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+        text-align: center;
+      }
+      .orb {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #2e2e2e;
+        color: #f5f5f5;
+        flex: none;
+      }
+      .orb svg { width: 26px; height: 26px; }
+      body[data-state='listening'] .orb { background: #f5f5f5; color: #1b1b1b; animation: pulse 1.4s ease-in-out infinite; }
+      body[data-state='error'] .orb { background: #3a2222; color: #ef7a7a; }
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(245, 245, 245, 0.45); }
+        50% { box-shadow: 0 0 0 14px rgba(245, 245, 245, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) { body[data-state='listening'] .orb { animation: none; } }
+      #status { margin: 0; font-weight: 600; font-size: 15px; }
+      #heard { margin: 0; font-size: 12.5px; max-width: 100%; min-height: 2.9em; color: #a8a8a8; max-width: 360px; }
+      body[data-state='error'] #heard { color: #ef7a7a; }
+      .row { display: flex; gap: 8px; }
+      button {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid #3a3a3a;
+        background: transparent;
+        color: #f5f5f5;
+        cursor: pointer;
+      }
+      button.primary { background: #f5f5f5; color: #1b1b1b; border-color: #f5f5f5; }
+      button[hidden] { display: none; }
+      .note { margin: 0; max-width: 100%; color: #767676; font-size: 11.5px; }
+    </style>
+  </head>
+  <body data-state="starting">
+    <div class="orb" aria-hidden="true">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7.5" y="2.5" width="5" height="9.5" rx="2.5" />
+        <path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5" />
+      </svg>
+    </div>
+    <p id="status" role="status">Getting ready…</p>
+    <p id="heard"></p>
+    <div class="row">
+      <button type="button" id="again" class="primary" hidden>Try again</button>
+      <button type="button" id="settings" hidden>Shield permissions</button>
+      <button type="button" id="done" hidden>Done</button>
+      <button type="button" id="cancel">Cancel</button>
+    </div>
+    <p class="note">Speech is turned into text on this computer. Your voice never leaves it.</p>
+    <script type="module" src="./voice-window.ts"></script>
+  </body>
+</html>

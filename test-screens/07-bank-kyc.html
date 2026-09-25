@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KYC review queue — Arcadia Bank Operations</title>
+    <!--
+      Test screen 7: a bank's internal KYC review console.
+
+      The case the first round asked for. Nobody needs an agent to log in; a
+      bank operations analyst clearing a queue of identity checks is exactly
+      the person who would use one, and exactly the person who is not allowed
+      to, because every row on this screen is a customer's identity.
+
+      THE TASK: "Approve the KYC application that has every document verified
+      and low risk." Ten applications; exactly one, KYC-2043, meets both
+      conditions. Every other row fails at least one, and two rows (2042, 2049)
+      are verified but not low risk — the near-misses a careless reading takes.
+
+      What the agent chooses from is what Shield leaves readable: reference,
+      channel, document status and risk grade. What it never receives is who
+      anyone is. Expected hidden in every row, written before the first run:
+
+        customer name    -> [NAME]        given-name list plus a following word
+        Aadhaar          -> [ID_NUMBER]   12 digits, first digit 2-9
+        PAN              -> [ID_NUMBER]   AAAAA9999A
+        account number   -> [ID_NUMBER]   9 or more unbroken digits
+        mobile           -> [PHONE]
+        deposit          -> [REDACTED]    rupee amount, the `other` rule
+        the two card images -> black boxes, from OCR of the text inside them
+
+      Buttons carry an aria-label naming their application, because the model
+      receives elements in document order without positions. Names are never
+      put in a label: a name copied into a label is the exact defect the
+      zero-leak sweep exists to catch. Names are two words and on the given-name
+      list; a middle name in free text leaves the surname behind, a recorded
+      limit the demo page does not lean on.
+
+      Deciding a row shows the outcome as page text and a status line, because
+      the agent reads text. Approve and Reject are final clicks, so the run stops
+      after one (DECISIONS.md 285).
+
+      All data is synthetic (TESTING.md Section 10). No external resources.
+    -->
+    <style>
+      :root {
+        --ink: #14201b; --muted: #5b6a63; --faint: #8a9892; --line: #e2e8e5; --bg: #f3f6f4; --card: #ffffff;
+        --brand: #0f4c3a; --ok: #0f7a4f; --ok-soft: #e3f4ec; --warn: #9a6400; --warn-soft: #fdf3dc;
+        --bad: #b42318; --bad-soft: #fdecea; --info-soft: #eef2f7; --info: #3b4a61;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 12.5px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+
+      .topbar { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 20px; background: var(--brand); color: #fff; }
+      .logo { width: 24px; height: 24px; border-radius: 6px; background: #fff; color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+      .topbar h1 { margin: 0; font-size: 14px; font-weight: 650; }
+      .topbar .env { padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.16); font-size: 11px; }
+      .topbar .search { margin-left: 24px; flex: 0 1 320px; padding: 6px 10px; border-radius: 6px; background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); font-size: 12px; }
+      .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
+
+      .shell { display: grid; grid-template-columns: 188px 1fr 290px; min-height: calc(100vh - 46px); }
+
+      nav.side { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; }
+      nav.side a { display: flex; justify-content: space-between; padding: 7px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; font-size: 12.5px; }
+      nav.side a.on { background: #e6f0ec; color: var(--brand); font-weight: 650; }
+      nav.side .group { margin: 14px 10px 6px; color: var(--faint); font-size: 11px; }
+      nav.side .count { color: var(--faint); font-variant-numeric: tabular-nums; }
+
+      main { padding: 14px 16px 18px; min-width: 0; }
+      .heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+      .heading h2 { margin: 0; font-size: 17px; }
+      .heading span { color: var(--muted); }
+
+      .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
+      .kpi small { display: block; color: var(--muted); font-size: 11px; }
+      .kpi strong { font-size: 17px; font-weight: 650; }
+
+      .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+      .tabs span { padding: 4px 10px; border-radius: 99px; color: var(--muted); font-size: 12px; }
+      .tabs span.on { background: var(--ink); color: #fff; }
+
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+      table { width: 100%; border-collapse: collapse; }
+      th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafcfb; padding: 7px 7px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+      td { padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+      tr:last-child td { border-bottom: 0; }
+      td.ref { font-weight: 600; }
+      td.mono { font-variant-numeric: tabular-nums; }
+
+      .chip { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+      .chip.ok { background: var(--ok-soft); color: var(--ok); }
+      .chip.warn { background: var(--warn-soft); color: var(--warn); }
+      .chip.bad { background: var(--bad-soft); color: var(--bad); }
+      .chip.info { background: var(--info-soft); color: var(--info); }
+
+      .actions { display: flex; gap: 5px; }
+      button { font: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+      .approve { border: 0; background: var(--brand); color: #fff; }
+      .reject { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      .done { font-weight: 650; }
+      .done.ok { color: var(--ok); }
+      .done.bad { color: var(--bad); }
+
+      aside.detail { background: var(--card); border-left: 1px solid var(--line); padding: 14px 16px; }
+      aside h3 { margin: 0 0 2px; font-size: 13px; }
+      aside .sub { margin: 0 0 10px; color: var(--muted); font-size: 11.5px; }
+      aside dl { margin: 0 0 12px; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+      aside dt { color: var(--muted); }
+      aside dd { margin: 0; }
+      aside figure { margin: 0 0 10px; }
+      aside figcaption { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+      aside img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+      .checks { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+      .checks li::before { content: '✓ '; color: var(--ok); font-weight: 700; }
+
+      .foot { margin-top: 8px; color: var(--faint); font-size: 11px; }
+
+      #toast[hidden] { display: none; }
+      #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; text-align: center; box-shadow: 0 6px 24px rgba(15,122,79,.35); z-index: 10; }
+      #toast.bad { background: var(--bad); box-shadow: 0 6px 24px rgba(180,35,24,.35); }
+    </style>
+  </head>
+  <body>
+    <p id="toast" role="status" hidden></p>
+    <header class="topbar">
+      <div class="logo" aria-hidden="true">A</div>
+      <h1>Arcadia Bank · Operations</h1>
+      <span class="env">Demo environment</span>
+      <span class="search">Search application, account or branch</span>
+      <span class="who">Branch 0142 · KYC desk · Shift 2</span>
+    </header>
+
+    <div class="shell">
+      <nav class="side" aria-label="Operations">
+        <a href="#">Dashboard</a>
+        <a href="#" class="on">KYC review <span class="count">10</span></a>
+        <a href="#">Re-KYC due <span class="count">64</span></a>
+        <a href="#">Account opening</a>
+        <a href="#">Loan documents</a>
+        <div class="group">Compliance</div>
+        <a href="#">AML alerts <span class="count">3</span></a>
+        <a href="#">Audit trail</a>
+        <a href="#">Reports</a>
+      </nav>
+
+      <main>
+        <div class="heading">
+          <h2>KYC review queue</h2>
+          <span id="queue-note">10 applications waiting · review within 24 hours</span>
+        </div>
+
+        <section class="kpis">
+          <div class="kpi"><small>Waiting</small><strong id="k-waiting">10</strong></div>
+          <div class="kpi"><small>Approved today</small><strong id="k-approved">38</strong></div>
+          <div class="kpi"><small>Rejected today</small><strong id="k-rejected">4</strong></div>
+          <div class="kpi"><small>Breaching 24 h</small><strong>2</strong></div>
+          <div class="kpi"><small>Average review time</small><strong>11 min</strong></div>
+        </section>
+
+        <div class="tabs"><span class="on">All 10</span><span>Mobile app 6</span><span>Branch 3</span><span>Partner 1</span></div>
+
+        <section class="panel">
+          <table>
+            <thead>
+              <tr>
+                <th>Application</th><th>Customer</th><th>Aadhaar</th><th>PAN</th><th>Account no.</th>
+                <th>Mobile</th><th>Deposit</th><th>Channel</th><th>Documents</th><th>Risk</th><th>Decision</th>
+              </tr>
+            </thead>
+            <tbody id="queue"></tbody>
+          </table>
+        </section>
+
+        <p class="foot">Fictional bank, synthetic customers. Not a real service, not real people.</p>
+      </main>
+
+      <!--
+        After the queue in document order, so the agent reads the queue first.
+        The images are the committed fictional sample cards: the part of the
+        page markup cannot describe, which only the on-device OCR can find.
+      -->
+      <aside class="detail">
+        <h3>Documents on file: KYC-2043</h3>
+        <p class="sub">Submitted today, 09:12 · Mobile app</p>
+        <dl>
+          <dt>Email</dt><dd>rahul.sharma@example.com</dd>
+          <dt>Branch</dt><dd>0142</dd>
+          <dt>Occupation</dt><dd>Salaried</dd>
+        </dl>
+        <figure>
+          <figcaption>Aadhaar card (uploaded)</figcaption>
+          <img src="aadhaar_sample.svg" alt="Uploaded Aadhaar card image" />
+        </figure>
+        <figure>
+          <figcaption>PAN card (uploaded)</figcaption>
+          <img src="pan_sample.svg" alt="Uploaded PAN card image" />
+        </figure>
+        <ul class="checks">
+          <li>Aadhaar OTP verified</li>
+          <li>PAN matches name</li>
+          <li>Sanctions screening clear</li>
+        </ul>
+      </aside>
+    </div>
+
+    <script>
+      // [ref, name, aadhaar, pan, account, mobile, deposit, channel, [tone, documents], [tone, risk]]
+      const rows = [
+        ['KYC-2041', 'Priya Nair', '4821 7730 5196', 'BQKPN4471C', '50100482917734', '+91 98110 22418', '₹25,000', 'Mobile app', ['bad', 'PAN missing'], ['ok', 'Low']],
+        ['KYC-2042', 'Vikram Rathore', '7390 2146 8805', 'CRXPR8820K', '50100519264408', '+91 99300 81442', '₹9,80,000', 'Branch', ['ok', 'All documents verified'], ['bad', 'High']],
+        ['KYC-2043', 'Rahul Sharma', '2345 6789 0124', 'ABCDE1234F', '50100633108152', '+91 98200 45817', '₹40,000', 'Mobile app', ['ok', 'All documents verified'], ['ok', 'Low']],
+        ['KYC-2044', 'Sneha Iyer', '6604 9912 3378', 'DLMPI2093Q', '50100702563391', '+91 90040 17735', '₹15,500', 'Mobile app', ['bad', 'Photo does not match Aadhaar'], ['ok', 'Low']],
+        ['KYC-2045', 'Arjun Mehta', '5127 4480 2269', 'EFGPM5561R', '50100811470025', '+91 97690 53120', '₹1,20,000', 'Partner', ['warn', 'Video KYC pending'], ['warn', 'Medium']],
+        ['KYC-2046', 'Kavya Reddy', '3981 5502 7714', 'GHKPR7720L', '50100928813306', '+91 98450 66301', '₹60,000', 'Branch', ['warn', 'Address proof expired'], ['ok', 'Low']],
+        ['KYC-2047', 'Aditya Joshi', '8862 1047 3395', 'JKLPJ3348M', '50101044572219', '+91 91670 38854', '₹5,000', 'Mobile app', ['info', 'Signature pending'], ['ok', 'Low']],
+        ['KYC-2048', 'Pooja Verma', '4470 9361 2208', 'MNOPV9912N', '50101158820473', '+91 93240 71196', '₹2,40,000', 'Mobile app', ['bad', 'Name mismatch on PAN'], ['warn', 'Medium']],
+        ['KYC-2049', 'Karan Malhotra', '7215 6608 4471', 'PQRPM4405S', '50101263394810', '+91 98999 20437', '₹14,50,000', 'Branch', ['ok', 'All documents verified'], ['warn', 'Medium']],
+        ['KYC-2050', 'Divya Menon', '6093 2284 5519', 'STUPM6627T', '50101370046652', '+91 99870 45521', '₹30,000', 'Mobile app', ['warn', 'Video KYC pending'], ['ok', 'Low']],
+      ];
+
+      const queue = document.getElementById('queue');
+      for (const [ref, name, aadhaar, pan, account, mobile, deposit, channel, docs, risk] of rows) {
+        const tr = document.createElement('tr');
+        tr.dataset.app = ref;
+        const cell = (content, className) => {
+          const td = document.createElement('td');
+          if (className) td.className = className;
+          td.textContent = content;
+          tr.append(td);
+        };
+        const chip = ([tone, label]) => {
+          const td = document.createElement('td');
+          const span = document.createElement('span');
+          span.className = `chip ${tone}`;
+          span.textContent = label;
+          td.append(span);
+          tr.append(td);
+        };
+        cell(ref, 'ref');
+        cell(name);
+        cell(aadhaar, 'mono');
+        cell(pan, 'mono');
+        cell(account, 'mono');
+        cell(mobile, 'mono');
+        cell(deposit, 'mono');
+        cell(channel);
+        chip(docs);
+        chip(risk);
+        const decision = document.createElement('td');
+        decision.innerHTML =
+          `<div class="actions"><button class="approve" aria-label="Approve application ${ref}">Approve</button>` +
+          `<button class="reject" aria-label="Reject application ${ref}">Reject</button></div>`;
+        tr.append(decision);
+        queue.append(tr);
+      }
+
+      const count = (id, delta) => {
+        const node = document.getElementById(id);
+        node.textContent = String(Number(node.textContent) + delta);
+      };
+
+      queue.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+        const row = button.closest('tr');
+        const app = row.dataset.app;
+        const approved = button.classList.contains('approve');
+
+        button.parentElement.parentElement.innerHTML = approved
+          ? '<span class="done ok">Approved</span>'
+          : '<span class="done bad">Rejected</span>';
+
+        count('k-waiting', -1);
+        count(approved ? 'k-approved' : 'k-rejected', 1);
+
+        const toast = document.getElementById('toast');
+        toast.textContent = approved
+          ? `✓ Decision saved: ${app} approved. Account activated.`
+          : `Decision saved: ${app} rejected.`;
+        toast.className = approved ? '' : 'bad';
+        toast.hidden = false;
+
+        const waiting = document.getElementById('k-waiting').textContent;
+        document.getElementById('queue-note').textContent =
+          `${app} ${approved ? 'approved' : 'rejected'} · ${waiting} applications waiting`;
+
+        console.info('[test-screen] decision recorded locally; nothing was sent anywhere');
+      });
+    </script>
+  </body>
+</html>

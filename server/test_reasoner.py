@@ -694,6 +694,58 @@ check(
     f"got {decision.action}",
 )
 
+# --- A real bank's registration page -------------------------------------------
+#
+# ParaBank (parabank.parasoft.com), the first real bank site tried, 2026-09-25.
+# Its sidebar keeps an empty login box on every page, the registration page
+# included, so the page carries THREE password fields and one is empty. The
+# sign-up rule read that empty box as "no new password set yet" and declined a
+# form that was filled and ready. Shapes and order are the page's own.
+
+
+def _at(entry, y, x=0):
+    entry["position"] = {"x": x, "y": y, "width": 200, "height": 24}
+    return entry
+
+
+parabank = [
+    _at(_element("p0", "input", None, "Username", filled=False), 210, 10),
+    _at(_element("p1", "input", "[PASSWORD]", "Password", filled=False), 260, 10),
+    _at(_element("p2", "button", None, "Log In"), 300, 10),
+    _at(_element("r0", "text", "Signing up is easy!"), 200, 300),
+    _at(_element("r1", "input", "[REDACTED]", None), 280, 400),
+    _at(_element("r2", "input", "[REDACTED]", None), 310, 400),
+    _at(_element("r3", "input", "[ADDRESS]", None), 340, 400),
+    _at(_element("r4", "input", "[ADDRESS]", None), 370, 400),
+    _at(_element("r5", "input", "[ADDRESS]", None), 400, 400),
+    _at(_element("r6", "input", "[ADDRESS]", None), 430, 400),
+    _at(_element("r7", "input", "[ID_NUMBER]", None), 460, 400),
+    _at(_element("r8", "input", "[ID_NUMBER]", None), 490, 400),
+    _at(_element("r9", "input", "[REDACTED]", None), 540, 400),
+    _at(_element("r10", "input", "[PASSWORD]", None, filled=True), 570, 400),
+    _at(_element("r11", "input", "[PASSWORD]", None, filled=True), 600, 400),
+    _at(_element("r12", "button", None, "Register"), 640, 400),
+]
+decision = decide_by_rules(_request(parabank, task="create this account"))
+check(
+    "an empty sidebar login box does not block a filled sign-up",
+    decision.action is not None
+    and decision.action.type == "click"
+    and decision.action.selector == "r12",
+    f"got {decision.action} / {decision.summary}",
+)
+
+parabank_unset = [dict(entry) for entry in parabank]
+for entry in parabank_unset:
+    if entry["elementId"] in ("r10", "r11"):
+        entry["filled"] = False
+decision = decide_by_rules(_request(parabank_unset, task="create this account"))
+check(
+    "but with the new password itself empty, it still declines",
+    decision.action is None,
+    f"got {decision.action}",
+)
+
 print()
 print(f"{len(failures)} failing check(s)" if failures else "all checks pass")
 sys.exit(1 if failures else 0)

@@ -39,7 +39,7 @@ from schemas import ALLOWED_ACTIONS, AnalyzeRequest, RedactedDomEntry
 # API_SPEC.md Section 8 requires the template be re-validated against the
 # regression suite when the schema changes; the version is what makes "which
 # template produced this behaviour?" answerable after the fact.
-PROMPT_VERSION = "1.3.0"
+PROMPT_VERSION = "1.4.0"
 
 # Every token the client can emit, with the reading the model should give it.
 # Kept in step with extension/src/lib/redaction/placeholders.ts by
@@ -180,6 +180,11 @@ Rules for the action:
   - One action only. You will be shown the result and asked again.
   - Prefer declining to guessing. A wrong action on somebody's real page is
     worse than an honest "I don't know".
+  - If the screen shows the task has already been done — a confirmation, a
+    status that now reads as the outcome the task asked for — do not act
+    again. Reply "needs_more_context" and say in reasoning_summary that the
+    task is complete. Clicking a status label or a confirmation achieves
+    nothing, and acting twice on a finished task can repeat it.
   - A checkbox reports its state as "checked" or "unchecked". You may tick one
     the form requires — accepting terms of service, for example — and you must
     never tick one that only opts the user into something extra, such as a

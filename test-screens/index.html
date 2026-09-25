@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield · Real workflows</title>
+    <!--
+      The demo hub. One page listing every workplace scenario with the task to
+      type or say, so whoever is driving the laptop never has to remember a
+      file name or a sentence on stage. Tasks are selectable text: triple-click
+      to copy.
+    -->
+    <style>
+      :root { --ink: #111; --body: #3d3d3d; --muted: #767676; --line: #e6e6e6; --soft: #f6f6f6; color-scheme: light; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--soft); color: var(--body); font: 14px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      main { max-width: 1040px; margin: 0 auto; padding: 40px 24px 48px; }
+      .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 650; font-size: 16px; }
+      .brand span { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; }
+      h1 { margin: 22px 0 6px; color: var(--ink); font-size: 32px; line-height: 1.15; letter-spacing: -0.01em; }
+      .lead { margin: 0 0 30px; max-width: 700px; color: var(--body); font-size: 16px; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+      .who { color: var(--muted); font-size: 12.5px; }
+      .card h2 { margin: 4px 0 8px; color: var(--ink); font-size: 18px; }
+      .card p { margin: 0 0 12px; }
+      .hidden { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+      .task { margin: 0 0 14px; padding: 10px 12px; background: var(--soft); border-radius: 8px; color: var(--ink); font-size: 13.5px; user-select: all; }
+      .task small { display: block; color: var(--muted); font-size: 11.5px; margin-bottom: 2px; user-select: none; }
+      .card a { margin-top: auto; align-self: flex-start; padding: 7px 14px; border-radius: 999px; background: var(--ink); color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; }
+      .card a.plain { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+      h3 { margin: 34px 0 12px; color: var(--ink); font-size: 15px; }
+      .foot { margin-top: 30px; color: var(--muted); font-size: 12.5px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 26px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand"><span>S</span>Shield</div>
+      <h1>Real work, private data, one AI agent</h1>
+      <p class="lead">
+        People in banks, colleges, companies and support desks work on screens full of other
+        people's data, so they aren't allowed to use AI agents. Shield hides that data on the
+        laptop first. Each scenario below is a real job, with a task the agent completes without
+        ever seeing who it's about.
+      </p>
+
+      <div class="grid">
+        <section class="card">
+          <span class="who">Banking · KYC operations</span>
+          <h2>Approve a customer's KYC</h2>
+          <p>An analyst clears a queue of ten identity checks, each with a name, Aadhaar, PAN, account number and phone.</p>
+          <p class="hidden">Hidden from the AI: names, Aadhaar, PAN, account numbers, phones, deposits, the ID card images.</p>
+          <p class="task"><small>Type or say</small>Approve the KYC application that has every document verified and low risk.</p>
+          <a href="07-bank-kyc.html">Open the KYC console</a>
+        </section>
+
+        <section class="card">
+          <span class="who">Education · Admissions office</span>
+          <h2>Shortlist from a merit list</h2>
+          <p>Admissions staff fill the last seat from ten applicants, each with Aadhaar, phone, email and a parent's name.</p>
+          <p class="hidden">Hidden from the AI: names, Aadhaar, phones, emails, parents' names.</p>
+          <p class="task"><small>Type or say</small>Shortlist the highest-ranked applicant whose documents are complete and fee is paid.</p>
+          <a href="08-college-admissions.html">Open admissions</a>
+        </section>
+
+        <section class="card">
+          <span class="who">Company · Payroll</span>
+          <h2>Release one salary</h2>
+          <p>HR releases month-end pay from a list with PANs, bank accounts, IFSC codes and salaries.</p>
+          <p class="hidden">Hidden from the AI: names, PAN, bank accounts, IFSC, every salary, the PAN card image.</p>
+          <p class="task"><small>Type or say</small>Release the salary for the engineering employee whose payroll is ready.</p>
+          <a href="09-hr-payroll.html">Open payroll</a>
+        </section>
+
+        <section class="card">
+          <span class="who">E-commerce · Customer support</span>
+          <h2>Reply to a customer</h2>
+          <p>An agent answers a damaged-delivery complaint. The AI writes and sends the reply.</p>
+          <p class="hidden">Hidden from the AI: the customer's name, phone, email, address and UPI ID.</p>
+          <p class="task"><small>Type or say</small>Tell the customer a free replacement will be delivered within 3 days, and send the reply.</p>
+          <a href="10-support-desk.html">Open the support desk</a>
+        </section>
+      </div>
+
+      <h3>On a real website we didn't build</h3>
+      <div class="grid">
+        <section class="card">
+          <span class="who">Real bank site · ParaBank</span>
+          <h2>Transfer money</h2>
+          <p>Log in with <strong>john</strong> / <strong>demo</strong>, open Transfer Funds. The AI types the amount and presses Transfer.</p>
+          <p class="task"><small>Type or say</small>Transfer 250 dollars</p>
+          <a class="plain" href="https://parabank.parasoft.com/parabank/index.htm">Open ParaBank</a>
+        </section>
+        <section class="card">
+          <span class="who">Proof</span>
+          <h2>Try to break it</h2>
+          <p>A page built to trick our own detector. Run Scan: seven of eight tricks are caught, and we show the one that isn't.</p>
+          <p class="task"><small>In the Shield panel</small>Scan the whole page</p>
+          <a class="plain" href="05-adversarial.html">Open the adversarial page</a>
+        </section>
+      </div>
+
+      <p class="foot">
+        Every organisation, person and number on these pages is fictional. After any run, open
+        "What was sent" in the Shield panel to see exactly what the AI received, and "Compliance
+        report" to see it the way an organisation's security team would.
+      </p>
+    </main>
+  </body>
+</html>

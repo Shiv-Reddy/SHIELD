@@ -96,6 +96,12 @@ export default defineConfig({
         // check that their ID number really was covered.
         proof: fileURLToPath(new URL('./src/proof/proof.html', import.meta.url)),
         sent: fileURLToPath(new URL('./src/sent/sent.html', import.meta.url)),
+        // The compliance report. A printable document for an organisation's
+        // security team, built from the audit log alone.
+        report: fileURLToPath(new URL('./src/report/report.html', import.meta.url)),
+        // The listening window. Its own page because a side panel cannot ask
+        // for the microphone; see voice/voice.html.
+        voice: fileURLToPath(new URL('./src/voice/voice.html', import.meta.url)),
         // Settings. Its own page rather than a panel because it holds the two
         // inference overrides, which exist so the fallback paths can be
         // exercised — and exercising them means reading a console beside the

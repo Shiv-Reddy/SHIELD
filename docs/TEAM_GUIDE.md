@@ -48,8 +48,8 @@ instruction**, and that instruction can only be one of three kinds:
 
 | Action | What it means | Example from our demo |
 |---|---|---|
-| **click** | Press something on the page: a button, a checkbox, a link | Click "Sign in". Tick "I accept the terms" |
-| **type** | Put text into a box | Type into the search box |
+| **click** | Press something on the page: a button, a checkbox, a link | Click "Approve" on KYC-2043. Click "Release" on one salary |
+| **type** | Put text into a box | Type the reply on the support desk. Type 250 on ParaBank |
 | **scroll** | Move the page up or down to see more of it | The signup page's "Create account" button is below the screen, so it scrolls down first |
 
 Things to say about them:
@@ -67,29 +67,133 @@ Things to say about them:
   again, hides the private parts again, and asks for the next step. If the
   AI asks for the same action twice in a row, Shield refuses. That stops
   something like a double payment.
+- **Approve, pay, send and submit are final.** Shield does one and stops. A
+  second one needs a person to ask again.
 
 **Why only three?** *"A short list is easy to check completely. Every new
 action is a new way to go wrong. These three are enough to fill and submit
 almost any form."*
 
-### Which pages to use in the demo
+### Which pages to use in the demo (round 2)
 
-| Use it for | Page | Why |
+**Start from the hub page: `test-screens/index.html`.** It lists every scenario with the exact task to type or say, and a button to open it. The four workplaces are:
+
+| Workplace | Page | Task | Right answer |
+|---|---|---|---|
+| Bank KYC | `07-bank-kyc.html` | Approve the KYC application that has every document verified and low risk. | KYC-2043 |
+| College admissions | `08-college-admissions.html` | Shortlist the highest-ranked applicant whose documents are complete and fee is paid. | ADM-3106 (rank 3) |
+| Company payroll | `09-hr-payroll.html` | Release the salary for the engineering employee whose payroll is ready. | EMP-0415 |
+| Customer support | `10-support-desk.html` | Tell the customer a free replacement will be delivered within 3 days, and send the reply. | Types the reply, then sends it |
+
+Each one was tested with the real detector and Gemini before the round: 15 out of 15 correct.
+
+### For judges who don't know this field
+
+Most judges won't know that AI agents work by sending screenshots to a server.
+Explain it before anything technical, using these.
+
+**Two facts to open with:**
+- In 2023 Samsung restricted staff from using ChatGPT after employees pasted
+  confidential company code into it.
+- India's Digital Personal Data Protection Act, 2023 allows penalties of up to
+  ₹250 crore for failing to protect personal data.
+
+**The comparison, in one table (put it on a slide):**
+
+| Option | Can staff use AI? | Is customer data safe? |
 |---|---|---|
-| **Main demo (must be perfect)** | `test-screens/01-login.html` | Our own page. Tested the most. After "Sign in", a green line says it worked |
-| **Second task** | `test-screens/02-signup.html` | Ticks the terms box, scrolls, clicks "Create account". A green **"✓ Account created successfully"** banner pops up at the top. It also has a sample ID card picture on the right |
-| **"Can we break it?"** | `test-screens/05-adversarial.html` | Eight tricky cases. 7 are caught. Point at the one we miss |
-| **"Is this hardcoded?" (a real site)** | `github.com/explore` using **Scan** | We tested it before and it was our best real page. Scan sends nothing, so it is safe to run anywhere |
-| **Backup real site** | `apple.com/in` using **Scan** | Tested before, big clear text |
+| Ban AI (what banks do today) | No | Yes |
+| A normal AI agent | Yes | No. It sends the whole screen |
+| Run the AI fully on the laptop | Yes, but slow (about 22 s a step) | Yes |
+| **Shield** | **Yes, about 2 s a step** | **Yes** |
+
+**Who pays:** banks, colleges, insurers and companies, per employee, as the
+thing that lets their staff use AI legally. The compliance report is what their
+security team buys. Individuals could use it free.
+
+**The one screen that explains everything:** after any run, open **What was
+sent?** It now starts with one sentence, such as "63 private items were hidden
+before anything left this laptop", then shows what the AI got and never got,
+and one row exactly as the AI read it. Read that sentence out loud.
+
+**Let the judge choose:** offer to run **Scan** on any website they name. It
+sends nothing, so it's safe anywhere, and nothing builds trust faster.
+
+### Round 2: the 5-minute run (innovation, impact, execution)
+
+Judges score **innovation, impact and execution**. Each part of the run below
+is there for one of them. Times are a guide. Practise with a timer.
+
+**0:00–0:40. The problem (impact).** Open `test-screens/index.html`. Say:
+> "Round one asked us why anyone would use an AI agent. Here's who: people at
+> banks, colleges, companies and support desks, whose screens are full of other
+> people's Aadhaar numbers, salaries and phone numbers. Today they're banned
+> from AI agents, because every screenshot an agent takes sends that data to a
+> server. Shield is what lets them use one."
+
+**0:40–2:00. The hero: bank KYC (innovation).** Open the KYC console. Type:
+*Approve the KYC application that has every document verified and low risk.*
+It approves **KYC-2043** and a green banner appears. Then open **What was sent?**
+and say:
+> "The AI picked the right customer out of ten, and it never learned who
+> anyone was. Every name, Aadhaar, PAN, account number and balance is a
+> placeholder, and the ID card photos are blacked out. The AI got the
+> structure of the page. The identities stayed on this laptop."
+
+**2:00–2:40. It's a category, not a demo page (impact).** Back to the hub.
+Run **one** more workplace: payroll (*Release the salary for the engineering
+employee whose payroll is ready*) or the support desk (*Tell the customer a
+free replacement will be delivered within 3 days, and send the reply*, where it
+**types** the reply). Say:
+> "Same agent, no code written for any of these pages."
+
+**2:40–3:20. A real website we didn't build (execution).** ParaBank → log in
+`john` / `demo` → Transfer Funds → *Transfer 250 dollars*. It types 250, clicks
+Transfer, and ParaBank says "Transfer Complete!".
+
+**3:20–4:00. The buyer's view (impact).** Shield panel → **Compliance report**.
+Say:
+> "The employee gets an AI assistant. The bank's compliance team gets this:
+> everything protected, how many requests reached the AI, all of them
+> redacted, and the controls mapped to the DPDP Act. That's who pays for
+> Shield."
+
+**4:00–4:40. Safety (execution).** Say it, don't demo it:
+> "Three guards stop raw data leaving, and the last one searches every
+> message before it's sent. The AI can only click, type or scroll. And
+> approve, pay and submit are final: Shield does one, then a person has to
+> ask again. Our first version approved four customers in a row during
+> testing. We found it, fixed it, and wrote a test so it can't come back."
+
+**4:40–5:00. Numbers, then stop.** *"About 135 milliseconds on the device.
+586 automated checks. 92 of every 100 private items found on our 50-page
+benchmark."*
+
+**Backup if Gemini or the wifi fails:** run **Scan** on the KYC console
+instead. It sends nothing, and still shows every private item boxed. Then
+play the backup video for the action.
+
+**Other scenarios, if there's time or a judge asks:**
+
+| Page | Task | What to point at |
+|---|---|---|
+| `08-college-admissions.html` | Shortlist the highest-ranked applicant whose documents are complete and fee is paid. | It skips ranks 1 and 2 (marksheet missing, fee pending) and picks rank 3 |
+| ParaBank **Register**, fake details, **new username every time** | create this account | The SSN, address and phone are hidden, and it clicks Register |
+| `test-screens/05-adversarial.html` | Scan | Seven of eight tricks caught. Point at the one we miss |
+
+**If asked "what stops it approving everyone?":** approve, pay, submit and sign in are final. Shield does one, stops, and a person has to ask again. That's on the report too, under "One decision at a time".
+
+**Voice is switched off for this round.** It's built (on-device, English and
+Hindi), but the microphone wouldn't start on the demo laptop. If asked:
+> "Voice input runs on the device in English and Hindi, so audio never leaves
+> the laptop. It's in the code and switched off today until we've fixed
+> microphone access on this machine."
 
 **Don't use these live:**
 - `mygov.in`, which is too long. The scan stops at its limit before the end.
-- `india.gov.in/hi`, which is in Hindi. We only read English from pictures.
+- `india.gov.in/hi`. We read only English from pictures.
 - `google.com/maps`, which is slow, about 43 seconds.
-
-**A real login page, such as `github.com/login`**, needs a test run first,
-on the laptop you will demo on. Type a **fake** email. If it doesn't finish
-cleanly, don't show it live. Use Scan on `github.com/explore` instead.
+- Any website opening or navigation. Shield deliberately can't open sites on its own. That's the answer if asked.
 
 **Never use a real account or a real password on stage.** The screen is
 projected.

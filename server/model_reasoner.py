@@ -32,7 +32,7 @@ import urllib.error
 import urllib.request
 
 from prompt import CREDENTIAL_REFERENCE, TOKEN_MEANINGS, build_prompt
-from reasoner import Decision, decide_by_rules, is_optional_opt_in
+from reasoner import Decision, decide_by_rules, is_optional_opt_in, recognised_form
 from schemas import ALLOWED_ACTIONS, Action, AnalyzeRequest
 
 logger = logging.getLogger("shield.model")
@@ -104,6 +104,18 @@ class ProviderRejectedRequest(ModelUnavailable):
     """
 
 
+class ProviderTimeout(ModelUnavailable):
+    """The provider did not answer within the budget.
+
+    Separate because it is the one failure a second attempt usually fixes.
+    Measured against the free tier on 2026-09-25: most calls answered in about
+    two seconds, and about one in four hung past fifteen — and those were not
+    slow answers on their way, since waiting longer did not rescue them. A
+    fresh request did. An allowlist violation or a malformed answer is not
+    like that, and is never retried.
+    """
+
+
 def is_configured() -> bool:
     return bool(MODEL_KEY and MODEL_NAME and MODEL_ENDPOINT)
 
@@ -171,6 +183,13 @@ def _call_model(body: dict[str, object]) -> dict[str, object]:
                 f"provider returned HTTP {error.code}"
             ) from None
         raise ModelUnavailable(f"provider returned HTTP {error.code}") from None
+    except TimeoutError:
+        raise ProviderTimeout("provider call timed out") from None
+    except urllib.error.URLError as error:
+        # A timeout while connecting arrives wrapped rather than bare.
+        if isinstance(error.reason, TimeoutError):
+            raise ProviderTimeout("provider call timed out") from None
+        raise ModelUnavailable(f"provider call failed ({type(error).__name__})") from None
     except Exception as error:
         raise ModelUnavailable(f"provider call failed ({type(error).__name__})") from None
 
@@ -357,7 +376,14 @@ def _body(request: AnalyzeRequest, with_frame: bool) -> dict[str, object]:
 
 
 async def _ask(request: AnalyzeRequest, with_frame: bool) -> Decision:
-    raw = await asyncio.to_thread(_call_model, _body(request, with_frame))
+    body = _body(request, with_frame)
+    try:
+        raw = await asyncio.to_thread(_call_model, body)
+    except ProviderTimeout:
+        # Once, and only for a timeout. See ProviderTimeout for why a second
+        # attempt is worth its cost here and nowhere else.
+        logger.warning("request %s timed out; retrying once", request.request_id)
+        raw = await asyncio.to_thread(_call_model, body)
     return interpret(_parse_json_object(_extract_text(raw)), request)
 
 
@@ -372,6 +398,14 @@ async def decide_with_model(request: AnalyzeRequest) -> tuple[Decision, str]:
 
     if not is_configured():
         return decide_by_rules(request), "rules"
+
+    # Login and sign-up go to the rules even with a model configured. The rules
+    # were written for exactly these two shapes and are covered check by check;
+    # the model, measured on the same sign-up page, once said it needed to scroll
+    # and returned no action, and costs two seconds a step where the rules cost
+    # none. The model is kept for what the rules cannot read at all.
+    if recognised_form(request) is not None:
+        return decide_by_rules(request), "rules-known-form"
 
     with_frame = SEND_FRAME and not _vision_refused
 

@@ -31,7 +31,10 @@ import type { ShieldState } from '../lib/status';
 import { MSG } from '../lib/messages';
 import { Masthead, isRunning } from './components/Masthead';
 import { Group, KeyButton, Row } from './components/Sheet';
-import { ArrowUpIcon, ClockIcon, OpenIcon, ReceiptIcon, StopIcon } from './components/Mark';
+import { Voice } from './components/Voice';
+
+const VOICE_ENABLED = false;
+import { ArrowUpIcon, ClockIcon, OpenIcon, ReceiptIcon, ReportIcon, StopIcon } from './components/Mark';
 import { ScanRows } from './components/ScanCard';
 import { Redactions, type Redaction } from './components/Redactions';
 import { AskFirstSwitch, MarkRows } from './components/Protect';
@@ -137,19 +140,42 @@ export function App() {
   const totalHidden = hidden.reduce((sum, item) => sum + item.count, 0);
   const measuredMs = state.timings.reduce((sum, timing) => sum + timing.durationMs, 0);
 
+  // One entry point for typed and spoken tasks, so a voice run is the same run.
+  const start = useCallback((query: string) => {
+    if (!query) return;
+    setProblem(null);
+    // Painted immediately so the control cannot be pressed twice while the
+    // worker spins up. The broadcast that follows replaces it.
+    setState({ ...INITIAL_STATE, status: 'reading', taskQuery: query });
+    void toWorker({ type: MSG.RUN_TASK, taskQuery: query });
+  }, []);
+
   const run = useCallback(
     (event: React.FormEvent) => {
       event.preventDefault();
-      const query = task.trim();
-      if (!query) return;
-      setProblem(null);
-      // Painted immediately so the control cannot be pressed twice while the
-      // worker spins up. The broadcast that follows replaces it.
-      setState({ ...INITIAL_STATE, status: 'reading', taskQuery: query });
-      void toWorker({ type: MSG.RUN_TASK, taskQuery: query });
+      start(task.trim());
     },
-    [task],
+    [task, start],
   );
+
+  const [listening, setListening] = useState(false);
+
+  // Stable, because the voice control subscribes to messages with these and
+  // would otherwise resubscribe on every render.
+  const heardTask = useCallback(
+    (text: string) => {
+      setTask(text);
+      start(text);
+    },
+    [start],
+  );
+  const listeningChanged = useCallback((now: boolean) => {
+    setListening(now);
+    if (now) {
+      setProblem(null);
+      setTask('');
+    }
+  }, []);
 
   const stop = useCallback(() => {
     void toWorker({ type: MSG.CANCEL_TASK });
@@ -295,6 +321,12 @@ export function App() {
             disabled={state.timings.length === 0}
           />
           <Audit />
+          <Row
+            icon={<ReportIcon className="size-4" />}
+            title="Compliance report"
+            trailing={<OpenIcon className="size-3.5" />}
+            onClick={() => void chrome.tabs.create({ url: chrome.runtime.getURL('report/report.html') })}
+          />
         </Group>
 
         <Group label="Options">
@@ -327,10 +359,24 @@ export function App() {
             value={task}
             onChange={(event) => setTask(event.target.value)}
             disabled={running}
-            placeholder="Tell Shield what to do on this page"
+            placeholder={listening ? 'Listening…' : 'Tell Shield what to do on this page'}
             autoComplete="off"
             className="text-bright placeholder:text-faint min-w-0 flex-1 bg-transparent py-1.5 text-[13.5px] outline-none focus-visible:outline-none disabled:opacity-60"
           />
+
+          {/*
+            Voice is off for the event round: the microphone would not start on
+            the demo laptop even with every permission allowed (DECISIONS.md
+            290). A control that fails on stage is worse than none. Flip
+            VOICE_ENABLED to bring it back.
+          */}
+          {running || !VOICE_ENABLED ? null : (
+            <Voice
+              disabled={running}
+              onFinished={heardTask}
+              onListeningChange={listeningChanged}
+            />
+          )}
 
           {running ? (
             <button

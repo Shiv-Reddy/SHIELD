@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>B.Tech admissions 2026 — Northfield Institute of Technology</title>
+    <!--
+      Test screen 8: a college admissions office.
+
+      Admissions staff shortlist thousands of applicants from screens holding
+      students' Aadhaar numbers, phone numbers and parents' details — the same
+      reason a bank desk cannot use an AI agent, in a sector that has no
+      compliance team to write an exception.
+
+      THE TASK: "Shortlist the highest-ranked applicant whose documents are
+      complete and fee is paid." Exactly one answer, ADM-3106, at rank 3. The
+      two ranked above each fail a condition (3103 has a marksheet missing,
+      3109 has the fee pending), so taking the top row gives the wrong answer.
+
+      A merit list, sorted by rank, because that is what an admissions office
+      works from. It was an unsorted table first, with the task phrased as
+      "highest percentile"; the model picked the top number and ignored the
+      conditions every time. Status badges name what they are about ("Fee
+      pending", not "Pending") for the same reason: the model reads cells in
+      order, far from the column heading.
+
+      Readable to the agent: application number, category, percentile, class 12
+      score, document and fee status. Hidden: name, Aadhaar, mobile, email,
+      parent's name. Names are two words and on the given-name list; every
+      button names its application and never its applicant.
+
+      All data is synthetic. No external resources.
+    -->
+    <style>
+      :root {
+        --ink: #1b1d2a; --muted: #5d6275; --faint: #8b90a3; --line: #e3e5ee; --bg: #f4f5f9; --card: #fff;
+        --brand: #2a2f6b; --ok: #1d7a4d; --ok-soft: #e4f3eb; --warn: #946200; --warn-soft: #fbf1d9;
+        --bad: #b42318; --bad-soft: #fdecea;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 12.5px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      .topbar { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 20px; background: var(--brand); color: #fff; }
+      .crest { width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+      .topbar h1 { margin: 0; font-size: 14px; font-weight: 650; }
+      .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
+      .shell { display: grid; grid-template-columns: 184px 1fr; min-height: calc(100vh - 46px); }
+      nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; }
+      nav a { display: flex; justify-content: space-between; padding: 7px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; }
+      nav a.on { background: #e9eaf5; color: var(--brand); font-weight: 650; }
+      nav .group { margin: 14px 10px 6px; color: var(--faint); font-size: 11px; }
+      main { padding: 14px 18px; min-width: 0; }
+      .heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+      .heading h2 { margin: 0; font-size: 17px; }
+      .heading span { color: var(--muted); }
+      .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
+      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
+      .kpi small { display: block; color: var(--muted); font-size: 11px; }
+      .kpi strong { font-size: 17px; font-weight: 650; }
+      .filters { display: flex; gap: 6px; margin-bottom: 8px; color: var(--muted); }
+      .filters span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--card); }
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+      table { width: 100%; border-collapse: collapse; }
+      th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafbfd; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+      td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+      tr:last-child td { border-bottom: 0; }
+      td.ref { font-weight: 600; }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .chip { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+      .chip.ok { background: var(--ok-soft); color: var(--ok); }
+      .chip.warn { background: var(--warn-soft); color: var(--warn); }
+      .chip.bad { background: var(--bad-soft); color: var(--bad); }
+      .actions { display: flex; gap: 5px; }
+      button { font: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+      .go { border: 0; background: var(--brand); color: #fff; }
+      .hold { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      .done { font-weight: 650; color: var(--ok); }
+      .done.held { color: var(--warn); }
+      .foot { margin-top: 8px; color: var(--faint); font-size: 11px; }
+      #toast[hidden] { display: none; }
+      #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; box-shadow: 0 6px 24px rgba(29,122,77,.35); z-index: 10; }
+      #toast.held { background: var(--warn); }
+    </style>
+  </head>
+  <body>
+    <p id="toast" role="status" hidden></p>
+    <header class="topbar">
+      <div class="crest" aria-hidden="true">N</div>
+      <h1>Northfield Institute of Technology · Admissions office</h1>
+      <span class="who">B.Tech 2026 · Round 1 counselling</span>
+    </header>
+    <div class="shell">
+      <nav aria-label="Admissions">
+        <a href="#">Overview</a>
+        <a href="#" class="on">Applications <span>10</span></a>
+        <a href="#">Document checks</a>
+        <a href="#">Fee payments</a>
+        <a href="#">Seat matrix</a>
+        <div class="group">Scholarships</div>
+        <a href="#">Merit scholarship</a>
+        <a href="#">Need-based aid</a>
+      </nav>
+      <main>
+        <div class="heading">
+          <h2>Computer Science · merit list, round 1</h2>
+          <span id="note">10 applicants · 1 seat left in this round</span>
+        </div>
+        <section class="kpis">
+          <div class="kpi"><small>Seats</small><strong>120</strong></div>
+          <div class="kpi"><small>Filled</small><strong id="k-filled">119</strong></div>
+          <div class="kpi"><small>Waiting review</small><strong id="k-waiting">10</strong></div>
+          <div class="kpi"><small>Cut-off percentile</small><strong>96.50</strong></div>
+          <div class="kpi"><small>Round closes</small><strong>28 Sep</strong></div>
+        </section>
+        <div class="filters"><span>Branch: Computer Science</span><span>Round 1</span><span>All categories</span></div>
+        <section class="panel">
+          <table>
+            <thead>
+              <tr><th>Merit rank</th><th>Application</th><th>Applicant</th><th>Aadhaar</th><th>Mobile</th><th>Email</th><th>Parent</th><th>Category</th><th>JEE percentile</th><th>Class 12</th><th>Documents</th><th>Fee</th><th>Decision</th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </section>
+        <p class="foot">Fictional institute, synthetic applicants. Not a real service, not real people.</p>
+      </main>
+    </div>
+    <script>
+      // [ref, applicant, aadhaar, mobile, email, parent, category, percentile, class12, [tone, docs], [tone, fee]]
+      const rows = [
+        ['ADM-3103', 'Ishaan Kapoor', '7348 2261 0947', '+91 99100 37126', 'ishaan.k@example.com', 'Deepak Kapoor', 'General', '99.46', '95.8%', ['bad', 'Marksheet missing'], ['ok', 'Fee paid']],
+        ['ADM-3109', 'Karan Bhatia', '7702 5591 3348', '+91 99580 26673', 'karan.b@example.com', 'Sanjay Bhatia', 'General', '99.02', '96.4%', ['ok', 'Documents complete'], ['bad', 'Fee pending']],
+        ['ADM-3106', 'Neha Joshi', '3674 8820 1593', '+91 97020 55308', 'neha.joshi@example.com', 'Ajay Joshi', 'General', '98.37', '94.6%', ['ok', 'Documents complete'], ['ok', 'Fee paid']],
+        ['ADM-3108', 'Sneha Kulkarni', '6841 0038 2217', '+91 98220 73641', 'sneha.k@example.com', 'Harish Kulkarni', 'General', '97.95', '92.8%', ['warn', 'Photo unclear'], ['ok', 'Fee paid']],
+        ['ADM-3101', 'Ananya Gupta', '5832 1947 6620', '+91 98730 11852', 'ananya.g@example.com', 'Suresh Gupta', 'General', '97.84', '93.2%', ['ok', 'Documents complete'], ['ok', 'Fee paid']],
+        ['ADM-3104', 'Meera Pillai', '4906 7713 2285', '+91 94470 28813', 'meera.p@example.com', 'Lakshmi Pillai', 'General', '97.12', '91.0%', ['warn', 'Caste certificate pending'], ['ok', 'Fee paid']],
+        ['ADM-3102', 'Rohan Das', '6219 0473 8851', '+91 90070 44219', 'rohan.das@example.com', 'Anil Das', 'OBC', '96.91', '89.6%', ['ok', 'Documents complete'], ['ok', 'Fee paid']],
+        ['ADM-3105', 'Aarav Singh', '8157 3390 4462', '+91 98330 60471', 'aarav.s@example.com', 'Vikram Singh', 'EWS', '96.55', '88.4%', ['ok', 'Documents complete'], ['bad', 'Fee pending']],
+        ['ADM-3107', 'Arjun Nair', '2598 4416 7730', '+91 96330 19942', 'arjun.n@example.com', 'Ramesh Nair', 'SC', '95.08', '90.2%', ['ok', 'Documents complete'], ['ok', 'Fee paid']],
+        ['ADM-3110', 'Pooja Rao', '4413 6627 9056', '+91 90190 84475', 'pooja.rao@example.com', 'Suresh Rao', 'OBC', '94.73', '87.9%', ['ok', 'Documents complete'], ['ok', 'Fee paid']],
+      ];
+      const body = document.getElementById('rows');
+      for (const [index, [ref, name, aadhaar, mobile, email, parent, category, pct, c12, docs, fee]] of rows.entries()) {
+        const tr = document.createElement('tr');
+        tr.dataset.ref = ref;
+        const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; tr.append(c); };
+        const chip = ([tone, text]) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = `chip ${tone}`; s.textContent = text; c.append(s); tr.append(c); };
+        td(String(index + 1), 'num'); td(ref, 'ref'); td(name); td(aadhaar); td(mobile); td(email); td(parent); td(category); td(pct, 'num'); td(c12, 'num'); chip(docs); chip(fee);
+        const d = document.createElement('td');
+        d.innerHTML = `<div class="actions"><button class="go" aria-label="Shortlist applicant ${ref}">Shortlist</button><button class="hold" aria-label="Hold applicant ${ref}">Hold</button></div>`;
+        tr.append(d);
+        body.append(tr);
+      }
+      body.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+        const ref = button.closest('tr').dataset.ref;
+        const shortlisted = button.classList.contains('go');
+        button.parentElement.parentElement.innerHTML = shortlisted ? '<span class="done">Shortlisted</span>' : '<span class="done held">On hold</span>';
+        const waiting = document.getElementById('k-waiting');
+        waiting.textContent = String(Number(waiting.textContent) - 1);
+        if (shortlisted) document.getElementById('k-filled').textContent = '120';
+        const toast = document.getElementById('toast');
+        toast.textContent = shortlisted ? `✓ Decision saved: ${ref} shortlisted. Seat offer sent.` : `Decision saved: ${ref} on hold.`;
+        toast.className = shortlisted ? '' : 'held';
+        toast.hidden = false;
+        document.getElementById('note').textContent = `${ref} ${shortlisted ? 'shortlisted' : 'on hold'} · ${waiting.textContent} applicants waiting`;
+      });
+    </script>
+  </body>
+</html>

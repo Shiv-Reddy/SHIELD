@@ -186,6 +186,7 @@ export function ocrRegions(
   const scaleX = candidate.width / cropWidth;
   const scaleY = candidate.height / cropHeight;
   const regions: SensitiveRegion[] = [];
+  let identityDocument = false;
 
   groupIntoLines(result.words).forEach((line, index) => {
     const text = line.map((word) => word.text).join(' ');
@@ -193,8 +194,11 @@ export function ocrRegions(
     // Judged as read, and then as though the confusable letters were digits.
     // The raw reading goes first so a line that genuinely is text keeps its own
     // classification rather than being reinterpreted as a number.
+    if (DOCUMENT_WORDS.test(text)) identityDocument = true;
+
     const hit = classifyTextContent(text) ?? classifyTextContent(digitVariant(text));
     if (!hit) return;
+    if (hit.category === 'id_number') identityDocument = true;
 
     const box = boundingBox(line);
     if (!box) return;
@@ -222,5 +226,31 @@ export function ocrRegions(
     });
   });
 
+  // An identity document is covered whole. Line by line, the Aadhaar number on
+  // the demo console's sample card was boxed and the name, date of birth and
+  // address printed beside it were not: an all-capitals name is not what the
+  // name rule reads, and an address on a card is not a sentence. Everything on
+  // an ID card is about one person, so the card is the unit, not the line.
+  if (identityDocument) {
+    regions.push({
+      regionId: `ocr-${candidate.elementId}-document`,
+      category: 'id_number',
+      source: 'ocr',
+      confidence: 0.9,
+      elementId: candidate.elementId,
+      reason: 'text in image — identity document, covered whole',
+      position: {
+        x: candidate.x,
+        y: candidate.y,
+        width: candidate.width,
+        height: candidate.height,
+      },
+    });
+  }
+
   return regions;
 }
+
+/** Words printed on Indian identity documents and passports. */
+const DOCUMENT_WORDS =
+  /\b(aadhaar|aadhar|uidai|unique identification|income tax|permanent account number|passport|driving licen[cs]e|election commission|voter|government of india)\b/i;

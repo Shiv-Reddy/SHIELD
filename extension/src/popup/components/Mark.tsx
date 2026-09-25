@@ -147,6 +147,26 @@ export function StopIcon({ className = '' }: { className?: string }) {
   );
 }
 
+/** A document with a rising line — the compliance report. */
+export function ReportIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M5.5 2.5h6l3 3v12h-9z" />
+      <path d="M8 14l2-2.5 1.5 1.5 2-3" />
+    </Icon>
+  );
+}
+
+/** Voice input, in the composer. */
+export function MicIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <rect x="7.5" y="2.5" width="5" height="9.5" rx="2.5" />
+      <path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5" />
+    </Icon>
+  );
+}
+
 /** A stack of frames — the pictures a scan kept of each screen. */
 export function FramesIcon({ className = '' }: { className?: string }) {
   return (

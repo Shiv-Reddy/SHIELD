@@ -196,7 +196,8 @@ test('an Aadhaar split across three words is detected as one region', () => {
     250,
   );
 
-  assert.equal(regions.length, 1);
+  // One box for the number's line, then the card itself covered whole.
+  assert.equal(regions.filter((region) => !region.regionId.endsWith('-document')).length, 1);
   assert.equal(regions[0]?.category, 'id_number');
   assert.equal(regions[0]?.source, 'ocr');
 });
@@ -303,7 +304,8 @@ test('an Aadhaar whose zeros were misread is still detected', () => {
     250,
   );
 
-  assert.equal(regions.length, 1);
+  // One box for the number's line, then the card itself covered whole.
+  assert.equal(regions.filter((region) => !region.regionId.endsWith('-document')).length, 1);
   assert.equal(regions[0]?.category, 'id_number');
 });
 
@@ -338,4 +340,38 @@ test('a genuine word keeps its own reading before the digit variant is tried', (
   );
 
   assert.deepEqual(regions, []);
+});
+
+test('an image carrying an identity number is covered whole, not line by line', () => {
+  const candidate = { elementId: 'card', x: 1000, y: 200, width: 300, height: 180 };
+  const words = [
+    { text: 'Rahul', x: 60, y: 40, width: 40, height: 12, confidence: 90 },
+    { text: 'Kumar', x: 104, y: 40, width: 40, height: 12, confidence: 90 },
+    { text: '2345', x: 20, y: 120, width: 44, height: 16, confidence: 90 },
+    { text: '6789', x: 70, y: 120, width: 44, height: 16, confidence: 90 },
+    { text: '0124', x: 120, y: 120, width: 44, height: 16, confidence: 90 },
+  ];
+  const regions = ocrRegions({ words } as never, candidate as never, 300, 180);
+  const whole = regions.find((region) => region.regionId.endsWith('-document'));
+  assert.ok(whole, 'the card has a region of its own');
+  assert.deepEqual(whole.position, { x: 1000, y: 200, width: 300, height: 180 });
+  assert.doesNotMatch(whole.reason, /Rahul|2345/);
+});
+
+test('document words alone are enough to cover a card', () => {
+  const candidate = { elementId: 'card', x: 0, y: 0, width: 300, height: 180 };
+  const words = [
+    { text: 'INCOME', x: 10, y: 10, width: 50, height: 12, confidence: 90 },
+    { text: 'TAX', x: 64, y: 10, width: 30, height: 12, confidence: 90 },
+    { text: 'DEPARTMENT', x: 98, y: 10, width: 80, height: 12, confidence: 90 },
+  ];
+  const regions = ocrRegions({ words } as never, candidate as never, 300, 180);
+  assert.equal(regions.length, 1);
+  assert.equal(regions[0]?.category, 'id_number');
+});
+
+test('an ordinary picture with no identity text is left alone', () => {
+  const candidate = { elementId: 'banner', x: 0, y: 0, width: 300, height: 180 };
+  const words = [{ text: 'Festive', x: 10, y: 10, width: 50, height: 12, confidence: 90 }, { text: 'sale', x: 64, y: 10, width: 30, height: 12, confidence: 90 }];
+  assert.equal(ocrRegions({ words } as never, candidate as never, 300, 180).length, 0);
 });

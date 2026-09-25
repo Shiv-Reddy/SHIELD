@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payroll · September 2026 — Lumen Softworks</title>
+    <!--
+      Test screen 9: a private company's payroll run.
+
+      Salaries, PANs and bank accounts on one screen: the data an HR team is
+      most careful with and the task it most wants help with at month end.
+
+      THE TASK: "Release the salary for the engineering employee whose payroll
+      is ready." Exactly one answer, EMP-0415. Three other rows are Ready but
+      not in Engineering, and three Engineering rows are not Ready, so neither
+      condition alone gives the answer.
+
+      Readable to the agent: employee ID, department, attendance and payroll
+      status. Hidden: name, PAN, bank account, IFSC, and every rupee amount.
+      The agent chooses whose salary to release without knowing who they are or
+      what they earn. The PAN card image is the committed fictional sample.
+
+      All data is synthetic. No external resources.
+    -->
+    <style>
+      :root {
+        --ink: #1a1f24; --muted: #5f6b76; --faint: #8e99a3; --line: #e4e8ec; --bg: #f5f7f9; --card: #fff;
+        --brand: #3b2f63; --ok: #1d7a4d; --ok-soft: #e4f3eb; --warn: #946200; --warn-soft: #fbf1d9; --bad: #b42318; --bad-soft: #fdecea;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 12.5px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      .topbar { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 20px; background: var(--brand); color: #fff; }
+      .logo { width: 24px; height: 24px; border-radius: 7px; background: #fff; color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+      .topbar h1 { margin: 0; font-size: 14px; font-weight: 650; }
+      .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
+      .shell { display: grid; grid-template-columns: 184px 1fr 270px; min-height: calc(100vh - 46px); }
+      nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; }
+      nav a { display: block; padding: 7px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; }
+      nav a.on { background: #eeebf6; color: var(--brand); font-weight: 650; }
+      nav .group { margin: 14px 10px 6px; color: var(--faint); font-size: 11px; }
+      main { padding: 14px 16px; min-width: 0; }
+      .heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+      .heading h2 { margin: 0; font-size: 17px; }
+      .heading span { color: var(--muted); }
+      .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
+      .kpi small { display: block; color: var(--muted); font-size: 11px; }
+      .kpi strong { font-size: 17px; font-weight: 650; }
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+      table { width: 100%; border-collapse: collapse; }
+      th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafbfc; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+      td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+      tr:last-child td { border-bottom: 0; }
+      td.ref { font-weight: 600; }
+      .chip { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+      .chip.ok { background: var(--ok-soft); color: var(--ok); }
+      .chip.warn { background: var(--warn-soft); color: var(--warn); }
+      .chip.bad { background: var(--bad-soft); color: var(--bad); }
+      .actions { display: flex; gap: 5px; }
+      button { font: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+      .go { border: 0; background: var(--brand); color: #fff; }
+      .hold { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+      .done { font-weight: 650; color: var(--ok); }
+      .done.held { color: var(--warn); }
+      aside { background: var(--card); border-left: 1px solid var(--line); padding: 14px 16px; }
+      aside h3 { margin: 0 0 2px; font-size: 13px; }
+      aside .sub { margin: 0 0 10px; color: var(--muted); font-size: 11.5px; }
+      aside dl { margin: 0 0 12px; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+      aside dt { color: var(--muted); }
+      aside dd { margin: 0; }
+      aside figcaption { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+      aside figure { margin: 0; }
+      aside img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+      .foot { margin-top: 8px; color: var(--faint); font-size: 11px; }
+      #toast[hidden] { display: none; }
+      #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; box-shadow: 0 6px 24px rgba(29,122,77,.35); z-index: 10; }
+      #toast.held { background: var(--warn); }
+    </style>
+  </head>
+  <body>
+    <p id="toast" role="status" hidden></p>
+    <header class="topbar">
+      <div class="logo" aria-hidden="true">L</div>
+      <h1>Lumen Softworks Pvt Ltd · People &amp; Payroll</h1>
+      <span class="who">Payroll desk · September 2026 run</span>
+    </header>
+    <div class="shell">
+      <nav aria-label="Payroll">
+        <a href="#">Dashboard</a>
+        <a href="#" class="on">Salary release</a>
+        <a href="#">Attendance</a>
+        <a href="#">Reimbursements</a>
+        <a href="#">Full and final</a>
+        <div class="group">Statutory</div>
+        <a href="#">TDS</a>
+        <a href="#">Provident fund</a>
+      </nav>
+      <main>
+        <div class="heading">
+          <h2>Salary release · September 2026</h2>
+          <span id="note">10 employees awaiting release · bank cut-off 6 pm</span>
+        </div>
+        <section class="kpis">
+          <div class="kpi"><small>Employees</small><strong>248</strong></div>
+          <div class="kpi"><small>Released</small><strong id="k-released">238</strong></div>
+          <div class="kpi"><small>Awaiting release</small><strong id="k-waiting">10</strong></div>
+          <div class="kpi"><small>Pay date</small><strong>30 Sep</strong></div>
+        </section>
+        <section class="panel">
+          <table>
+            <thead>
+              <tr><th>Employee ID</th><th>Employee</th><th>Department</th><th>PAN</th><th>Bank account</th><th>IFSC</th><th>Net pay</th><th>Attendance</th><th>Payroll status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </section>
+        <p class="foot">Fictional company, synthetic employees. Not a real service, not real people.</p>
+      </main>
+      <aside>
+        <h3>Tax documents: EMP-0415</h3>
+        <p class="sub">Verified for TDS this quarter</p>
+        <dl>
+          <dt>Work email</dt><dd>rahul.sharma@example.com</dd>
+          <dt>Location</dt><dd>Pune</dd>
+          <dt>Tax regime</dt><dd>New</dd>
+        </dl>
+        <figure>
+          <figcaption>PAN card on file</figcaption>
+          <img src="pan_sample.svg" alt="PAN card image on file" />
+        </figure>
+      </aside>
+    </div>
+    <script>
+      // [id, name, department, pan, account, ifsc, net, attendance, [tone, status]]
+      const rows = [
+        ['EMP-0409', 'Priya Iyer', 'Sales', 'BKLPI4471C', '10023849118', 'HDFC0001234', '₹82,400', '22/22', ['ok', 'Ready']],
+        ['EMP-0410', 'Amit Chopra', 'Engineering', 'CQRPC8820K', '30027760514', 'ICIC0004411', '₹1,48,900', '19/22', ['warn', 'Attendance mismatch']],
+        ['EMP-0411', 'Kavya Nair', 'Finance', 'DSTPN2093Q', '50100229183', 'UTIB0000187', '₹96,250', '22/22', ['ok', 'Ready']],
+        ['EMP-0412', 'Rohit Sen', 'Engineering', 'EFGPS5561R', '20038847112', 'SBIN0011452', '₹1,62,000', '22/22', ['bad', 'Bank details missing']],
+        ['EMP-0413', 'Divya Menon', 'Support', 'GHKPM7720L', '40019375521', 'KKBK0000958', '₹54,800', '21/22', ['ok', 'Ready']],
+        ['EMP-0414', 'Arjun Rao', 'Engineering', 'JKLPR3348M', '60024418890', 'HDFC0002231', '₹1,21,300', '22/22', ['bad', 'On hold, exit in progress']],
+        ['EMP-0415', 'Rahul Sharma', 'Engineering', 'ABCDE1234F', '70031156284', 'ICIC0000719', '₹1,35,600', '22/22', ['ok', 'Ready']],
+        ['EMP-0416', 'Sneha Pillai', 'Design', 'MNOPP9912N', '80047729036', 'UTIB0003304', '₹1,02,700', '20/22', ['warn', 'Reimbursement pending']],
+        ['EMP-0417', 'Vikram Shah', 'Engineering', 'PQRPS4405S', '90052286147', 'SBIN0004408', '₹1,74,500', '22/22', ['warn', 'Awaiting manager sign-off']],
+        ['EMP-0418', 'Neha Das', 'Marketing', 'STUPD6627T', '11064490373', 'KKBK0001662', '₹88,900', '22/22', ['warn', 'Awaiting manager sign-off']],
+      ];
+      const body = document.getElementById('rows');
+      for (const [id, name, dept, pan, account, ifsc, net, attendance, status] of rows) {
+        const tr = document.createElement('tr');
+        tr.dataset.ref = id;
+        const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; tr.append(c); };
+        td(id, 'ref'); td(name); td(dept); td(pan); td(account); td(ifsc); td(net); td(attendance);
+        const c = document.createElement('td'); const s = document.createElement('span'); s.className = `chip ${status[0]}`; s.textContent = status[1]; c.append(s); tr.append(c);
+        const d = document.createElement('td');
+        d.innerHTML = `<div class="actions"><button class="go" aria-label="Release salary for ${id}">Release</button><button class="hold" aria-label="Hold salary for ${id}">Hold</button></div>`;
+        tr.append(d);
+        body.append(tr);
+      }
+      body.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+        const ref = button.closest('tr').dataset.ref;
+        const released = button.classList.contains('go');
+        button.parentElement.parentElement.innerHTML = released ? '<span class="done">Released</span>' : '<span class="done held">On hold</span>';
+        const waiting = document.getElementById('k-waiting');
+        waiting.textContent = String(Number(waiting.textContent) - 1);
+        if (released) { const r = document.getElementById('k-released'); r.textContent = String(Number(r.textContent) + 1); }
+        const toast = document.getElementById('toast');
+        toast.textContent = released ? `✓ Salary released for ${ref}. Bank file queued.` : `Salary on hold for ${ref}.`;
+        toast.className = released ? '' : 'held';
+        toast.hidden = false;
+        document.getElementById('note').textContent = `${ref} ${released ? 'released' : 'on hold'} · ${waiting.textContent} employees awaiting release`;
+      });
+    </script>
+  </body>
+</html>

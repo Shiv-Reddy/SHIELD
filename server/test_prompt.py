@@ -502,7 +502,21 @@ REPLY = {
 }
 
 
-def _with_fake_provider(behaviour):
+# A page that is not a login or sign-up form, so it reaches the model: the two
+# known shapes go to the rules even with a model configured. e2 is the button the
+# stubbed REPLY clicks, as it was on LOGIN.
+QUEUE = _request(
+    [
+        _element("e0", "text", "KYC-2043"),
+        _element("e1", "text", "[NAME]"),
+        _element("e2", "button", None, "Approve application KYC-2043"),
+    ],
+    task="approve the verified application",
+    manifest=[{"regionId": "dom-e1", "category": "name", "method": "dom"}],
+)
+
+
+def _with_fake_provider(behaviour, request=QUEUE):
     """Run one decision against a stubbed provider, and restore everything after.
 
     The latch in `decide_with_model` is module state on purpose — it is a fact
@@ -523,7 +537,7 @@ def _with_fake_provider(behaviour):
     model_reasoner._call_model = behaviour
 
     try:
-        return asyncio.run(model_reasoner.decide_with_model(LOGIN))
+        return asyncio.run(model_reasoner.decide_with_model(request))
     finally:
         model_reasoner._call_model = original_call
         (
@@ -589,6 +603,59 @@ check(
     "a refusal the image did not cause still falls back to the rules",
     path == "rules-fallback",
     f"got {path}",
+)
+
+
+calls = []
+
+
+def _counting_provider(body):
+    calls.append(body)
+    return REPLY
+
+
+decision, path = _with_fake_provider(_counting_provider, request=LOGIN)
+check(
+    "a login form goes to the rules even with a model configured",
+    path == "rules-known-form" and not calls,
+    f"got {path} after {len(calls)} provider call(s)",
+)
+check(
+    "and the rules still ask for the saved credential",
+    decision.action is not None and decision.action.value == "[USE_SAVED_CREDENTIAL]",
+    f"got {decision.action}",
+)
+
+attempts = []
+
+
+def _hangs_once(body):
+    attempts.append(body)
+    if len(attempts) == 1:
+        raise model_reasoner.ProviderTimeout("provider call timed out")
+    return REPLY
+
+
+decision, path = _with_fake_provider(_hangs_once)
+check(
+    "a call that times out is tried once more, and the second answer is used",
+    len(attempts) == 2 and path == "model-vision" and decision.action is not None,
+    f"got {path} after {len(attempts)} attempt(s)",
+)
+
+attempts.clear()
+
+
+def _always_hangs(body):
+    attempts.append(body)
+    raise model_reasoner.ProviderTimeout("provider call timed out")
+
+
+decision, path = _with_fake_provider(_always_hangs)
+check(
+    "but only once: a second timeout falls back to the rules",
+    len(attempts) == 2 and path == "rules-fallback",
+    f"got {path} after {len(attempts)} attempt(s)",
 )
 
 check(

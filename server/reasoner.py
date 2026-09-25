@@ -392,6 +392,15 @@ def _decide_signup(
     """
     unfilled_passwords = [field for field in password_fields if not field.filled]
 
+    # A new password and its confirmation, both filled, mean the sign-up's own
+    # password is set. An empty password box beside them then belongs to some
+    # other form on the page — found on the first real bank site tried
+    # (ParaBank, 2026-09-25), whose sidebar keeps a login box on every page,
+    # including the registration page, where it made this decline a sign-up
+    # that was ready to submit.
+    if sum(1 for field in password_fields if field.filled) >= 2:
+        unfilled_passwords = []
+
     # A sign-up password is a NEW password for an account that does not exist
     # yet, so no credential store could hold it. Asking for a saved one is wrong
     # in principle here, not merely unfulfillable as it would be on a login
@@ -436,6 +445,26 @@ def _decide_signup(
             + _empty_field_note(identity_fields)
         ),
     )
+
+
+def recognised_form(request: AnalyzeRequest) -> str | None:
+    """"login", "signup", or None — the same reading `decide_by_rules` acts on.
+
+    Public so the model adapter can send the two shapes the rules were built and
+    tested for to the rules, and only everything else to the model.
+    """
+    elements = request.redacted_dom_summary
+    identity_fields = [
+        entry
+        for entry in elements
+        if entry.elementType == "input" and entry.value in IDENTITY_TOKENS
+    ]
+    password_fields = [
+        entry
+        for entry in elements
+        if entry.elementType == "input" and entry.value == PASSWORD_TOKEN
+    ]
+    return _form_kind(password_fields, identity_fields, elements)
 
 
 def decide_by_rules(request: AnalyzeRequest) -> Decision:

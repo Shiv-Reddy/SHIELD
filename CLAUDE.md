@@ -30,7 +30,9 @@ Code freezes 23 September.**
   a change that breaks Chrome to serve Firefox is not taken. Edge runs the same
   Chromium bundle. See DECISIONS.md 214–216.
 - Server model: free-tier, provider-agnostic. Nothing paid committed.
-- Primary demo: login autofill. Must be perfect.
+- Primary demo: the bank KYC review console (test-screens/07-bank-kyc.html),
+  since round one of the event (DECISIONS.md 279). Must be perfect. Login stays
+  a test screen.
 - Full scope is documented; the BUILD follows docs/TASKS.md, which is the only
   source of truth for what is next.
 
