@@ -18,9 +18,16 @@ import { SIZE as LOGO_SIZE, covers, toSvg } from './logo.mjs';
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
 const SIZES = [16, 32, 48, 128];
 
-// Matches --accent in popup.css, so the toolbar icon and the popup read as one
-// piece of design.
-const INK = [0x25, 0x63, 0xeb];
+// Black and white only, and both are needed.
+//
+// A one-colour icon disappears on some browser theme or other: black vanishes
+// on a dark toolbar, white on a light one. So the mark is white on a black
+// rounded square — still only two colours, readable on every toolbar, and the
+// mark's own cut-outs (the eye, the pupil) show the black beneath them rather
+// than whatever colour the toolbar happens to be. It used to be blue, matching
+// an accent from a popup design that no longer exists.
+const MARK = [0xff, 0xff, 0xff];
+const BADGE = [0x00, 0x00, 0x00];
 
 // --- PNG encoding -----------------------------------------------------------
 
@@ -77,37 +84,60 @@ function encodePng(width, height, rgba) {
 
 // --- Rendering --------------------------------------------------------------
 
+/** True when a point in icon pixels falls inside the rounded badge. */
+function inBadge(x, y, size) {
+  const r = 0.22 * size; // corner radius — rounded, not a circle, like other toolbar icons
+  const cx = Math.min(Math.max(x, r), size - r);
+  const cy = Math.min(Math.max(y, r), size - r);
+  return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
+}
+
 /**
  * Render one icon, supersampling 4x4 per pixel to keep the edges smooth.
  *
  * The geometry itself lives in logo.mjs and is shared with the SVG files, so
  * the toolbar icon and every other appearance of the mark cannot drift apart.
+ *
+ * Each sample is white (inside the mark), black (inside the badge but not the
+ * mark), or transparent (outside both). The pixel is the average, blended in
+ * premultiplied form so the white-to-black edge does not pick up a grey fringe
+ * from the transparent corners.
  */
 function renderIcon(size) {
   const rgba = Buffer.alloc(size * size * 4);
   const samples = 4;
-  const inset = 0.06 * size; // breathing room so the glyph isn't flush to the edge
+  const inset = 0.17 * size; // the mark sits inside the badge with room around it
   const scale = LOGO_SIZE / (size - 2 * inset);
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
-      let hits = 0;
+      let alpha = 0;
+      const colour = [0, 0, 0];
 
       for (let sy = 0; sy < samples; sy += 1) {
         for (let sx = 0; sx < samples; sx += 1) {
-          const lx = (x + (sx + 0.5) / samples - inset) * scale;
-          const ly = (y + (sy + 0.5) / samples - inset) * scale;
-          if (covers(lx, ly)) hits += 1;
+          const px = x + (sx + 0.5) / samples;
+          const py = y + (sy + 0.5) / samples;
+
+          let ink = null;
+          if (covers((px - inset) * scale, (py - inset) * scale)) ink = MARK;
+          else if (inBadge(px, py, size)) ink = BADGE;
+          if (!ink) continue;
+
+          alpha += 1;
+          colour[0] += ink[0];
+          colour[1] += ink[1];
+          colour[2] += ink[2];
         }
       }
 
-      if (hits === 0) continue; // stays fully transparent
+      if (alpha === 0) continue; // stays fully transparent
 
       const offset = (y * size + x) * 4;
-      rgba[offset] = INK[0];
-      rgba[offset + 1] = INK[1];
-      rgba[offset + 2] = INK[2];
-      rgba[offset + 3] = Math.round((hits / (samples * samples)) * 255);
+      rgba[offset] = Math.round(colour[0] / alpha);
+      rgba[offset + 1] = Math.round(colour[1] / alpha);
+      rgba[offset + 2] = Math.round(colour[2] / alpha);
+      rgba[offset + 3] = Math.round((alpha / (samples * samples)) * 255);
     }
   }
 

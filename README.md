@@ -140,7 +140,6 @@ Full steps, including the commit guard and a table of what each failure means:
 
 Load the extension, start the backend, open a page with a form. The toolbar icon
 opens everything.
-
 **Ask it to do something.** Type a task in plain words — *"log in with my saved
 details"*. Shield reads the screen, covers anything private, sends only the safe
 version, and performs the one action it gets back.
@@ -229,8 +228,10 @@ docker run --rm -p 127.0.0.1:8787:8787 shield-server
 no login and no rate limit by design, because it is meant to be reached from the
 same machine. Without that prefix, anyone who finds it can drive it.
 
-Shield asks for `activeTab`, `scripting`, `storage` and `offscreen`. It has no
-access to sites you have not opened it on.
+Shield asks for `activeTab`, `scripting`, `storage`, `offscreen` and `sidePanel`.
+It has no access to sites you have not opened it on. On Chrome it opens in the
+side panel **on the tab whose icon you clicked, and only that tab** — switch tabs
+and it goes away, because Shield has no permission there. Firefox uses a popup.
 
 ---
 

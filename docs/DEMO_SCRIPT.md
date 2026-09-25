@@ -26,8 +26,8 @@ Shield performing worse than it does.
       then 344ms, then **84ms**. The first request after starting the server
       pays import and validation costs once. Start it, hit
       `curl http://127.0.0.1:8787/health`, then do one throwaway full run.
-- [ ] **Warm the model.** Open the popup once before starting. A cold first
-      inference pays roughly 900ms compiling WebGPU shaders; opening the popup
+- [ ] **Warm the model.** Open the panel once before starting. A cold first
+      inference pays roughly 900ms compiling WebGPU shaders; opening the panel
       begins that while you are still talking.
 - [ ] **`/health` reports both facts.** "The server is up" and "the server can
       answer" are different claims. Check `prompt_version` matches the code you
@@ -73,11 +73,11 @@ broken one:
 Not a script — a ranked list of what actually earns something, so a demo of any
 length can be cut from the top.
 
-1. **The payload itself.** "What was sent?" in the popup shows the exact JSON
+1. **The payload itself.** "What was sent?" in the panel shows the exact JSON
    transmitted, recorded *before* the request goes out, so it still has an
    answer when the network fails — which is when somebody is most likely to ask.
    The password field reads `[PASSWORD]`: not a masked value, not a hash. Use
-   the popup rather than the DevTools Network tab; it survives a failed request
+   the panel rather than the DevTools Network tab; it survives a failed request
    and needs no second window. DevTools stays the fallback if a judge asks to
    see raw traffic rather than our rendering of it, which is a fair request.
 2. **The explainable overlay**, showing redaction is precise rather than a
@@ -150,11 +150,11 @@ a whole-page number it did not earn. That has already happened on a real
 government page at 55% of the document.
 
 **Q: "Can I see what it has done over time, not just this run?"**
-Yes — the popup keeps a log of every pass: when, what scope it claimed, how many
+Yes — the panel keeps a log of every pass: when, what scope it claimed, how many
 of each category, and whether anything was transmitted. Categories, counts, rule
 names and timings only. No page content, no field values and no URLs, which is
 deliberate so the file can be handed to somebody else. It exports as JSON from
-the popup.
+the panel.
 
 **Q: "What happens if someone tries to trick your system?"**
 Open `test-screens/05-adversarial.html` and run it. Eight cases, with what we

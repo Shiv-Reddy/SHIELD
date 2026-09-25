@@ -37,7 +37,11 @@
 
 import type { SensitiveCategory, SensitiveRegion } from './types';
 
-const STORAGE_KEY = 'auditLog';
+/**
+ * Exported so the popup can listen for changes to this one key, rather than
+ * polling or relying on a status broadcast that races the write.
+ */
+export const AUDIT_STORAGE_KEY = 'auditLog';
 
 /**
  * How many passes are kept.
@@ -130,6 +134,49 @@ export function appendCapped(
   return [entry, ...entries].slice(0, Math.max(1, cap));
 }
 
+/** What the popup's footer shows. Every field is counted, none estimated. */
+export interface AuditTotals {
+  /** Private items hidden, summed across every recorded pass. */
+  hidden: number;
+  /** Runs and scans recorded. */
+  passes: number;
+  /** Passes that transmitted anything. Always redacted — that is the invariant. */
+  sent: number;
+  /**
+   * True once the log has reached its cap, so the totals describe only the
+   * most recent passes. Said out loud by the footer rather than left for a
+   * reader to discover that a lifetime-looking number stopped growing.
+   */
+  capped: boolean;
+}
+
+/**
+ * Sum the log into three numbers.
+ *
+ * WHY FROM THE LOG AND NOT A SEPARATE COUNTER
+ *
+ * The panel above argues that a bare total is a claim about a product while a
+ * list of passes is a record somebody can disagree with. These totals are made
+ * checkable by being computed from that same list: every number here can be
+ * reproduced from the rows, and from the exported file. A running counter kept
+ * alongside would survive "Clear" and outgrow the 200-entry cap, and then it
+ * would be exactly the uncheckable claim the panel was written to avoid.
+ *
+ * Pure, so the arithmetic is tested without storage.
+ */
+export function auditTotals(
+  entries: readonly AuditEntry[],
+  cap: number = MAX_ENTRIES,
+): AuditTotals {
+  let hidden = 0;
+  let sent = 0;
+  for (const entry of entries) {
+    hidden += entry.total;
+    if (entry.transmitted) sent += 1;
+  }
+  return { hidden, passes: entries.length, sent, capped: entries.length >= cap };
+}
+
 /** The export, as a string. Pure, so what it contains is testable. */
 export function auditJson(entries: readonly AuditEntry[]): string {
   return JSON.stringify(
@@ -156,7 +203,7 @@ export function auditJson(entries: readonly AuditEntry[]): string {
 export async function recordAudit(entry: AuditEntry): Promise<void> {
   try {
     const entries = await readAudit();
-    await chrome.storage.local.set({ [STORAGE_KEY]: appendCapped(entries, entry) });
+    await chrome.storage.local.set({ [AUDIT_STORAGE_KEY]: appendCapped(entries, entry) });
   } catch (error) {
     // Same reasoning as `recordTransmission`: this is evidence, not protection,
     // and failing to write it must never interfere with the pass it describes.
@@ -166,8 +213,8 @@ export async function recordAudit(entry: AuditEntry): Promise<void> {
 
 export async function readAudit(): Promise<AuditEntry[]> {
   try {
-    const stored = await chrome.storage.local.get([STORAGE_KEY]);
-    const value = stored[STORAGE_KEY];
+    const stored = await chrome.storage.local.get([AUDIT_STORAGE_KEY]);
+    const value = stored[AUDIT_STORAGE_KEY];
     return Array.isArray(value) ? (value as AuditEntry[]) : [];
   } catch (error) {
     console.warn('[shield] could not read the audit log', error);
@@ -177,7 +224,7 @@ export async function readAudit(): Promise<AuditEntry[]> {
 
 export async function clearAudit(): Promise<void> {
   try {
-    await chrome.storage.local.remove([STORAGE_KEY]);
+    await chrome.storage.local.remove([AUDIT_STORAGE_KEY]);
   } catch (error) {
     console.warn('[shield] could not clear the audit log', error);
   }

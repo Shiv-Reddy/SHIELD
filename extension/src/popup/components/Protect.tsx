@@ -1,16 +1,18 @@
 /**
- * Marking by hand, and observe-only.
+ * Marking by hand, and asking before sending.
  *
- * Both were in the popup this one replaces, and both are restored here rather
- * than dropped, because a redesign that quietly loses features is a
- * regression wearing a new coat. The reasoning behind each is the original's,
- * repeated where it governs behaviour rather than appearance.
+ * "Watch without acting" used to live here too. It was taken out of the panel
+ * because it is a testing switch rather than something a person using Shield
+ * needs every day, and the panel is for the everyday. It is not gone: it is on
+ * the Settings page, which already had it, so nobody who switched it on can be
+ * left with runs that silently never act and no way to turn it off.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { MSG } from '../../lib/messages';
-import { readSettings, setObserveOnly, setRequireConsent } from '../../lib/settings';
-import { Card, GhostButton, Row, Title } from './Sheet';
+import { readSettings, setRequireConsent } from '../../lib/settings';
+import { Row, SwitchRow } from './Sheet';
+import { closeIfPopup } from '../surface';
 
 /** Drawn as a rectangle being enclosed — marking an area, not selecting text. */
 function MarkIcon({ className = '' }: { className?: string }) {
@@ -53,10 +55,16 @@ async function countMarks(): Promise<number> {
   }
 }
 
-export function Protect({ onProblem }: { onProblem: (message: string) => void }) {
+/**
+ * The rows for marking an area private, for the page group.
+ *
+ * Returned as rows rather than a card so that App can place them in the same
+ * group as the scan: both are "what Shield does to this page", and one
+ * surface for them is what makes the panel read as organised rather than
+ * boxed.
+ */
+export function MarkRows({ onProblem }: { onProblem: (message: string) => void }) {
   const [marks, setMarks] = useState(0);
-  const [observe, setObserve] = useState(false);
-  const [askFirst, setAskFirst] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(() => {
@@ -65,12 +73,6 @@ export function Protect({ onProblem }: { onProblem: (message: string) => void })
 
   useEffect(() => {
     refresh();
-    // Read back from storage rather than assumed, so the switch always shows
-    // what the next run will actually do.
-    void readSettings().then((settings) => {
-      setObserve(settings.observeOnly);
-      setAskFirst(settings.requireConsent);
-    });
   }, [refresh]);
 
   const beginMarking = useCallback(() => {
@@ -82,11 +84,11 @@ export function Protect({ onProblem }: { onProblem: (message: string) => void })
       setBusy(false);
 
       if (result?.ok) {
-        window.close();
+        closeIfPopup();
         return;
       }
       // Closing onto a page where nothing will happen would look like the
-      // control did nothing, so the popup stays open and says why instead.
+      // control did nothing, so the surface stays open and says why instead.
       onProblem(result?.message ?? 'Shield could not open marking mode on this page.');
     })();
   }, [onProblem]);
@@ -106,72 +108,52 @@ export function Protect({ onProblem }: { onProblem: (message: string) => void })
   }, [refresh]);
 
   return (
-    <Card tab={marks > 0 ? `${marks} marked` : undefined}>
-      <Title>Hide something yourself</Title>
-
+    <>
       <Row
         icon={<MarkIcon className="size-4" />}
         title="Mark an area private"
-        detail={busy ? 'opening' : 'drag over anything'}
+        detail={busy ? 'Opening…' : marks > 0 ? `${marks} marked` : undefined}
         onClick={beginMarking}
         disabled={busy}
       />
-
       {marks > 0 ? (
-        <div className="mt-2">
-          <GhostButton onClick={clearMarks}>Clear {marks} marked</GhostButton>
-        </div>
+        <Row
+          tone="quiet"
+          indent
+          title={`Clear ${marks} marked area${marks === 1 ? '' : 's'}`}
+          onClick={clearMarks}
+        />
       ) : null}
+    </>
+  );
+}
 
-      {/*
-        Observe-only is persisted rather than per-run: the runs it exists for
-        come in batches — one live site after another — and a switch that reset
-        itself each time the popup closed would be off exactly when it was
-        being relied on.
-      */}
-      <label className="border-edge mt-3 flex cursor-pointer items-start gap-2.5 border-t pt-3">
-        <input
-          type="checkbox"
-          checked={observe}
-          onChange={(event) => {
-            const next = event.target.checked;
-            setObserve(next);
-            void setObserveOnly(next);
-          }}
-          className="accent-live mt-0.5 size-3.5 shrink-0"
-        />
-        <span className="leading-snug">
-          <span className="text-bright block text-[12px]">Watch without acting</span>
-          <span className="text-faint block text-[11px]">
-            Runs everything, then reports the action instead of performing it
-          </span>
-        </span>
-      </label>
+/**
+ * Ask before sending.
+ *
+ * Off by default, and the wording says what it adds rather than implying it is
+ * what keeps the page safe. It is not: the payload is sealed, order-checked
+ * and swept before this ever appears, by three mechanisms that ask nobody
+ * (DECISIONS.md 240). What this adds is a look before it goes.
+ */
+export function AskFirstSwitch() {
+  const [askFirst, setAskFirst] = useState(false);
 
-      {/*
-        Off by default, and the wording says why rather than implying this is
-        what keeps the page safe. It is not: the payload is sealed, order-checked
-        and swept before this ever appears, by three mechanisms that ask nobody
-        (DECISIONS.md 240). What this adds is a look before it goes.
-      */}
-      <label className="mt-2.5 flex cursor-pointer items-start gap-2.5">
-        <input
-          type="checkbox"
-          checked={askFirst}
-          onChange={(event) => {
-            const next = event.target.checked;
-            setAskFirst(next);
-            void setRequireConsent(next);
-          }}
-          className="accent-live mt-0.5 size-3.5 shrink-0"
-        />
-        <span className="leading-snug">
-          <span className="text-bright block text-[12px]">Ask before sending</span>
-          <span className="text-faint block text-[11px]">
-            Shows what is about to go, every step. No answer means it is not sent
-          </span>
-        </span>
-      </label>
-    </Card>
+  useEffect(() => {
+    // Read back from storage rather than assumed, so the switch always shows
+    // what the next run will actually do.
+    void readSettings().then((settings) => setAskFirst(settings.requireConsent));
+  }, []);
+
+  return (
+    <SwitchRow
+      title="Ask before sending"
+      description="See what is about to be sent, at every step. No answer means it is not sent."
+      checked={askFirst}
+      onChange={(next) => {
+        setAskFirst(next);
+        void setRequireConsent(next);
+      }}
+    />
   );
 }

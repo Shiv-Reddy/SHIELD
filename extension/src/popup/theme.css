@@ -1,90 +1,79 @@
 @import 'tailwindcss';
 
 /*
- * Shield popup.
+ * Shield panel.
  *
- * THE DIRECTION IS PINNED BY A REFERENCE, AND THE REFERENCE WINS
+ * THE DIRECTION
  *
- * Supersedes the light "redacted document" theme. That design reasoned from
- * the subject — a bar struck through a page — and it was a reasonable place to
- * arrive from the brief alone. The brief is no longer alone: a specific
- * extension UI was supplied as the target, and a named reference beats a
- * derivation every time, because the person holding it can see something the
- * derivation cannot.
+ * Supersedes the design that copied a supplied extension reference: blue-black
+ * ground, a holographic gradient on the primary control, a violet stripe for
+ * the live item, tabs protruding from every card. It was a faithful copy and it
+ * read as a developer tool. The brief is now plainer and wins for the same
+ * reason the reference once did — it is what the person holding the product
+ * asked for: minimal, professional, the way a large, careful company ships a
+ * panel, with a logo that is black and white and nothing blue anywhere.
  *
- * What is kept from the old design is the only part that was never decorative:
- * the bars are still real measurements, one per category actually found, width
- * proportional to share. On a dark ground a black bar is a hole rather than a
- * mark, so they invert to near-white — the same information, drawn for the
- * surface it now sits on.
+ * So there is no accent colour. White is the accent, because the logo is
+ * white, and colour appears only where it carries meaning — a status that is
+ * done, failed, or needs attention — and never as decoration.
  *
- * WHAT THE REFERENCE ACTUALLY ESTABLISHES
+ * WHAT IS KEPT, AND WHY IT IS THE ONLY BOLD THING
  *
- * Five things, and they are copied as a system rather than sampled piecemeal:
+ * The redaction bars. Everything else here is quiet on purpose so that they
+ * are the one memorable element: the same solid block Shield paints over a
+ * screenshot, drawn at real proportions in the interface that reports it.
  *
- *   1. A blue-black ground, not neutral grey and not pure black, with cards
- *      one step lighter and separated by hairlines rather than by shadow.
- *   2. Generous radii that step down with nesting — the window, then cards,
- *      then controls inside them.
- *   3. Tabs that protrude from a card's edge instead of sitting inside it.
- *      This is the detail that makes the reference recognisable and it is the
- *      easiest to get wrong by leaving out.
- *   4. Exactly one holographic gradient, on exactly one control per view. It
- *      is the only saturated thing on the screen and it marks the primary
- *      action. A second one anywhere would spend what makes the first work.
- *   5. A violet stripe marking the live item, drawn on the leading edge.
+ * STRUCTURE BY GROUPING, NOT BY BOXES
+ *
+ * The old panel put everything in its own card, six of equal weight, and the
+ * eye had nowhere to start. Now there are three kinds of thing: the hero (not
+ * boxed at all), grouped lists of rows (one surface per group, rows divided by
+ * hairlines — the idiom of a platform settings screen), and the composer,
+ * pinned to the foot of the window where a person expects to type to an agent.
  *
  * TYPE
  *
- * No web fonts — the extension CSP forbids remote stylesheets, and bundling a
- * face would put a binary blob into a repository whose premise is that
- * everything in it can be read. The reference's face is a geometric grotesque;
- * the closest thing already present on the demo machine is Segoe UI Variable,
- * with the platform stack behind it.
+ * No web fonts — the extension CSP forbids remote stylesheets and a bundled
+ * face would be a binary blob in a repository whose premise is that everything
+ * in it can be read. Segoe UI Variable is the platform face on the demo
+ * machine, with the platform stack behind it. Sentence case throughout.
+ * Headings are brighter than the rows beneath them, never dimmer.
  */
 
 @theme {
-  /* Ground. Blue-black, matching the reference — a neutral grey reads as a
-     developer tool and pure black kills the depth the cards depend on. */
-  --color-void: #0b0b12;
-  --color-panel: #12121b;
-  --color-card: #171722;
-  --color-card-raised: #1e1e2b;
+  /* Graphite, not blue-black. A neutral ground reads as part of the browser
+     it sits inside rather than as a themed app parked beside it. */
+  --color-void: #1b1b1b;
+  --color-panel: #1b1b1b;
+  --color-card: #242424;
+  --color-card-raised: #2e2e2e;
 
-  /* Hairlines. The only separator in the interface; there are no shadows. */
+  /* Hairlines. The only separator; there are no shadows. */
   --color-edge: rgba(255, 255, 255, 0.08);
-  --color-edge-lit: rgba(255, 255, 255, 0.16);
+  --color-edge-lit: rgba(255, 255, 255, 0.18);
 
-  /* Text */
-  --color-bright: #ffffff;
-  --color-dim: #8e8ea3;
-  --color-faint: #63637a;
+  /* Text, in three steps. */
+  --color-bright: #f5f5f5;
+  --color-dim: #a8a8a8;
+  --color-faint: #767676;
 
-  /* The violet that marks a live item. */
-  --color-live: #7b5cfa;
-  --color-live-wash: rgba(123, 92, 250, 0.12);
+  /* The accent is white, as the logo is. `live` keeps its name because it
+     still marks the thing something is happening to. */
+  --color-live: #ffffff;
 
-  /* The one gradient. Pink to lavender to mint, dark text on top, reserved for
-     the single primary action in any view. */
-  --gradient-key: linear-gradient(
-    100deg,
-    #f3b2d8 0%,
-    #cbb2f6 48%,
-    #a7e3dd 100%
-  );
-
-  /* States, kept low-saturation so the gradient stays the only bright thing. */
-  --color-ok: #5fd0a4;
+  /* Meaning only, low saturation so none of them reads as decoration. */
+  --color-ok: #6fcf97;
   --color-warn: #e0b95f;
-  --color-alarm: #f2789a;
+  --color-alarm: #ef7a7a;
 
   --font-ui: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system,
     sans-serif;
+  --font-display: 'Segoe UI Variable Display', 'Segoe UI', system-ui,
+    -apple-system, sans-serif;
 
-  /* Radii step down with nesting, as they do in the reference. */
-  --radius-window: 18px;
-  --radius-card: 14px;
-  --radius-control: 10px;
+  /* Radii step down with nesting: group, then control. */
+  --radius-card: 12px;
+  --radius-control: 8px;
   --radius-pill: 999px;
 }
 
@@ -101,50 +90,42 @@ body {
 }
 
 /*
- * The key control's fill.
+ * The two surfaces.
  *
- * A class rather than a utility because the gradient is a single design
- * decision with a single home — if it is ever retuned it should change in one
- * place, and a Tailwind arbitrary value repeated at two call sites is how a
- * design system quietly acquires two slightly different accents.
+ * A popup is sized by its content, so it is given a fixed width and a height of
+ * 600px — the ceiling Chrome imposes. The side panel is sized by the browser and
+ * the user, so it fills whatever it is given, and the composer sits at the foot
+ * of the window rather than at the foot of 600px.
  */
-.key-fill {
-  background: var(--gradient-key);
-  color: #17131f;
+.shell {
+  height: 600px;
 }
 
-.key-fill:disabled {
-  background: var(--color-card-raised);
-  color: var(--color-faint);
+html[data-view='panel'],
+html[data-view='panel'] body {
+  width: auto;
+}
+
+html[data-view='panel'] .shell {
+  height: 100vh;
 }
 
 /*
- * A tab that protrudes from the top edge of a card.
+ * Motion. Two pieces, and each has one job.
  *
- * The card carries the position; this carries the shape. It sits half outside
- * its parent, so the parent must not clip, which is why no card in this
- * interface uses overflow-hidden.
- */
-.tab-out {
-  background: var(--color-card-raised);
-  border: 1px solid var(--color-edge);
-  border-radius: var(--radius-control);
-}
-
-/*
- * The only motion.
+ * The sweep: a mark travelling the header rule while the pipeline is live,
+ * answering "is anything happening" and nothing else.
  *
- * A mark travelling the masthead rule while the pipeline is live, answering
- * "is anything happening" and nothing else. No entrance animations, no hover
- * transitions on cards — both are the generic default and neither tells
- * anybody anything.
+ * The reveal: the window wipes in from the top once, when it opens, so it
+ * arrives the way a panel does rather than appearing like a menu. One
+ * orchestrated opening, and no effect on any individual row or group.
  */
 @keyframes shield-sweep {
   from {
     transform: translateX(-100%);
   }
   to {
-    transform: translateX(460%);
+    transform: translateX(560%);
   }
 }
 
@@ -152,14 +133,53 @@ body {
   animation: shield-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+/*
+ * Top to bottom, once. `backwards` rather than `both` so that once it finishes
+ * no clip-path is left on the window to cut anything drawn near its edge.
+ */
+@keyframes shield-reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0.35;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.shield-reveal {
+  animation: shield-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .shield-sweep {
     animation: none;
     opacity: 0.6;
   }
+
+  .shield-reveal {
+    animation: none;
+  }
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-live);
-  outline-offset: 2px;
+/* Thin and quiet. A white ring on a graphite ground is visible without
+   shouting, which the old double violet ring around the task box did.
+
+   In the base layer, not bare: unlayered CSS outranks every Tailwind utility,
+   so a bare rule here silently beat `outline-none` on the task box — which
+   draws its focus on the composer around it instead — and put a hard grey
+   rectangle inside the rounded field. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.55);
+    outline-offset: 2px;
+  }
+}
+
+/* The scrolling middle keeps a scrollbar that belongs to the panel rather than
+   the operating system's default, which on Windows is a light grey slab. */
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
 }

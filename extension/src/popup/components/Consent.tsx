@@ -58,10 +58,10 @@ export function Consent({
   );
 
   return (
-    <Card live>
-      <Title aside="nothing has been sent yet">Send this?</Title>
+    <Card>
+      <Title aside="Nothing sent yet">Send this?</Title>
 
-      <dl className="space-y-1 text-[12px]">
+      <dl className="space-y-1.5 text-[12.5px]">
         <Fact label="Page elements" value={String(request.elements)} />
         <Fact label="Values replaced" value={String(request.placeholders)} />
         <Fact
@@ -72,7 +72,7 @@ export function Consent({
       </dl>
 
       {request.hidden.length > 0 ? (
-        <p className="text-dim border-edge mt-2.5 border-t pt-2 text-[11px] leading-snug">
+        <p className="text-dim border-edge mt-3 border-t pt-2.5 text-[12px] leading-snug">
           Hidden before sending:{' '}
           {request.hidden
             .map(({ category, count }) => `${count} ${categoryLabel(category).toLowerCase()}`)
@@ -80,7 +80,7 @@ export function Consent({
           .
         </p>
       ) : (
-        <p className="text-dim border-edge mt-2.5 border-t pt-2 text-[11px] leading-snug">
+        <p className="text-dim border-edge mt-3 border-t pt-2.5 text-[12px] leading-snug">
           Nothing on this screen was identified as sensitive, so nothing was
           replaced.
         </p>
@@ -92,13 +92,13 @@ export function Consent({
         <button
           type="button"
           onClick={() => void chrome.tabs.create({ url: 'sent/sent.html' })}
-          className="text-faint hover:text-bright ml-auto self-center text-[11px] underline-offset-2 hover:underline"
+          className="text-dim hover:text-bright ml-auto self-center text-[12px] underline-offset-2 hover:underline"
         >
           See the exact bytes
         </button>
       </div>
 
-      <p className="text-faint mt-2 text-[10px] leading-snug">
+      <p className="text-faint mt-2.5 text-[11.5px] leading-snug">
         No answer within a minute means it is not sent.
       </p>
     </Card>

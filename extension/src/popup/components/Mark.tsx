@@ -6,7 +6,8 @@
  * and rebuilt every time it is clicked, so a file fetch happens on every open
  * rather than once. Inline, it is part of the first paint.
  *
- * White only. The mark has a blue variant and it is not used here: the
+ * White only, and the mark has no coloured variant at all — black and white
+ * everywhere, toolbar included. White here because: the
  * reference interface has exactly one saturated element per view and it is the
  * primary action. A coloured logo would be a second, competing with the thing
  * the design wants looked at.
@@ -105,6 +106,63 @@ export function ClockIcon({ className = '' }: { className?: string }) {
     <Icon className={className}>
       <circle cx="10" cy="10" r="7" />
       <path d="M10 6v4.2l2.6 1.6" />
+    </Icon>
+  );
+}
+
+/** Opens in place — a history list, a detail. Rotated 90° when open. */
+export function ChevronIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="m7.5 4.5 5.5 5.5-5.5 5.5" />
+    </Icon>
+  );
+}
+
+/** Opens a tab of its own. Distinct from the chevron so the row says which. */
+export function OpenIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M8 4H5.5A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5V12" />
+      <path d="M11 4h5v5M16 4l-7 7" />
+    </Icon>
+  );
+}
+
+/** Send, in the composer. */
+export function ArrowUpIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M10 16V4.5M5 9.5l5-5 5 5" />
+    </Icon>
+  );
+}
+
+/** Stop, in the composer while a run is in flight. Filled, so it reads at a glance. */
+export function StopIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" className={className} aria-hidden="true">
+      <rect x="6" y="6" width="8" height="8" rx="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** A stack of frames — the pictures a scan kept of each screen. */
+export function FramesIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <rect x="3" y="5.5" width="11" height="9" rx="1.5" />
+      <path d="M6 3h9.5A1.5 1.5 0 0 1 17 4.5V12" />
+    </Icon>
+  );
+}
+
+/** A list of past passes. */
+export function HistoryIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6M3.5 3.5v2.9h2.9" />
+      <path d="M10 6.8v3.4l2.2 1.4" />
     </Icon>
   );
 }

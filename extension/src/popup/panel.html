@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  The same interface as popup.html, opened in Chrome's side panel.
+
+  A separate page rather than popup.html with a query string, because the
+  surface has to be known before the first paint: the popup is a fixed 372px
+  and the panel fills whatever width the user drags it to, and a layout that
+  corrected itself after mounting would visibly jump on every open.
+-->
+<html lang="en" data-view="panel">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shield</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

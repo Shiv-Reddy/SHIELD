@@ -57,7 +57,7 @@ one.
 
 ### Shot 3 — the proof (60 seconds) — THE MOST IMPORTANT SHOT
 
-Open **"What was sent?"** in the popup. Slow down here. Zoom in if you can.
+Open **"What was sent?"** in the Shield panel. Slow down here. Zoom in if you can.
 
 > "This is the exact thing that left my computer. Not a summary of it — the
 > real payload, recorded before it was sent. The picture has black boxes over

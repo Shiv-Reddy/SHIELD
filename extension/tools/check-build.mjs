@@ -105,12 +105,30 @@ if (firefox) {
   if (manifest.minimum_chrome_version) {
     problems.push('Firefox build still carries minimum_chrome_version');
   }
+  if (manifest.permissions?.includes('sidePanel')) {
+    problems.push('Firefox build still asks for "sidePanel", which it does not have');
+  }
+  if (!manifest.action?.default_popup) {
+    problems.push('Firefox build has no popup, so clicking the icon would open nothing');
+  }
 } else {
   if (!manifest.background?.service_worker) {
     problems.push('Chrome build has no background.service_worker');
   } else {
     mustExist(manifest.background.service_worker, 'background.service_worker');
   }
+  // The side panel. A declared popup would win the icon click, so the panel
+  // would never open and — worse — the click would stop granting activeTab
+  // through onClicked, which is what the panel relies on.
+  if (manifest.action?.default_popup) {
+    problems.push('Chrome build declares a popup, so the icon will not open the side panel');
+  }
+  if (!manifest.permissions?.includes('sidePanel')) {
+    problems.push('Chrome build does not ask for "sidePanel", so the panel cannot open');
+  }
+  // Set from code rather than the manifest (see service-worker.ts), so nothing
+  // above checks that the page exists. This does.
+  mustExist('popup/panel.html', 'side panel page');
 }
 
 // --- Pages opened by string from the source ---------------------------------

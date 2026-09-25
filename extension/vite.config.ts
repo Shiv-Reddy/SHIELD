@@ -76,6 +76,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: fileURLToPath(new URL('./src/popup/popup.html', import.meta.url)),
+        // The same interface in Chrome's side panel. See panel.html for why it
+        // is its own page.
+        panel: fileURLToPath(new URL('./src/popup/panel.html', import.meta.url)),
         'service-worker': fileURLToPath(
           new URL('./src/background/service-worker.ts', import.meta.url),
         ),

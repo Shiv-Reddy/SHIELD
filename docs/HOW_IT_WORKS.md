@@ -189,7 +189,7 @@ open the file and walk through it if asked.
 | Area | Should be able to explain |
 |---|---|
 | **Detection** | Why page code beats pixels; what the rules look for |
-| **Extension & UI** | The popup, "What was sent?", the activity log |
+| **Extension & UI** | The side panel, "What was sent?", the activity log |
 | **Backend** | The three allowed actions and why only three |
 | **Vision / model** | Why a model runs locally; faces and image text |
 | **Testing & data** | The 50-page test set, and the four rival approaches |

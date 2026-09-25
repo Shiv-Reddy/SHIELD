@@ -157,7 +157,7 @@ cd server && .venv/Scripts/python test_prompt.py     # 56 checks
 138 server checks in total. None of them need a network or a key.
 
 Then the end-to-end check: open one of the pages in `test-screens/`, click the
-Shield icon, and run the login task. The popup's **"What was sent?"** view shows
+Shield icon, and run the login task. The panel's **"What was sent?"** view shows
 the exact payload that left the machine — that view is the point of the project,
 so it is worth looking at once on day one.
 

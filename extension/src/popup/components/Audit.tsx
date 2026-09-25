@@ -19,7 +19,8 @@
 import { useCallback, useState } from 'react';
 import { auditJson, clearAudit, readAudit, type AuditEntry } from '../../lib/audit';
 import { categoryLabel } from './Redactions';
-import { Card, Disclosure, GhostButton, Title } from './Sheet';
+import { ChevronIcon, HistoryIcon } from './Mark';
+import { GhostButton, Row } from './Sheet';
 
 /**
  * How many passes the panel lists.
@@ -46,6 +47,7 @@ function foundIn(entry: AuditEntry): string {
 
 export function Audit() {
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
+  const [open, setOpen] = useState(false);
 
   const refresh = useCallback(() => {
     void readAudit().then(setEntries);
@@ -82,64 +84,74 @@ export function Audit() {
   const count = entries?.length ?? 0;
 
   return (
-    <Card>
-      <Title>What has been hidden</Title>
-
-      <Disclosure
-        label="Show every pass"
-        openLabel="Hide history"
-        // Opening is what reads storage. Mounting the popup does not, because
-        // the panel is shut on open and most sessions never look at it.
-        onOpenChange={(open) => {
-          if (open) refresh();
+    <>
+      <Row
+        icon={<HistoryIcon className="size-4" />}
+        title="History"
+        expanded={open}
+        trailing={
+          <ChevronIcon
+            className={`size-3.5 transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+          />
+        }
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          // Opening is what reads storage. Mounting does not, because most
+          // sessions never look at it.
+          if (next) refresh();
         }}
-      >
-        <p className="text-faint text-[11px] leading-snug">
-          {entries === null
-            ? 'Reading…'
-            : count === 0
-              ? 'Nothing recorded yet.'
-              : `${count} pass${count === 1 ? '' : 'es'} recorded. ` +
-                'Categories, counts and rule names only — no page content.'}
-        </p>
+      />
 
-        {entries && count > 0 ? (
-          <>
-            <ul className="border-edge mt-2 max-h-56 space-y-2 overflow-y-auto border-t pt-2">
-              {entries.slice(0, AUDIT_ROWS).map((entry) => (
-                <li key={`${entry.at}-${entry.kind}`} className="leading-snug">
-                  <span className="text-faint block text-[10px] tabular-nums">
-                    {new Date(entry.at).toLocaleString()}
-                  </span>
-                  <span className="text-bright block text-[12px]">{foundIn(entry)}</span>
-                  <span className="text-dim block text-[11px]">
-                    {scopeOf(entry)} ·{' '}
-                    {/*
-                      Stated per entry rather than inferred from the kind, so
-                      the row says the fact instead of relying on the reader
-                      knowing that scans never transmit.
-                    */}
-                    <span className={entry.transmitted ? 'text-warn' : 'text-ok'}>
-                      {entry.transmitted ? 'sent' : 'not sent'}
+      {open ? (
+        <div className="px-3.5 py-3">
+          <p className="text-faint text-[12px] leading-snug">
+            {entries === null
+              ? 'Reading…'
+              : count === 0
+                ? 'Nothing recorded yet.'
+                : 'Categories and counts only. No page content, values or web addresses.'}
+          </p>
+
+          {entries && count > 0 ? (
+            <>
+              <ul className="panel-scroll mt-2.5 max-h-60 space-y-3 overflow-y-auto pr-1">
+                {entries.slice(0, AUDIT_ROWS).map((entry) => (
+                  <li key={`${entry.at}-${entry.kind}`} className="leading-snug">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-bright text-[12.5px]">{foundIn(entry)}</span>
+                      {/*
+                        Stated per entry rather than inferred from the kind, so
+                        the row says the fact instead of relying on the reader
+                        knowing that scans never transmit.
+                      */}
+                      <span
+                        className={`shrink-0 text-[11.5px] ${entry.transmitted ? 'text-dim' : 'text-ok'}`}
+                      >
+                        {entry.transmitted ? 'Sent, redacted' : 'Not sent'}
+                      </span>
+                    </div>
+                    <span className="text-faint block text-[11.5px] tabular-nums">
+                      {new Date(entry.at).toLocaleString()}, {scopeOf(entry)}
                     </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
 
-            {count > AUDIT_ROWS ? (
-              <p className="text-faint mt-1.5 text-[10px]">
-                Showing {AUDIT_ROWS} of {count}. The file has all of them.
-              </p>
-            ) : null}
+              {count > AUDIT_ROWS ? (
+                <p className="text-faint mt-2 text-[11.5px]">
+                  Showing {AUDIT_ROWS} of {count}. The file has all of them.
+                </p>
+              ) : null}
 
-            <div className="mt-2.5 flex gap-2">
-              <GhostButton onClick={save}>Save as a file</GhostButton>
-              <GhostButton onClick={clear}>Clear</GhostButton>
-            </div>
-          </>
-        ) : null}
-      </Disclosure>
-    </Card>
+              <div className="mt-3 flex gap-2">
+                <GhostButton onClick={save}>Save as a file</GhostButton>
+                <GhostButton onClick={clear}>Clear history</GhostButton>
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </>
   );
 }

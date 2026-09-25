@@ -24,9 +24,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MSG, type ScanStatusResult } from '../../lib/messages';
 import type { ShieldState } from '../../lib/status';
-import { categoryLabel } from './Redactions';
-import { Card, GhostButton, Row, Title } from './Sheet';
-import { ScanIcon } from './Mark';
+import { Row } from './Sheet';
+import { FramesIcon, OpenIcon, ScanIcon } from './Mark';
+import { closeIfPopup } from '../surface';
 
 /** How many findings the page is carrying right now, whatever the worker recalls. */
 async function findingsOnPage(): Promise<number> {
@@ -45,32 +45,27 @@ async function findingsOnPage(): Promise<number> {
 }
 
 /**
- * What the last scan amounts to, in one sentence.
+ * What the scan row says beside its title.
  *
- * Named by category rather than totalled, because "6 found" says nothing about
- * whether that is six headings or six ID numbers. And the sentence ends with
- * what Shield will DO about them: a scan that only reported would be pointing
- * at an Aadhaar number and leaving it there.
+ * The breakdown by category is the hero's job — the bars above — so this says
+ * only what the bars cannot: how much of the page was looked at, and whether
+ * the scan reached the bottom. A truncated scan must not pass for a whole-page
+ * result, which is why "stopped early" is said here, where the number is.
  */
-function summarise(scan: NonNullable<ShieldState['scan']>): string {
-  const looked = `${scan.stops} screen${scan.stops === 1 ? '' : 's'}`;
-
-  if (scan.total === 0) {
-    return scan.truncated
-      ? `Nothing found in ${looked} — the scan stopped before the end of the page`
-      : `Nothing sensitive found across ${looked}`;
+function scanDetail(state: ShieldState, onPage: number): string | undefined {
+  if (state.scanProgress) {
+    return `Screen ${state.scanProgress.stop} of ${state.scanProgress.total}`;
   }
-
-  const breakdown = scan.counts
-    .map(({ category, count }) => `${count} ${categoryLabel(category).toLowerCase()}`)
-    .join(', ');
-
-  return scan.truncated
-    ? `${breakdown} — stopped early · hidden on every run`
-    : `${breakdown} across ${looked} · hidden on every run`;
+  const scan = state.scan;
+  if (scan) {
+    if (scan.truncated) return `Stopped after ${scan.stops} screens`;
+    return `${scan.stops} screen${scan.stops === 1 ? '' : 's'}`;
+  }
+  if (onPage > 0) return `${onPage} hidden`;
+  return undefined;
 }
 
-export function ScanCard({
+export function ScanRows({
   state,
   busy,
   onScan,
@@ -93,56 +88,47 @@ export function ScanCard({
 
   const openRecord = useCallback(() => {
     void chrome.tabs.create({ url: chrome.runtime.getURL('proof/proof.html') });
-    window.close();
+    closeIfPopup();
   }, []);
 
   const scan = state.scan;
   const carrying = scan?.total ?? onPage;
 
   return (
-    <Card tab={carrying > 0 ? `${carrying} found` : undefined}>
-      <Title>Without sending anything</Title>
-
+    <>
       <Row
         icon={<ScanIcon className="size-4" />}
         title="Scan the whole page"
-        detail={state.scanProgress ? undefined : 'every screen, top to bottom'}
+        detail={scanDetail(state, onPage)}
         onClick={onScan}
         disabled={busy}
       />
 
-      {state.scanProgress ? (
-        <p className="text-faint mt-1 px-2 text-[11px] tabular-nums">
-          screen {state.scanProgress.stop} of {state.scanProgress.total}
-        </p>
-      ) : null}
-
-      {scan ? (
-        <p
-          className={`mt-2 text-[11px] leading-snug ${scan.truncated ? 'text-warn' : 'text-dim'}`}
-        >
-          {summarise(scan)}
-        </p>
-      ) : onPage > 0 ? (
-        <p className="text-dim mt-2 text-[11px] leading-snug">
-          {onPage} area{onPage === 1 ? '' : 's'} from the last scan · hidden on every run
-        </p>
-      ) : null}
-
+      {/*
+        The scan record: a redacted picture of every screen examined, kept
+        locally. The only surface that proves a scan happened rather than
+        reporting that it did, and offered even when nothing was found —
+        "Shield looked at every screen and there was nothing to hide" is a
+        result worth being able to show somebody.
+      */}
       {scan || onPage > 0 ? (
-        <div className="mt-2.5 flex gap-2">
-          {/*
-            The scan record: a redacted picture of every screen examined, kept
-            locally. It is the only surface that proves a scan happened rather
-            than reporting that it did, and it is offered even when nothing was
-            found — "Shield looked at all six screens and there was nothing to
-            hide" is a result worth being able to show somebody, not an empty
-            state to suppress.
-          */}
-          <GhostButton onClick={openRecord}>See what it looked at</GhostButton>
-          {carrying > 0 ? <GhostButton onClick={onClear}>Clear</GhostButton> : null}
-        </div>
+        <Row
+          icon={<FramesIcon className="size-4" />}
+          title="See what it looked at"
+          trailing={<OpenIcon className="size-3.5" />}
+          onClick={openRecord}
+        />
       ) : null}
-    </Card>
+
+      {carrying > 0 ? (
+        <Row
+          tone="quiet"
+          indent
+          title="Clear scan results"
+          onClick={onClear}
+          disabled={busy}
+        />
+      ) : null}
+    </>
   );
 }

@@ -131,8 +131,8 @@ function renderRegion(region: ManualRegion): void {
     top: `${region.y - window.scrollY}px`,
     width: `${region.width}px`,
     height: `${region.height}px`,
-    background: 'rgba(15, 23, 42, 0.82)',
-    border: '2px solid #22d3ee',
+    background: 'rgba(0, 0, 0, 0.85)',
+    border: '2px solid #ffffff',
     borderRadius: '3px',
     cursor: 'pointer',
     pointerEvents: 'auto',
@@ -212,10 +212,10 @@ function buildToolbar(): HTMLElement {
     gap: '8px',
     padding: '6px 6px 6px 14px',
     borderRadius: '10px',
-    background: 'rgba(15, 23, 42, 0.94)',
-    color: '#e2e8f0',
+    background: 'rgba(0, 0, 0, 0.92)',
+    color: '#ffffff',
     font: '500 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
-    boxShadow: '0 4px 20px rgba(2, 6, 23, 0.45)',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.45)',
     pointerEvents: 'auto',
     whiteSpace: 'nowrap',
     // Only the fade is animated. Moving the bar would make it a thing to track
@@ -270,10 +270,10 @@ function toolbarButton(
   button.textContent = label;
   Object.assign(button.style, {
     padding: '6px 12px',
-    border: primary ? '0' : '1px solid rgba(226, 232, 240, 0.28)',
+    border: primary ? '0' : '1px solid rgba(255, 255, 255, 0.28)',
     borderRadius: '7px',
-    background: primary ? '#22d3ee' : 'transparent',
-    color: primary ? '#083344' : '#e2e8f0',
+    background: primary ? '#ffffff' : 'transparent',
+    color: primary ? '#000000' : '#ffffff',
     font: '600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif',
     cursor: 'pointer',
     pointerEvents: 'auto',
@@ -352,8 +352,9 @@ function onMouseDown(event: MouseEvent): void {
   const box = document.createElement('div');
   Object.assign(box.style, {
     position: 'absolute',
-    background: 'rgba(34, 211, 238, 0.22)',
-    border: '2px dashed #22d3ee',
+    background: 'rgba(255, 255, 255, 0.18)',
+    border: '2px dashed #ffffff',
+    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.85)',
     borderRadius: '3px',
     pointerEvents: 'none',
   } satisfies Partial<CSSStyleDeclaration>);
@@ -463,7 +464,7 @@ export function setManualVisible(visible: boolean): void {
     return;
   }
   // Hidden rather than cleared, because the capture is about to be taken and a
-  // cyan outline would be baked into the frame the model is shown — and into
+  // white outline would be baked into the frame the model is shown — and into
   // the frame the user is told is a faithful record of what was sent.
   teardownSurface();
 }

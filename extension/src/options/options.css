@@ -2,7 +2,7 @@
  * Settings.
  *
  * Reached from the popup's gear, so it uses the popup's palette rather than the
- * older blue one in proof.css — the page you open from a surface should look
+ * older one in proof.css — the page you open from a surface should look
  * like the surface you opened it from. proof/ and sent/ keep their own
  * stylesheet deliberately (DECISIONS.md 241): they work, they are read once
  * each, and restyling them would spend demo-week risk on pages nobody is
@@ -17,24 +17,26 @@
 :root {
   color-scheme: dark;
 
-  --void: #0b0b12;
-  --panel: #12121b;
-  --card: #171722;
-  --card-raised: #1e1e2b;
+  /* The panel's palette — graphite, white as the accent, no blue or violet.
+     The page opened from the gear has to read as the same product. */
+  --void: #1b1b1b;
+  --panel: #1b1b1b;
+  --card: #242424;
+  --card-raised: #2e2e2e;
 
   --edge: rgba(255, 255, 255, 0.08);
   --edge-lit: rgba(255, 255, 255, 0.16);
 
-  --bright: #ffffff;
-  --dim: #8e8ea3;
-  --faint: #63637a;
+  --bright: #f5f5f5;
+  --dim: #a8a8a8;
+  --faint: #767676;
 
-  --live: #7b5cfa;
-  --ok: #5fd0a4;
+  --live: #ffffff;
+  --ok: #6fcf97;
   --warn: #e0b95f;
 
-  --radius-card: 14px;
-  --radius-control: 10px;
+  --radius-card: 12px;
+  --radius-control: 8px;
 
   --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
@@ -63,7 +65,7 @@ body {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: normal;
 }
 
 .masthead p {
@@ -147,7 +149,7 @@ main {
 
 .choice:has(input:checked) {
   border-color: var(--live);
-  background: rgba(123, 92, 250, 0.1);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .choice-name {

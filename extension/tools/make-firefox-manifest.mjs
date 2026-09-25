@@ -53,7 +53,15 @@ manifest.background = {
 
 // No offscreen API on Firefox, and there is nothing for it to do there. Left in
 // place it is an unrecognised permission and a warning at install time.
-manifest.permissions = manifest.permissions.filter((name) => name !== 'offscreen');
+manifest.permissions = manifest.permissions.filter(
+  (name) => name !== 'offscreen' && name !== 'sidePanel',
+);
+
+// Chrome opens Shield in its side panel, which means Chrome's manifest has no
+// popup — the icon click is handled in code so that it grants activeTab and
+// opens the panel on that tab. Firefox has no `sidePanel` API, so it keeps the
+// popup. Same page, same interface; only where it opens differs.
+manifest.action = { ...manifest.action, default_popup: 'popup/popup.html' };
 
 // A Chrome-only key. Harmless but noisy, and the Firefox floor is a different
 // number for a different reason - see below.

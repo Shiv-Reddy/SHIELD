@@ -186,13 +186,13 @@ Then whoever is driving the laptop starts the demo.
 
 ### Your one-line intro
 
-> "I'm Satyanand. I built the extension you actually see and use — the popup,
+> "I'm Satyanand. I built the extension you actually see and use — the side panel,
 > the button you click to run it, and the screen that shows you exactly what
 > got sent."
 
 ### What you own
 
-- **The popup** — what you see when you click the Shield icon: the task box,
+- **The side panel** — what opens beside the page when you click the Shield icon: the task box,
   the Run button, the settings
 - **Carrying out the action** — actually clicking, typing, or scrolling on the
   page once the AI decides what to do, and double-checking the target is real
@@ -200,6 +200,10 @@ Then whoever is driving the laptop starts the demo.
 - **"What was sent?"** — the screen that shows the exact message that left the
   computer
 - **The activity log** — a record of every run, with counts only, no real data
+- **The three numbers at the bottom of the panel** — items hidden, runs and
+  scans, and times something was sent. If a judge asks where they come from:
+  *"We add them up from the history log right above them. Nothing is
+  estimated — you can open the history and check every number."
 
 ### Three facts to know cold
 
@@ -286,7 +290,7 @@ Then whoever is driving the laptop starts the demo.
 | What gets missed and why | Shashank |
 | What happens on the server, the AI model, the three allowed actions | Ayush |
 | Whether the demo can survive the AI being down | Ayush |
-| The popup, the buttons, "what was sent" | Satyanand |
+| The side panel, the buttons, "what was sent" | Satyanand |
 | Whether an action is safe to actually run | Satyanand |
 | The bigger picture, the story, "what's next" | Isha |
 | Anything about docs, the README, our numbers on paper | Isha |

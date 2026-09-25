@@ -129,8 +129,11 @@ export async function captureViewport(
     // message here, not a generic failure.
     const detail = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `Couldn't capture this page. Chrome blocks extensions from reading ` +
-        `some pages, including chrome:// pages, the Web Store, and PDFs. (${detail})`,
+      // Permission is granted per click and lapses when the page changes, so on
+      // an ordinary site the fix is one click, and the message leads with it.
+      `Couldn't capture this page. If you've just moved to it, click the Shield ` +
+        `icon in the toolbar to let Shield read it. Chrome also blocks extensions ` +
+        `from reading chrome:// pages, the Web Store, and PDFs. (${detail})`,
     );
   }
 

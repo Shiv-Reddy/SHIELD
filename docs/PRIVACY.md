@@ -42,7 +42,9 @@ payload for leaked values before it is allowed out.
 
 Shield reads a page only when you ask it to. It uses the `activeTab` permission,
 which means it has access to the tab you invoked it on, at the moment you
-invoked it — not to every site you visit.
+invoked it — not to every site you visit. On Chrome, Shield opens in the side
+panel on that tab only. Move to another tab and the panel goes away, because
+Shield has no permission there.
 
 ---
 
@@ -57,7 +59,7 @@ One request, to one endpoint you control, containing exactly four things:
 | A **redacted** screenshot | The same picture, with solid black rectangles painted over every detected sensitive region. Not blurred; blur is reversible and we do not use it |
 | A description of the page's elements | Labels and positions, with sensitive values replaced by placeholders such as `[PASSWORD]`, `[EMAIL]` or `[REDACTED]` |
 
-**You can see this for yourself.** The popup has a "What was sent?" view showing
+**You can see this for yourself.** Shield's panel has a "What was sent?" view showing
 the exact payload, recorded before the request leaves — so it still has an
 answer when the network fails. We would rather you checked than believed us.
 

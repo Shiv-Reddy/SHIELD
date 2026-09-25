@@ -54,6 +54,8 @@ const POPUP_SOURCES = [
   // that has it. Left in so a port cannot lose it silently the way the last
   // one nearly did.
   'src/popup/components/CorpusCapture.tsx',
+  'src/popup/components/Totals.tsx',
+  'src/popup/surface.ts',
 ];
 
 /**
@@ -102,17 +104,22 @@ test('the popup can still ask for everything it used to', () => {
 });
 
 /**
- * The settings the popup is the only way to reach.
+ * No stored setting may become impossible to change.
  *
- * Each of these is a stored preference with no other user-facing control, so a
- * popup that stops writing it does not fail — it silently becomes the only
- * build where that setting can never be changed again.
+ * Each of these is a stored preference with a user-facing control somewhere.
+ * A surface that stops writing one does not fail — it silently becomes the
+ * build where that setting, once switched on, can never be switched off. That
+ * is the failure this guards against, not "the panel must hold every switch":
+ * "Watch without acting" and the inference pin moved out of the panel on
+ * purpose (DECISIONS.md 277) and live on the Settings page, which already had
+ * them. So the check is that each is writable from the panel OR the Settings
+ * page — and it still fails the moment one is writable from neither.
  */
-test('the popup can still change the settings only it can change', () => {
-  const source = POPUP_SOURCES.map(read).join('\n');
+test('every stored setting can still be changed from somewhere', () => {
+  const source = [...POPUP_SOURCES, 'src/options/options.ts'].map(read).join('\n');
 
   for (const setter of ['setObserveOnly', 'setForceBackend', 'setRequireConsent']) {
-    assert.ok(source.includes(setter), `The popup no longer calls ${setter}.`);
+    assert.ok(source.includes(setter), `Nothing calls ${setter} any more.`);
   }
 });
 

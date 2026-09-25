@@ -1,21 +1,28 @@
 /**
- * The popup.
+ * The panel.
+ *
+ * THE SHAPE
+ *
+ * A header, a scrolling middle, and a dock pinned to the foot of the window
+ * holding the totals and the composer. It is the shape of an assistant panel —
+ * the place a person expects to type an instruction is the bottom edge, where
+ * it stays however far the middle is scrolled.
  *
  * WHAT THE HERO IS
  *
- * The first card is whatever Shield most recently protected — the bars, per
- * category, at real widths, with the count as the figure beside them. Not a
- * big number under a label, which is the default treatment and says nothing
- * this product could not have claimed without running. Before anything has
- * run there are no bars, because there is nothing to draw, and the space says
- * what will happen instead. An empty state is an invitation, not a shrug.
+ * The top of the middle is whatever Shield has hidden on this page, as bars
+ * per category at real widths. Not a big number under a label — the default
+ * treatment, and one that says nothing this product could not claim without
+ * running. It is not boxed: it is the most important thing on screen, and a
+ * box would make it one box among several. Before anything is found there are
+ * no bars, because there is nothing to draw, and the space says what Shield
+ * will do instead. An empty state is an invitation, not a shrug.
  *
  * WHAT IS BELOW IT, AND IN WHAT ORDER
  *
- * The task box with the one gradient control, then the things that need no
- * task at all — scanning the whole page — then the evidence. That ordering is
- * the product's own argument: act, or look without acting, and then check what
- * actually happened.
+ * Three groups: what Shield can do to this page without being asked to act,
+ * the evidence of what happened, and the one option a person might change. That
+ * ordering is the product's own argument — protect the page, then check.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -23,12 +30,13 @@ import { INITIAL_STATE, STATUS_LABEL } from '../lib/status';
 import type { ShieldState } from '../lib/status';
 import { MSG } from '../lib/messages';
 import { Masthead, isRunning } from './components/Masthead';
-import { Card, GhostButton, KeyButton, Row, Title } from './components/Sheet';
-import { ClockIcon, ReceiptIcon } from './components/Mark';
-import { ScanCard } from './components/ScanCard';
+import { Group, KeyButton, Row } from './components/Sheet';
+import { ArrowUpIcon, ClockIcon, OpenIcon, ReceiptIcon, StopIcon } from './components/Mark';
+import { ScanRows } from './components/ScanCard';
 import { Redactions, type Redaction } from './components/Redactions';
-import { Protect } from './components/Protect';
+import { AskFirstSwitch, MarkRows } from './components/Protect';
 import { Audit } from './components/Audit';
+import { Totals } from './components/Totals';
 import { Consent } from './components/Consent';
 import type { ConsentRequest } from '../lib/consent';
 import { CorpusCapture } from './components/CorpusCapture';
@@ -44,9 +52,29 @@ async function toWorker<T = unknown>(message: object): Promise<T | undefined> {
     return (await chrome.runtime.sendMessage(message)) as T;
   } catch {
     // A sleeping worker is ordinary, not an error worth showing. The state
-    // broadcast that follows is what the interface actually renders.
+    // broadcast that follows is what the interface renders.
     return undefined;
   }
+}
+
+/** A line of text that needs noticing: an error, or a slower path in use. */
+function Notice({
+  tone,
+  children,
+}: {
+  tone: 'alarm' | 'warn';
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      role={tone === 'alarm' ? 'alert' : 'status'}
+      className={`rounded-card border px-3.5 py-3 text-[12.5px] leading-snug ${
+        tone === 'alarm' ? 'border-alarm/35 bg-alarm/10' : 'border-warn/30 bg-warn/10'
+      }`}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function App() {
@@ -73,21 +101,21 @@ export function App() {
         // a card left on screen would invite a click that authorises nothing.
         if (message.state.status !== 'awaiting-consent') setConsent(null);
         setState(message.state);
-        // A popup reopened mid-run has an empty box and a run in flight, which
-        // reads as "it forgot what I asked". The worker still knows, so the
-        // box is refilled from it — but only when empty, or this would
-        // overwrite what the user is in the middle of typing.
+        // Reopened mid-run with an empty box and a run in flight reads as "it
+        // forgot what I asked". The worker still knows, so the box is refilled
+        // from it — but only when empty, or this would overwrite what the user
+        // is in the middle of typing.
         const asked = message.state.taskQuery;
         if (asked) setTask((current) => current || asked);
       }
     };
     chrome.runtime.onMessage.addListener(listen);
 
-    // Read rather than assumed, so a pinned backend is visible on the build
-    // line instead of being a setting somebody left on weeks ago.
+    // Read rather than assumed, so a pinned backend is visible instead of being
+    // a setting somebody left on weeks ago.
     void readSettings().then((settings) => setForcedBackend(settings.forceBackend));
 
-    // Fired the instant the popup opens, before a character is typed. Loading
+    // Fired the instant the panel opens, before a character is typed. Loading
     // the model takes about a second and typing a task takes several; doing
     // them concurrently makes that second disappear.
     void toWorker({ type: MSG.PREPARE });
@@ -114,6 +142,7 @@ export function App() {
       event.preventDefault();
       const query = task.trim();
       if (!query) return;
+      setProblem(null);
       // Painted immediately so the control cannot be pressed twice while the
       // worker spins up. The broadcast that follows replaces it.
       setState({ ...INITIAL_STATE, status: 'reading', taskQuery: query });
@@ -122,153 +151,155 @@ export function App() {
     [task],
   );
 
+  const stop = useCallback(() => {
+    void toWorker({ type: MSG.CANCEL_TASK });
+    setState(INITIAL_STATE);
+  }, []);
+
   /**
-   * Pin inference to the CPU, or release it.
+   * Release a pinned inference backend.
    *
-   * The loaded model is cached by the host, so the override does not take hold
-   * until that session is replaced — which is what RESTART_BACKEND is for. A
-   * version of this that only wrote the setting would appear to work and
-   * change nothing until the next reload.
+   * Pinning lives on the Settings page now, beside the other inference
+   * controls; the panel only says when it is in force and offers the way back,
+   * because an override you cannot see is how a slow reading gets mistaken for
+   * the real hardware. The loaded model is cached by the host, so the release
+   * does not take hold until that session is replaced — which is what
+   * RESTART_BACKEND is for.
    */
-  const cycleBackend = useCallback(() => {
+  const releaseBackend = useCallback(() => {
     void (async () => {
-      const next: ExecutionBackend | null = forcedBackend === 'wasm' ? null : 'wasm';
-      await setForceBackend(next);
-      setForcedBackend(next);
+      await setForceBackend(null);
+      setForcedBackend(null);
       await toWorker({ type: MSG.RESTART_BACKEND });
     })();
-  }, [forcedBackend]);
+  }, []);
+
+  const scan = state.scan;
 
   return (
-    <div className="bg-void text-bright">
+    // Full height with the dock pinned to the foot: 600px in a popup, which is
+    // the most Chrome allows, and the whole window in the side panel.
+    <div className="bg-void text-bright shield-reveal shell flex flex-col">
       <Masthead
         status={state.status}
         label={STATUS_LABEL[state.status]}
+        step={state.step}
         build={__SHIELD_BUILD__}
-        forcedBackend={forcedBackend}
-        onCycleBackend={cycleBackend}
         onSettings={() => void chrome.runtime.openOptionsPage?.()}
       />
 
-      <div className="space-y-3 px-3.5 py-3.5">
-        <Card tab={hidden.length > 0 ? `${totalHidden} hidden` : undefined} live={running}>
-          {hidden.length > 0 ? (
-            <>
-              <Title aside="never transmitted">Covered on this page</Title>
-              <Redactions items={hidden} />
-            </>
-          ) : (
-            <p className="text-dim text-[13px] leading-snug">
-              Shield reads this page on your device, covers anything private,
-              and only then asks the assistant what to do.{' '}
-              <span className="text-bright">Nothing private leaves.</span>
-            </p>
-          )}
-
-          {state.coverage ? (
-            <p className="text-faint border-edge mt-3 border-t pt-2.5 text-[11px] leading-snug">
-              {state.coverage.message}
-            </p>
-          ) : null}
-        </Card>
-
+      <main className="panel-scroll min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pt-5 pb-6">
         {/*
-          Directly under the hero, above the task box: this is the one thing on
-          screen with a run waiting on it, and anything between it and the top
-          would be something to scroll past while a payload sits held.
+          First, above everything: this is the one thing on screen with a run
+          waiting on it, and anything above it would be something to scroll
+          past while a payload sits held.
         */}
         {consent ? <Consent request={consent} onDecided={() => setConsent(null)} /> : null}
 
         {state.errorMessage || problem ? (
-          <div className="border-alarm/40 bg-alarm/10 rounded-card border px-3.5 py-2.5">
-            <p className="text-[12px] leading-snug">{state.errorMessage ?? problem}</p>
-          </div>
+          <Notice tone="alarm">{state.errorMessage ?? problem}</Notice>
         ) : null}
 
         {/*
           PRD.md Section 20 requires the fallback to be automatic AND for the
           user to be told things may be slower. A silent 10x slowdown looks
-          like a bug, and the trust story depends on Shield never being quietly
-          worse than it claims. This is a notice, not an error — it reports a
-          working system running on its slower path.
+          like a bug. This is a notice, not an error — it reports a working
+          system on its slower path.
         */}
         {state.fellBack ? (
-          <div className="border-warn/35 bg-warn/10 rounded-card border px-3.5 py-2.5">
-            <p className="text-[12px] leading-snug">
-              This computer's graphics acceleration isn't available to Shield, so
-              it's running on the CPU. Everything still works — it will just be
-              slower.
-            </p>
-          </div>
+          <Notice tone="warn">
+            Graphics acceleration isn't available, so Shield is running on the CPU. Everything
+            still works, just more slowly.
+          </Notice>
         ) : null}
 
-        <Card>
-          <form onSubmit={run}>
-            <label htmlFor="task" className="sr-only">
-              What should Shield do on this page?
-            </label>
-            <input
-              id="task"
-              ref={taskBox}
-              value={task}
-              onChange={(event) => setTask(event.target.value)}
-              disabled={running}
-              placeholder="Log in with my saved details"
-              className="bg-card-raised border-edge text-bright placeholder:text-faint focus:border-live rounded-control w-full border px-3 py-2.5 text-[13px] outline-none disabled:opacity-50"
-            />
+        {forcedBackend ? (
+          <Notice tone="warn">
+            Shield is pinned to {forcedBackend === 'wasm' ? 'the CPU' : forcedBackend} in Settings.{' '}
+            <button
+              type="button"
+              onClick={releaseBackend}
+              className="text-bright underline underline-offset-2"
+            >
+              Use automatic
+            </button>
+          </Notice>
+        ) : null}
 
-            <div className="mt-2.5 flex items-center gap-2">
-              <KeyButton type="submit" disabled={running || task.trim().length === 0}>
-                {running ? 'Working' : 'Run task'}
-              </KeyButton>
+        <section aria-labelledby="hero-title">
+          <div className="flex items-baseline justify-between gap-3">
+            <h1
+              id="hero-title"
+              className="text-bright text-[17px] leading-tight font-semibold"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              {hidden.length > 0 ? 'Hidden on this page' : 'Nothing hidden yet'}
+            </h1>
+            {hidden.length > 0 ? (
+              <span className="text-faint shrink-0 text-[12.5px] tabular-nums">
+                {totalHidden} item{totalHidden === 1 ? '' : 's'}
+              </span>
+            ) : null}
+          </div>
 
-              {running ? (
-                <GhostButton
-                  onClick={() => {
-                    void toWorker({ type: MSG.CANCEL_TASK });
-                    setState(INITIAL_STATE);
-                  }}
-                >
-                  Stop
-                </GhostButton>
-              ) : null}
-
-              {state.step > 1 ? (
-                <span className="text-faint ml-auto text-[11px] tabular-nums">
-                  step {state.step}
-                </span>
-              ) : null}
+          {hidden.length > 0 ? (
+            <div className="mt-4">
+              <Redactions items={hidden} />
             </div>
-          </form>
-        </Card>
+          ) : (
+            <p className="text-dim mt-2 text-[13px] leading-relaxed">
+              Shield reads this page on your device and covers anything private before the
+              assistant sees it. Nothing private leaves your computer.
+            </p>
+          )}
 
-        <ScanCard
-          state={state}
-          busy={running}
-          onScan={() => void toWorker({ type: MSG.SCAN_PAGE })}
-          onClear={() => void toWorker({ type: MSG.CLEAR_SCAN })}
-        />
+          {scan ? (
+            <p
+              className={`mt-4 text-[12px] leading-snug ${scan.truncated ? 'text-warn' : 'text-faint'}`}
+            >
+              {scan.truncated
+                ? `The scan stopped after ${scan.stops} screens, before the end of the page. What it found is hidden on every run.`
+                : `Found by scanning ${scan.stops} screen${scan.stops === 1 ? '' : 's'}. Hidden on every run.`}
+            </p>
+          ) : null}
 
-        <Protect onProblem={setProblem} />
+          {state.coverage ? (
+            <p className="text-faint mt-2 text-[12px] leading-snug">{state.coverage.message}</p>
+          ) : null}
+        </section>
 
-        <Card>
-          <Title>Check what happened</Title>
+        <Group label="This page">
+          <ScanRows
+            state={state}
+            busy={running}
+            onScan={() => void toWorker({ type: MSG.SCAN_PAGE })}
+            onClear={() => void toWorker({ type: MSG.CLEAR_SCAN })}
+          />
+          <MarkRows onProblem={setProblem} />
+        </Group>
+
+        <Group label="Check what happened">
           <Row
             icon={<ReceiptIcon className="size-4" />}
             title="What was sent"
-            detail={state.timings.length > 0 ? 'last run' : 'nothing yet'}
+            detail={state.timings.length > 0 ? 'Last run' : 'Nothing yet'}
+            trailing={<OpenIcon className="size-3.5" />}
             onClick={() => void chrome.tabs.create({ url: 'sent/sent.html' })}
           />
           <Row
             icon={<ClockIcon className="size-4" />}
             title="Where the time went"
-            detail={state.timings.length > 0 ? `${measuredMs.toFixed(0)}ms` : undefined}
+            detail={state.timings.length > 0 ? `${measuredMs.toFixed(0)} ms` : undefined}
+            trailing={<OpenIcon className="size-3.5" />}
             onClick={() => void chrome.tabs.create({ url: 'sent/sent.html#timing' })}
             disabled={state.timings.length === 0}
           />
-        </Card>
+          <Audit />
+        </Group>
 
-        <Audit />
+        <Group label="Options">
+          <AskFirstSwitch />
+        </Group>
 
         {/*
           Compiled out entirely unless the build asked for it. The define makes
@@ -278,7 +309,51 @@ export function App() {
           checked rather than trusted.
         */}
         {__SHIELD_DEV__ ? <CorpusCapture /> : null}
-      </div>
+      </main>
+
+      <footer className="border-edge shrink-0 space-y-3.5 border-t px-4 pt-3.5 pb-4">
+        <Totals />
+
+        <form
+          onSubmit={run}
+          className="bg-card border-edge focus-within:border-dim/60 flex items-center gap-2 rounded-[14px] border py-1.5 pr-1.5 pl-3.5 transition-colors duration-100"
+        >
+          <label htmlFor="task" className="sr-only">
+            What should Shield do on this page?
+          </label>
+          <input
+            id="task"
+            ref={taskBox}
+            value={task}
+            onChange={(event) => setTask(event.target.value)}
+            disabled={running}
+            placeholder="Tell Shield what to do on this page"
+            autoComplete="off"
+            className="text-bright placeholder:text-faint min-w-0 flex-1 bg-transparent py-1.5 text-[13.5px] outline-none focus-visible:outline-none disabled:opacity-60"
+          />
+
+          {running ? (
+            <button
+              type="button"
+              onClick={stop}
+              aria-label="Stop"
+              title="Stop"
+              className="bg-card-raised text-bright hover:bg-edge-lit flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-100"
+            >
+              <StopIcon className="size-4" />
+            </button>
+          ) : (
+            <KeyButton
+              type="submit"
+              shape="round"
+              label="Run task"
+              disabled={task.trim().length === 0}
+            >
+              <ArrowUpIcon className="size-4" />
+            </KeyButton>
+          )}
+        </form>
+      </footer>
     </div>
   );
 }
@@ -287,7 +362,7 @@ export function App() {
  * What to draw bars for.
  *
  * The scan's category counts, because that is the only per-category tally the
- * popup receives — a run reports timings and coverage but not a breakdown.
+ * panel receives — a run reports timings and coverage but not a breakdown.
  * When a run has happened and no scan has, there is nothing to draw, and a
  * single undifferentiated bar for "some things were hidden" would be exactly
  * the decorative rectangle the bars exist not to be.

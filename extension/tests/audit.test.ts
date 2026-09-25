@@ -18,6 +18,7 @@ import {
   MAX_ENTRIES,
   appendCapped,
   auditJson,
+  auditTotals,
   buildAuditEntry,
   type AuditEntry,
 } from '../src/lib/audit';
@@ -187,4 +188,43 @@ test('an empty log exports as a valid file rather than nothing', () => {
   const parsed = JSON.parse(auditJson([]));
 
   assert.deepEqual(parsed.entries, []);
+});
+
+// --- The popup's totals ------------------------------------------------------
+//
+// The footer shows three numbers, and the claim beneath them is that nothing is
+// estimated. These pin that: every figure is reproducible from the entries, so
+// it can be checked against the history panel and the exported file.
+
+test('totals are sums over the log, and nothing else', () => {
+  const totals = auditTotals([
+    entry({ total: 3, transmitted: true }),
+    entry({ total: 5, transmitted: false, kind: 'scan', examined: 'document' }),
+    entry({ total: 0, transmitted: true }),
+  ]);
+
+  assert.deepEqual(totals, { hidden: 8, passes: 3, sent: 2, capped: false });
+});
+
+test('an empty log is zero, which is what "Clear" must produce', () => {
+  assert.deepEqual(auditTotals([]), { hidden: 0, passes: 0, sent: 0, capped: false });
+});
+
+test('a pass that sent nothing is never counted as sent', () => {
+  // Scans and declined consent both record transmitted: false. Counting either
+  // as "sent" would overstate what left the machine — the wrong direction for
+  // this project to be wrong in.
+  const totals = auditTotals([
+    entry({ transmitted: false, kind: 'scan', examined: 'document' }),
+    entry({ transmitted: false }),
+  ]);
+
+  assert.equal(totals.sent, 0);
+});
+
+test('a full log says so, so the totals are not read as lifetime figures', () => {
+  const full = Array.from({ length: MAX_ENTRIES }, () => entry());
+
+  assert.equal(auditTotals(full).capped, true);
+  assert.equal(auditTotals(full.slice(1)).capped, false);
 });

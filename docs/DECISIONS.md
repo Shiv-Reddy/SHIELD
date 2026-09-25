@@ -961,3 +961,53 @@ would later have to re-derive it, or worse, re-make the same mistake.
    `findPersonName` delegates to `findPersonNames` rather than repeating the match, for the reason `phoneMatchIsCredible` exists — the classifier asks *whether*, the scrubber asks *which spans*, and two implementations would drift.
 
    A newline still counts as whitespace between the two tokens, unchanged and deliberate: a name wrapped across two lines is still a name, and the uncertainty rule resolves toward hiding.
+
+275. **The popup is full height with a one-time top-to-bottom reveal, and carries three totals counted from the audit log — nothing estimated**
+
+   Asked for: a Brave-style stats strip, and a window that opens top to bottom the way a browser's AI side panel does.
+
+   **A real side panel was considered and not taken.** Shield runs under `activeTab` (16), which grants the tab the icon was clicked on and nothing else, and PRIVACY.md makes that a promise to users. A popup closes when focus leaves it, so the limit never showed. A side panel stays open across tab switches, and on the next tab Shield has no permission. The only smooth fix is `<all_urls>`, which makes Chrome warn at install that the extension can *"read and change all your data on all websites"* — the worst sentence a privacy product can show a judge. So the popup became a panel in shape instead: 600px, the most Chrome allows, with the totals pinned to its foot.
+
+   **The totals are computed from the audit log, not kept as a separate counter.** `Audit.tsx` argues that a bare total is a claim about a product while a list of passes is a record somebody can disagree with. Summing the same list keeps every figure reproducible from the history panel and the export. A running counter would survive "Clear" and outgrow the 200-entry cap, becoming exactly the uncheckable number that panel was written to avoid. At the cap the footer says the totals cover the last 200 passes instead of letting them pass for lifetime figures.
+
+   **Three tiles, all counted:** private items hidden, runs and scans, and passes that sent anything (always redacted). The reference also showed "data saved" and "time saved". Those are estimates and were left out on purpose.
+
+   **The footer listens for the storage write, not the run's "done" broadcast.** The worker records a pass fire-and-forget, so the broadcast can land first and the numbers would lag by one pass exactly when someone is watching.
+
+   **theme.css said "no entrance animations" and now has one.** The rule was right as a default against per-card fade-ins. It gave way because a specific reference was supplied, and one orchestrated opening is a different thing. The comment was rewritten rather than left contradicting the code. `backwards` fill so no clip-path remains afterwards to cut the tabs that protrude from each card. Reduced motion turns it off.
+
+   Four tests pin the arithmetic, including that a pass that sent nothing is never counted as sent. Breaking that line fails two of them.
+
+276. **Chrome opens Shield in a side panel on the clicked tab only, and the logo and every accent are black and white — supersedes 275's "no side panel"**
+
+   275 kept the popup because a side panel open on every tab would sit beside pages Shield has no permission to read, and the smooth fix — `<all_urls>` — makes Chrome warn at install that Shield can read all data on all websites. The popup did not feel like a professional side panel, so this was reopened, and there turned out to be a third option 275 did not take: **enable the panel per tab.**
+
+   With no `default_popup`, clicking the icon fires `action.onClicked`, which grants activeTab for that tab. The handler then enables the panel for that tab alone and opens it. The panel's global default is off. The result: **the panel appears exactly where Shield has permission and nowhere else.** Switching tabs puts it away, and coming back brings it back. No new host permission, no install warning, and DECISIONS 16 and PRIVACY.md stand unchanged. `sidePanel` itself carries no warning.
+
+   **The one known cost.** Permission lapses when the tab navigates, but the panel stays. A run after navigating therefore fails, so both failure messages now lead with the fix — *click the Shield icon in the toolbar* — instead of only listing chrome:// pages.
+
+   **Neither API call is awaited.** `sidePanel.open` must run while the click still counts as a user gesture, and an `await` in front of it uses that up.
+
+   **Firefox keeps the popup.** It has no `sidePanel` API of the same shape. The Firefox manifest generator strips the permission and restores `default_popup`, so the two builds share one page and differ only in where it opens. `check-build.mjs` now refuses a Chrome build that declares a popup, which would win the click and silently stop the panel from opening and stop activeTab from being granted. It also refuses one without `sidePanel` or without the panel page, and refuses a Firefox build that asks for `sidePanel` or has no popup. Each check was provoked with a deliberately wrong manifest before being trusted.
+
+   **Two popup habits were wrong for a panel.** Marking an area and opening the scan record both called `window.close()` to get a popup off the page. A panel sits beside the page rather than over it, so closing it would throw away the surface the user chose to keep open. Both now close only in a popup.
+
+   **The panel is its own page, `panel.html`, rather than `popup.html?view=panel`.** The surface must be known before first paint: a popup is a fixed 372px and a panel fills what it is given, and a layout corrected after mounting would jump on every open.
+
+   **Black and white.** The toolbar icon was blue (`#2563eb`), matching an accent from a popup design that no longer existed; its CSS file, `popup.css`, was imported by nothing and was deleted. A one-colour icon vanishes on some browser theme, so the mark is now **white on a black rounded square**: two colours, readable on light and dark toolbars, and the eye's cut-outs show black rather than the toolbar. Checked at 16 and 32px on both. The scan-record page drew the logo in blue via `--accent`, and the three things Shield draws *on* web pages were blue or cyan. They are now white lines with a thin black ring, so they read on light and dark sites. The run overlay and scan overlay used to be told apart by colour; now it is by line: solid with a black tag for a run, dashed with a white tag for a scan. The one violet accent in the interface — the live item and focus ring — was left alone. It is not blue, and it is the design system's single marker.
+
+277. **The panel was redesigned to be minimal and neutral: one hero, grouped lists, and a composer pinned to the foot. "Watch without acting" left the panel for Settings**
+
+   Rated honestly before changing anything, from a real render rather than from memory: about 5.5 out of 10. It worked and every number on it was real, but it read as a developer tool. The reasons, all visible on screen: six boxed cards of equal weight, so the eye had nowhere to start; the task box, the reason Shield exists, as the second card; a rainbow gradient button and a thick violet focus ring fighting a logo that is now black and white; the same finding said twice (tabs reading "10 hidden" and "10 found", bars and a sentence listing the same categories); section titles dimmer than the rows under them; a three-line header carrying a build timestamp; white native checkboxes on a dark ground.
+
+   **What replaced it.** Graphite rather than blue-black, and **no accent colour — white is the accent, as the logo is.** Colour only means something: done, needs attention, failed. The redaction bars stay as the one memorable element, unboxed, now drawn as a chart — labels on one edge, bars from one start line, counts on the other edge — so the only ragged edge is the data. Everything else is grouped lists (one surface, rows divided by hairlines, the idiom of a settings screen), and the task box is **pinned to the foot of the window with a white send button that turns into Stop mid-run**, where a person expects to type to an assistant. The header is one line; the build stamp is its tooltip; the step count joins the status.
+
+   **Removed from the panel, and where each went.** "Watch without acting" is a testing switch, not an everyday one, and it went to the Settings page, **which already had it.** Deleting it outright would have been the real risk: anyone who had switched it on would get runs that silently never act, with no way to turn it off. The inference pin — which the build line used to toggle — is also already on Settings; the panel now only says when a pin is in force and offers "Use automatic", because an override you cannot see gets mistaken for slow hardware.
+
+   **The parity test was changed, and the change keeps its purpose.** It required the popup to call every settings writer, on the grounds that a surface that stops writing one strands it. Its real claim is that no setting may become impossible to change, so it now accepts the panel *or* the Settings page and still fails when a writer vanishes from both. It was provoked to prove that — and the first provocation was itself wrong: renaming to `setObserveOnlyGONE` still contained the string being searched for, and the test rightly passed. Redone with a name that does not contain it, the test failed.
+
+   **A defect the render caught that no test could.** The global focus-ring rule was plain CSS, and plain CSS outranks every Tailwind utility, so the task box's `outline-none` never applied and a hard grey rectangle sat inside the rounded composer. Moved into `@layer base`. Found by looking at the screen, which is the argument for rendering before rating.
+
+   **How it was checked.** A preview harness in the scratchpad serves the built `dist/`, injects stand-in Chrome APIs, and renders the panel at a true 400px through an iframe, because headless Chrome will not lay out a window narrower than about 500px. Empty, running and done states were each rendered and inspected. Two apparent defects in the captures — a disabled-looking send button and a bright separator — turned out to be the capture catching a 100ms colour fade mid-way. The DOM showed the button enabled, and a longer settle showed both correct. The fade on the send button was removed anyway, since nothing should animate on open that the user did not start.
+
+   The Settings, scan-record and sent pages took the same tokens, so the page opened from the gear reads as the same product.

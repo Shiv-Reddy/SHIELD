@@ -122,9 +122,9 @@ const DEFAULT_TASK = 'Describe what is on this screen';
  * same — try it on an ordinary web page.
  */
 const UNREADABLE_PAGE_MESSAGE =
-  "Shield can't read this page. Chrome blocks extensions on its own pages — " +
-  'chrome:// pages, the Web Store, PDFs, and other extensions. Try an ordinary ' +
-  'web page.';
+  "Shield can't read this page. If you've just moved to it, click the Shield " +
+  'icon in the toolbar to let Shield read it. Chrome also blocks extensions on ' +
+  'its own pages — chrome:// pages, the Web Store, PDFs, and other extensions.';
 
 // --- Run state --------------------------------------------------------------
 
@@ -1554,7 +1554,7 @@ async function runTask(taskQuery: string): Promise<void> {
     await sendToTab(tabId, { type: MSG.SET_SCAN_VISIBLE, visible: false });
 
     // Put the drawing surface away before anything is captured. The marks are
-    // kept — only the cyan outlines go — because they would otherwise be baked
+    // kept — only the white outlines go — because they would otherwise be baked
     // into the frame the model is shown AND into the frame the popup presents
     // as a faithful record of what was sent. Shield's own UI has no business
     // appearing in either.
@@ -2323,6 +2323,49 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (state.tabId !== tabId) return;
   if (changeInfo.url !== undefined || changeInfo.status === 'loading') cancelTask();
 });
+
+// --- The side panel ---------------------------------------------------------
+
+/** Where the side panel's page lives, relative to the extension root. */
+const PANEL_PATH = 'popup/panel.html';
+
+/*
+ * Opening Shield on Chrome: the side panel, on the tab that was clicked, and
+ * only that tab.
+ *
+ * WHY PER TAB, AND WHY THE CLICK IS HANDLED IN CODE
+ *
+ * Shield reads a page under activeTab, which Chrome grants for the tab whose
+ * icon was clicked and nothing else. A side panel enabled for every tab would
+ * sit open beside pages Shield has no right to read, and every run there would
+ * fail. The alternative — asking for every site — makes Chrome warn at install
+ * that Shield can "read and change all your data on all websites", which is the
+ * opposite of what this product is. So the panel is enabled for one tab at a
+ * time: it appears exactly where Shield has permission, and switching tabs puts
+ * it away. PRIVACY.md's promise holds unchanged.
+ *
+ * There is deliberately no `default_popup` in the Chrome manifest, because a
+ * popup would win the click and this listener would never fire — and
+ * `action.onClicked` firing is what grants activeTab.
+ *
+ * Neither call is awaited. `sidePanel.open` has to happen while the click still
+ * counts as a user gesture, and an await in front of it spends that.
+ *
+ * Firefox has no sidePanel API and keeps its popup (see
+ * make-firefox-manifest.mjs), where onClicked never fires anyway.
+ */
+if (chrome.sidePanel) {
+  // Off everywhere by default, so the panel never appears on a tab nobody
+  // clicked. A tab's own setting overrides this, which is how the one tab that
+  // was clicked gets it.
+  void chrome.sidePanel.setOptions({ enabled: false });
+
+  chrome.action.onClicked.addListener((tab) => {
+    if (tab.id === undefined) return;
+    void chrome.sidePanel.setOptions({ tabId: tab.id, path: PANEL_PATH, enabled: true });
+    void chrome.sidePanel.open({ tabId: tab.id });
+  });
+}
 
 console.info(
   `[shield] service worker ready — v${chrome.runtime.getManifest().version}, ` +

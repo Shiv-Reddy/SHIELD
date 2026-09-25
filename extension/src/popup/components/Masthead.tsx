@@ -1,10 +1,14 @@
 /**
- * The masthead — mark, wordmark, status, settings.
+ * The header — mark, name, status, settings. One line.
  *
- * Follows the reference's header: the mark and wordmark stacked tight on the
- * left, icon controls on the right, a hairline underneath. The status sits
- * here because it is the most-changing thing in the interface, not because
- * headers conventionally hold chips.
+ * It used to carry a tracked-out capitalised wordmark, a tagline and a build
+ * timestamp on three lines. The timestamp is still here, as the name's
+ * tooltip: it answers "which build is this?" for whoever is debugging, without
+ * sitting in front of everybody who is not.
+ *
+ * The status sits here because it is the most-changing thing in the interface,
+ * and the step count joins it while a run is in flight, so progress has one
+ * home instead of two.
  */
 
 import type { ShieldStatus } from '../../lib/status';
@@ -33,92 +37,65 @@ export function isRunning(status: ShieldStatus): boolean {
 
 function dotColour(status: ShieldStatus): string {
   if (status === 'error') return 'bg-alarm';
+  if (status === 'awaiting-consent') return 'bg-warn';
   if (status === 'done') return 'bg-ok';
-  if (RUNNING.has(status)) return 'bg-live';
+  if (RUNNING.has(status)) return 'bg-live animate-pulse';
   return 'bg-faint';
 }
 
 export function Masthead({
   status,
   label,
+  step,
   build,
-  forcedBackend,
-  onCycleBackend,
   onSettings,
 }: {
   status: ShieldStatus;
   label: string;
+  /** Shown while running, once there is more than one step to count. */
+  step: number;
   build: string;
-  /** Set when inference is pinned rather than chosen. Shown, never hidden. */
-  forcedBackend: string | null;
-  onCycleBackend: () => void;
   onSettings: () => void;
 }) {
   const running = RUNNING.has(status);
+  // "Ready" says what idle means to the person using it; the internal word is
+  // not theirs.
+  const shown = status === 'idle' ? 'Ready' : label;
 
   return (
-    <header className="relative px-4 pt-3.5 pb-3">
-      <div className="flex items-center gap-2.5">
-        <ShieldMark className="text-bright size-6" />
+    <header className="relative flex shrink-0 items-center gap-2.5 px-4 py-3">
+      <ShieldMark className="text-bright size-5.5" />
+      <span
+        className="text-bright text-[15px] leading-none font-semibold"
+        style={{ fontFamily: 'var(--font-display)' }}
+        title={`Build ${build}`}
+      >
+        Shield
+      </span>
 
-        <span className="leading-none">
-          <span className="text-bright block text-[15px] font-semibold tracking-[0.14em]">
-            SHIELD
-          </span>
-          <span className="text-faint mt-1 block text-[10px] tracking-[0.06em]">
-            on-device redaction
-          </span>
+      <span className="ml-auto flex min-w-0 items-center gap-1.5" role="status">
+        <span className={`size-1.5 shrink-0 rounded-full ${dotColour(status)}`} aria-hidden="true" />
+        <span className="text-dim truncate text-[12.5px] leading-none">
+          {running && step > 1 ? <span className="text-faint">Step {step}: </span> : null}
+          {shown}
         </span>
+      </span>
 
-        <span className="ml-auto flex items-center gap-3">
-          <span className="flex items-center gap-1.5">
-            <span className={`size-1.5 rounded-full ${dotColour(status)}`} aria-hidden="true" />
-            <span className="text-dim text-[12px] leading-none">{label}</span>
-          </span>
-          <button
-            type="button"
-            onClick={onSettings}
-            aria-label="Settings"
-            className="text-faint hover:text-bright rounded-control"
-          >
-            <GearIcon className="size-4.5" />
-          </button>
-        </span>
-      </div>
-
-      {/*
-        The build line is also the CPU-fallback switch.
-
-        Deliberately unlabelled: it is a developer and demo affordance, not a
-        user-facing setting, and PRD.md Section 14 does not put backend
-        selection in the popup. It earns its place twice over — the CPU
-        fallback required by FR-27 is otherwise impossible to exercise on
-        hardware where WebGPU works, and being able to show that fallback live
-        is a direct answer to the obvious judge question about machines with no
-        GPU. When a backend IS pinned the line says so plainly, because an
-        override you cannot see is how a "slow" reading gets taken for the real
-        hardware.
-      */}
       <button
         type="button"
-        onClick={onCycleBackend}
-        title={
-          forcedBackend
-            ? `Inference pinned to ${forcedBackend}. Click to return to automatic.`
-            : 'Click to force CPU (WASM) inference, for testing the fallback path.'
-        }
-        className="text-faint hover:text-dim rounded-control mt-2 block text-[10px] leading-none tabular-nums"
+        onClick={onSettings}
+        aria-label="Settings"
+        title="Settings"
+        className="text-dim hover:text-bright hover:bg-card rounded-control -mr-1.5 p-1.5 transition-colors duration-100"
       >
-        build {build}
-        {forcedBackend ? <span className="text-warn"> · forced: {forcedBackend}</span> : null}
+        <GearIcon className="size-4.5" />
       </button>
 
       {/*
-        The only motion in the interface: a violet mark travelling the rule
-        while the pipeline is live, and absent the rest of the time. It answers
-        "is anything happening" and nothing else.
+        A mark travelling the rule while the pipeline is live, absent the rest
+        of the time. It answers "is anything happening" and nothing else.
       */}
-      <div className="bg-edge absolute inset-x-0 bottom-0 h-px" aria-hidden="true">
+      <div className="bg-edge absolute inset-x-0 bottom-0 h-px overflow-hidden" aria-hidden="true">
         {running ? <div className="shield-sweep bg-live h-px w-1/5" /> : null}
       </div>
     </header>

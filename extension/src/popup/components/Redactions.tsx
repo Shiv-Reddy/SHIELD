@@ -60,24 +60,24 @@ export function Redactions({ items }: { items: Redaction[] }) {
   const largest = Math.max(...items.map((item) => item.count));
 
   return (
-    <ul className="space-y-1.5">
+    // A chart rather than a list: labels share a left edge, bars share a start
+    // line, counts share a right edge. The only ragged edge left is the end of
+    // each bar, and that edge is the data.
+    <ul className="grid grid-cols-[max-content_1fr_auto] items-center gap-x-3 gap-y-2">
       {items.map((item) => {
         const share = Math.max(MIN_SHARE, item.count / largest);
         return (
-          <li key={item.category} className="flex items-center gap-2.5">
-            <span
-              className="bg-bright h-3.5 shrink-0 rounded-[2px]"
-              style={{ width: `${share * 132}px` }}
-              // The bar carries no text, so the row's meaning has to reach a
-              // screen reader some other way. The label beside it does that,
-              // which is why the bar itself is hidden from the tree rather
-              // than given a redundant label of its own.
-              aria-hidden="true"
-            />
-            <span className="text-dim text-[12px] leading-none">
+          <li key={item.category} className="contents">
+            <span className="text-dim text-[12.5px] leading-none">
               {categoryLabel(item.category)}
             </span>
-            <span className="text-faint ml-auto text-[12px] leading-none tabular-nums">
+            <span className="block h-3" aria-hidden="true">
+              <span
+                className="bg-bright block h-full rounded-[2px]"
+                style={{ width: `${share * 100}%` }}
+              />
+            </span>
+            <span className="text-bright text-right text-[12.5px] leading-none font-medium tabular-nums">
               {item.count}
             </span>
           </li>
