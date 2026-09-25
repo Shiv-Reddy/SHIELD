@@ -215,6 +215,77 @@
         color: #9aa5b1;
         margin: 14px 0 0;
       }
+
+      /*
+        The ID-proof preview sits beside the form, not inside it. Anything added
+        above the button pushes it further below the fold and changes the
+        recorded scroll geometry; a side column changes nothing vertical.
+      */
+      .layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 24px;
+      }
+
+      .layout form {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .proof {
+        flex: 0 1 300px;
+        min-width: 180px;
+        position: sticky;
+        top: 16px;
+        padding: 12px 16px 16px;
+        border: 1px solid #e4e7eb;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .proof h2 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        color: #3e4c59;
+      }
+
+      .proof p {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: #7b8794;
+      }
+
+      .proof img {
+        display: block;
+        width: 100%;
+        border: 1px solid #e4e7eb;
+        border-radius: 6px;
+      }
+
+      /*
+        The success banner is a pseudo-element on <body>, not a new node, so the
+        element count the tests recorded stays the same. It is fixed to the top
+        because by the time the form is submitted the page has been scrolled
+        down, and the intro paragraph that used to carry the message is off
+        screen.
+      */
+      body[data-status]::after {
+        content: attr(data-status);
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100% - 32px);
+        padding: 14px 22px;
+        border-radius: 10px;
+        background: #047857;
+        color: #fff;
+        font-size: 17px;
+        font-weight: 600;
+        text-align: center;
+        box-shadow: 0 6px 24px rgba(4, 120, 87, 0.35);
+        z-index: 10;
+      }
     </style>
   </head>
   <body>
@@ -224,6 +295,7 @@
       data appears on this page.
     </p>
 
+    <div class="layout">
     <form id="signup">
       <fieldset>
         <legend>About you</legend>
@@ -385,6 +457,19 @@
       </p>
     </form>
 
+    <!--
+      After the form in document order, so every form control keeps the
+      element id it had before this was added. The card is the fictional
+      sample from Screen 1: an ID number and a photo printed inside a picture,
+      which page markup cannot describe.
+    -->
+    <aside class="proof">
+      <h2>ID proof uploaded</h2>
+      <p>Fictional sample, not a real document.</p>
+      <img src="aadhaar_sample.svg" alt="Fictional sample ID card, not a real document" />
+    </aside>
+    </div>
+
     <script>
       // Same reason as Screen 1: a fixture that navigates away cannot be run
       // twice, and the second run is where the interesting numbers are.
@@ -423,6 +508,7 @@
 
         const at = new Date().toLocaleTimeString();
         announce(`Account created at ${at}. The form was submitted by Shield.`);
+        document.body.dataset.status = '✓ Account created successfully';
 
         console.info('[test-screen] submit intercepted; nothing was sent anywhere');
       });

@@ -39,6 +39,70 @@ Then whoever is driving the laptop starts the demo.
 
 ---
 
+## What everyone must know, whatever your part
+
+### The three actions: click, type, scroll
+
+The cloud AI never touches the page itself. It sends back **one small
+instruction**, and that instruction can only be one of three kinds:
+
+| Action | What it means | Example from our demo |
+|---|---|---|
+| **click** | Press something on the page: a button, a checkbox, a link | Click "Sign in". Tick "I accept the terms" |
+| **type** | Put text into a box | Type into the search box |
+| **scroll** | Move the page up or down to see more of it | The signup page's "Create account" button is below the screen, so it scrolls down first |
+
+Things to say about them:
+
+- **The AI can't pick any other action.** It cannot run code, open another
+  website, download a file, read your files, or send your data somewhere.
+  Those actions are not in the list, so any reply like that is thrown away.
+- **Every reply is checked twice.** The server checks it first. Then your
+  own computer checks it again and makes sure the target is still the same
+  box or button, in case the page changed in between.
+- **The AI never sees what gets typed into a private box.** For a password
+  box it sees only `[PASSWORD]`. It can say *which* box to fill. It can't
+  know or send the real value. Shield does not store passwords either.
+- **One action at a time.** After each action Shield looks at the page
+  again, hides the private parts again, and asks for the next step. If the
+  AI asks for the same action twice in a row, Shield refuses. That stops
+  something like a double payment.
+
+**Why only three?** *"A short list is easy to check completely. Every new
+action is a new way to go wrong. These three are enough to fill and submit
+almost any form."*
+
+### Which pages to use in the demo
+
+| Use it for | Page | Why |
+|---|---|---|
+| **Main demo (must be perfect)** | `test-screens/01-login.html` | Our own page. Tested the most. After "Sign in", a green line says it worked |
+| **Second task** | `test-screens/02-signup.html` | Ticks the terms box, scrolls, clicks "Create account". A green **"✓ Account created successfully"** banner pops up at the top. It also has a sample ID card picture on the right |
+| **"Can we break it?"** | `test-screens/05-adversarial.html` | Eight tricky cases. 7 are caught. Point at the one we miss |
+| **"Is this hardcoded?" (a real site)** | `github.com/explore` using **Scan** | We tested it before and it was our best real page. Scan sends nothing, so it is safe to run anywhere |
+| **Backup real site** | `apple.com/in` using **Scan** | Tested before, big clear text |
+
+**Don't use these live:**
+- `mygov.in`, which is too long. The scan stops at its limit before the end.
+- `india.gov.in/hi`, which is in Hindi. We only read English from pictures.
+- `google.com/maps`, which is slow, about 43 seconds.
+
+**A real login page, such as `github.com/login`**, needs a test run first,
+on the laptop you will demo on. Type a **fake** email. If it doesn't finish
+cleanly, don't show it live. Use Scan on `github.com/explore` instead.
+
+**Never use a real account or a real password on stage.** The screen is
+projected.
+
+### After each run, open "What was sent?"
+
+This is the proof, so never skip it. Point at three things:
+1. The black boxes on the picture.
+2. `[PASSWORD]`, `[EMAIL]` and `[NAME]` where the real values were.
+3. The action that came back: one click, type or scroll.
+
+---
+
 ## Shivkumar Reddy — Lead, local AI model, and testing
 
 ### Your one-line intro
@@ -84,6 +148,26 @@ Then whoever is driving the laptop starts the demo.
 > also built a page specifically designed to trick our own detector, and wrote
 > down what we expected to happen before we ever ran it — seven out of eight
 > tricky cases are caught."
+
+### More questions you may get
+
+**"Why run the model in the browser and not on a server?"**
+> "Because the whole point is that the raw screen never leaves. If we sent it
+> to our own server to find the private parts, we would already have leaked
+> them. So the finding has to happen on the laptop."
+
+**"Won't that be slow on a normal laptop?"**
+> "The local part takes about 135 milliseconds. It uses the graphics chip if
+> the browser has WebGPU, and falls back to the normal processor if not."
+
+**"What does 91.8% recall actually mean for a user?"**
+> "Out of 100 private things, we find about 92. We also have three guards
+> behind that. The last one searches the whole message for anything we
+> flagged, and refuses to send if it finds one."
+
+**"What happens without internet?"**
+> "It still works. A local model on the same laptop makes the decision, just
+> slower: about 22 seconds instead of under 2."
 
 ---
 
@@ -134,6 +218,31 @@ Then whoever is driving the laptop starts the demo.
 > pixels wide. We wrote all of this down on purpose rather than waiting for
 > someone to find it."
 
+### More questions you may get
+
+**"What kinds of private data do you find?"**
+> "Passwords, emails, phone numbers, names, addresses, Aadhaar, PAN, IFSC
+> codes, UPI IDs, faces, and text inside pictures. If something looks
+> private but we can't say what it is, we still hide it."
+
+**"Why black boxes and not blur?"**
+> "Blur can sometimes be undone. A solid black box can't. We also swap
+> the real text for labels like `[EMAIL]`. Covering the picture but sending
+> the real text would only look safe."
+
+**"What about the ID card picture on the signup page?"**
+> "The page code can't describe what's inside a picture. That's why we have
+> the second layer, which reads text out of images and finds faces."
+
+(Check this one in "What was sent?" before the round, so you know what the
+card looks like after hiding.)
+
+**"You hide too much sometimes — isn't that a problem?"**
+> "Sometimes, yes. A box with the word 'name' in its label gets hidden even
+> when it's only a display name, which isn't private. We chose that.
+> Hiding something harmless is a small annoyance. Missing something private
+> is a leak."
+
 ---
 
 ## Ayush Verma — The backend, where the AI decides what to do
@@ -179,6 +288,30 @@ Then whoever is driving the laptop starts the demo.
 > "Then the server falls back to simple rules automatically, and the demo
 > still finishes. We built it that way on purpose — a live demo depending on
 > someone's free-tier API being up is a single point of failure we didn't want."
+
+### More questions you may get
+
+**"Explain click, type and scroll."**
+Use the table in "What everyone must know" above. The short version:
+> "Click presses something, type puts text in a box, scroll moves the page.
+> That's the full list. Anything else the AI says is thrown away."
+
+**"Can a website trick your AI? For example, hidden text saying 'ignore your
+instructions'?"**
+> "It can try, and we don't claim to stop that completely. What we do is
+> limit the damage. The worst it can do is one click, type or scroll, on an
+> element that really is on the page, and your computer checks that
+> element again first. It can't make the AI send your data anywhere,
+> because your data was never in the message."
+
+**"Which AI model do you use?"**
+> "A free-tier cloud model, and it can be swapped out. Our code doesn't
+> depend on one company. With no key, simple rules take over, and there is
+> also a local model for offline use."
+
+**"Is the data stored on your server?"**
+> "No. It answers and forgets. The logs have only a request ID and a
+> time."
 
 ---
 
@@ -231,6 +364,27 @@ Then whoever is driving the laptop starts the demo.
 > there for people who want to see every single one, not because we need
 > permission to keep the promise."
 
+### More questions you may get
+
+**"Why a side panel and not a popup?"**
+> "A popup closes the moment you click the page. The side panel stays open
+> next to the page, so you can watch every step as it happens."
+
+**"How do I know the task actually worked?"**
+> "The panel shows each step as it runs. Our test pages also show it
+> clearly. Login shows a green 'Signed in' line, and signup shows a green
+> 'Account created successfully' banner at the top."
+
+**"Does it work on Firefox?"**
+> "Yes, it's the same code built for Firefox. There it opens as a popup,
+> because Firefox doesn't have Chrome's side panel. Chrome is our main
+> demo."
+
+**"Does it work with Gemini in Chrome, or other AI agents?"**
+> "Not yet. A Chrome extension isn't allowed to read or change what
+> another program sends. Right now Shield is its own agent. Protecting other
+> agents is our next step."
+
 ---
 
 ## Isha Kumari — Docs, demo, and telling the story
@@ -278,6 +432,55 @@ Then whoever is driving the laptop starts the demo.
 > real users. We didn't half-build any of these — we picked what to finish
 > properly instead."
 
+### More questions you may get
+
+**"Who is this for?"**
+> "Anyone who wants an AI to help on a website but doesn't want to hand
+> over their bank page, their ID, or their passwords. That includes people
+> at companies where sending screens to an outside AI isn't allowed."
+
+**"What makes this different from other screen agents?"**
+> "Other agents send your whole screen. We hide the private parts first,
+> on your own computer, and we show you exactly what was sent. That proof
+> screen is what nobody else has."
+
+**"How long did this take, and how did you split the work?"**
+> Answer truthfully with the real timeline. For the split, point at the
+> quick reference table below: each person owns one part.
+
+**"What was the hardest bug?"**
+> "A name was hidden in a form box but still showed in a button's label
+> elsewhere on the page. Our last guard found it and refused to send, so
+> nothing leaked. Then we fixed the cause."
+
+---
+
+## Hard questions anyone can get
+
+If it's your part, answer it. If not, point to the right person.
+
+**"What if your detector misses something?"**
+> "It can. That's why there are three guards. The code can't build a message
+> that skipped hiding. The steps are checked to have run in order. And
+> just before sending, we search the whole message for every value we
+> flagged. If one is still there, it isn't sent."
+
+**"Isn't this just a demo trick on your own page?"**
+> "Pick any website and we'll scan it now. Scan sends nothing, so it's safe
+> anywhere." (Use `github.com/explore` if they don't pick one.)
+
+**"What's the catch?"**
+> "Names come from a list, not a model. We only read English from pictures.
+> Faces smaller than about 80 pixels get missed. And when acting, it looks
+> at one screen at a time."
+
+**"Why should anyone trust you?"**
+> "They don't have to. Open 'What was sent?' and read the actual message."
+
+**"Is it open source?"**
+> "The repo is private until the event ends, then we make it public so
+> anyone can check it."
+
 ---
 
 ## Quick reference — who to point to
@@ -314,6 +517,7 @@ Then whoever is driving the laptop starts the demo.
 
 ---
 
-**Before you go in:** everyone reads their own section, everyone reads the
-quick reference table once, and everyone can say the three sentences above
-without reading them. That is enough.
+**Before you go in:** everyone reads their own section and the "What
+everyone must know" part at the top. Everyone reads the quick reference
+table once. Everyone can say the three sentences above without reading them.
+That's enough.
