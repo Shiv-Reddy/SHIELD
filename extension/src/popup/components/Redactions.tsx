@@ -47,7 +47,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   address: 'Addresses',
   id_number: 'ID numbers',
   face: 'Faces',
-  other: 'Unidentified fields',
+  other: 'Other private details',
 };
 
 export function categoryLabel(category: string): string {

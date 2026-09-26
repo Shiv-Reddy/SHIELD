@@ -232,6 +232,9 @@ main {
 
 .switch strong {
   display: block;
+  /* The name of the setting reads as live text; only its explanation is
+     quiet. Both in the faint colour made every switch look disabled. */
+  color: var(--bright);
   font-size: 13px;
   font-weight: 500;
 }
@@ -245,4 +248,10 @@ main {
 :focus-visible {
   outline: 2px solid var(--live);
   outline-offset: 2px;
+}
+
+.note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

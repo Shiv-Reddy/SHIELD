@@ -26,3 +26,8 @@ Shield_*_Idea_Presentation.pdf
 .env.*
 !.env.example
 *.key
+
+# The organisation dashboard's store: counts from each laptop, written at
+# runtime. Local state, never source.
+server/fleet_data.json
+server/fleet_data.tmp

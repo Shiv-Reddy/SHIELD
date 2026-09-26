@@ -18,14 +18,14 @@ const CONTAINER_ID = 'shield-redaction-overlay';
 
 /** What the user is told each category means, in their words rather than ours. */
 const CATEGORY_LABEL: Readonly<Record<SensitiveCategory, string>> = {
-  password: 'Password',
-  name: 'Name',
-  email: 'Email',
-  phone: 'Phone',
-  address: 'Address',
-  id_number: 'ID number',
-  face: 'Face',
-  other: 'Hidden',
+  password: '[PASSWORD]',
+  name: '[NAME]',
+  email: '[EMAIL]',
+  phone: '[PHONE]',
+  address: '[ADDRESS]',
+  id_number: '[ID_NUMBER]',
+  face: '[FACE]',
+  other: '[REDACTED]',
 };
 
 export interface OverlayRegion {
@@ -106,6 +106,10 @@ export function showOverlay(regions: readonly OverlayRegion[]): void {
   } satisfies Partial<CSSStyleDeclaration>);
 
   for (const region of regions) {
+    // Solid, with the label the AI was given written on it: while the AI is
+    // deciding, the page itself reads the way the AI is reading it. The
+    // overlay is drawn after the capture and removed before any action, so it
+    // is never in a frame that is examined or sent.
     const box = document.createElement('div');
     Object.assign(box.style, {
       position: 'fixed',
@@ -113,12 +117,15 @@ export function showOverlay(regions: readonly OverlayRegion[]): void {
       top: `${region.y}px`,
       width: `${region.width}px`,
       height: `${region.height}px`,
-      border: '2px solid #ffffff',
       borderRadius: '3px',
-      background: 'rgba(0, 0, 0, 0.14)',
-      boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.85)',
+      background: '#111111',
+      boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.6)',
       pointerEvents: 'none',
       boxSizing: 'border-box',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
     } satisfies Partial<CSSStyleDeclaration>);
 
     const tag = document.createElement('span');
@@ -129,16 +136,9 @@ export function showOverlay(regions: readonly OverlayRegion[]): void {
     tag.title = region.reason;
 
     Object.assign(tag.style, {
-      position: 'absolute',
-      // Above the box, unless that would put it off the top of the screen.
-      top: region.y > 22 ? '-20px' : '100%',
-      left: '0',
-      padding: '1px 6px',
-      borderRadius: '3px',
-      background: '#000000',
       color: '#ffffff',
-      boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.35)',
-      font: '600 11px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif',
+      font: `600 ${region.height >= 40 ? 13 : 10.5}px/1 ui-monospace, "Cascadia Mono", Consolas, monospace`,
+      letterSpacing: '0.02em',
       whiteSpace: 'nowrap',
       pointerEvents: 'none',
     } satisfies Partial<CSSStyleDeclaration>);
@@ -146,6 +146,27 @@ export function showOverlay(regions: readonly OverlayRegion[]): void {
     box.appendChild(tag);
     container.appendChild(box);
   }
+
+  // Says what the black boxes are, for whoever is watching the screen.
+  const banner = document.createElement('div');
+  banner.textContent = `Shield · this is what the AI sees: ${regions.length} private item${
+    regions.length === 1 ? '' : 's'
+  } covered on this laptop`;
+  Object.assign(banner.style, {
+    position: 'fixed',
+    left: '50%',
+    bottom: '18px',
+    transform: 'translateX(-50%)',
+    padding: '9px 16px',
+    borderRadius: '999px',
+    background: '#111111',
+    color: '#ffffff',
+    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.35)',
+    font: '600 13px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif',
+    whiteSpace: 'nowrap',
+    pointerEvents: 'none',
+  } satisfies Partial<CSSStyleDeclaration>);
+  container.appendChild(banner);
 
   document.documentElement.appendChild(container);
 

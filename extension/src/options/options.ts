@@ -16,6 +16,7 @@
  */
 
 import { MSG } from '../lib/messages';
+import { fleetBase, readFleetIdentity, saveFleetIdentity } from '../lib/fleet';
 import {
   DEFAULT_ENDPOINT,
   REDACTION_FLOORS,
@@ -82,6 +83,10 @@ const backendBox = required<HTMLSelectElement>('#force-backend');
 const hostBox = required<HTMLSelectElement>('#force-host');
 const observeBox = required<HTMLInputElement>('#observe-only');
 const consentBox = required<HTMLInputElement>('#require-consent');
+const fleetName = required<HTMLInputElement>('#fleet-name');
+const fleetTeam = required<HTMLInputElement>('#fleet-team');
+const fleetSharing = required<HTMLInputElement>('#fleet-sharing');
+const fleetOpen = required<HTMLAnchorElement>('#fleet-open');
 const buildLine = required<HTMLParagraphElement>('#build');
 
 /** Rebuild the vision host so a pinned backend or host actually takes hold. */
@@ -190,7 +195,17 @@ async function load(): Promise<void> {
   observeBox.checked = settings.observeOnly;
   consentBox.checked = settings.requireConsent;
   buildLine.textContent = `build ${__SHIELD_BUILD__}`;
+
+  const identity = await readFleetIdentity();
+  fleetName.value = identity.deviceName;
+  fleetTeam.value = identity.team;
+  fleetSharing.checked = identity.sharing;
+  fleetOpen.href = `${fleetBase(settings.endpoint)}/admin`;
 }
+
+fleetName.addEventListener('change', () => void saveFleetIdentity({ deviceName: fleetName.value.trim() }));
+fleetTeam.addEventListener('change', () => void saveFleetIdentity({ team: fleetTeam.value.trim() }));
+fleetSharing.addEventListener('change', () => void saveFleetIdentity({ sharing: fleetSharing.checked }));
 
 endpointBox.addEventListener('blur', commitEndpoint);
 endpointBox.addEventListener('keydown', (event) => {

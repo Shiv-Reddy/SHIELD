@@ -14,7 +14,7 @@ IDs are kept from the original register so older notes still line up.
 | T-01 | The local model is too slow on some laptops | Measured it. One full pass is ~135ms on Chrome, 364ms on Firefox once warm. Every stage is inside its budget | **Closed** |
 | T-02 | WebGPU missing or broken on some machines | A CPU fallback is built and proved by a start-up self-test — 126ms to start, 55ms to run, re-checked 2026-09-23 | **Closed** |
 | T-03 | Hiding too much breaks the cloud model's reasoning | We use labels like `[PASSWORD]`, not blanket blackout. 96.5% of the page stays readable, measured | **Closed** |
-| T-04 | Hiding too little leaks private data | When unsure, hide. Recall is 91.8% over 50 pages, and a page built to defeat us catches 7 of 8 | **Closed** |
+| T-04 | Hiding too little leaks private data | When unsure, hide. Recall is 92.4% over 50 pages, and a page built to defeat us catches 7 of 8 | **Closed** |
 | T-05 | The element an action targets has moved or gone | The client re-checks the element — selector, type and label — before acting | **Closed** |
 | T-06 | The free model API hits a rate limit near the deadline | Three fallbacks: the rule path needs no model at all, a local model runs offline, and any OpenAI-compatible provider is a config change | **Closed** |
 | T-07 | A multi-step task loops forever | A maximum step count stops it with a clear message. Found by a real loop and fixed (DECISIONS.md 227) | **Closed** |

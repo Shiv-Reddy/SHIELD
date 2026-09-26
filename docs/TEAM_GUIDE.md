@@ -133,8 +133,12 @@ is there for one of them. Times are a guide. Practise with a timer.
 
 **0:40–2:00. The hero: bank KYC (innovation).** Open the KYC console. Type:
 *Approve the KYC application that has every document verified and low risk.*
-It approves **KYC-2043** and a green banner appears. Then open **What was sent?**
-and say:
+**While the AI decides, the page turns into what the AI sees**: every name,
+Aadhaar, PAN and account number is covered by a black label like `[NAME]`,
+with a banner at the bottom. Point at it and say *"This is all the AI gets."*
+Then the covers come off, it approves **KYC-2043**, and a green banner
+appears. The Shield panel lists each step and ends with "Clicked Approve
+application KYC-2043, then stopped". Then open **What was sent?** and say:
 > "The AI picked the right customer out of ten, and it never learned who
 > anyone was. Every name, Aadhaar, PAN, account number and balance is a
 > placeholder, and the ID card photos are blacked out. The AI got the
@@ -147,26 +151,34 @@ free replacement will be delivered within 3 days, and send the reply*, where it
 **types** the reply). Say:
 > "Same agent, no code written for any of these pages."
 
-**2:40–3:20. A real website we didn't build (execution).** ParaBank → log in
-`john` / `demo` → Transfer Funds → *Transfer 250 dollars*. It types 250, clicks
-Transfer, and ParaBank says "Transfer Complete!".
+**2:40–3:20. A real website we didn't build (execution).** Either ParaBank →
+log in `john` / `demo` → Transfer Funds → *Transfer 250 dollars* (it types 250,
+clicks Transfer, "Transfer Complete!"), or OrangeHRM, real HR software → log in
+`Admin` / `admin123` → PIM → *Search for the employee with ID 0397*. On
+OrangeHRM point at the black labels: every employee's name, the signed-in
+user's name, even the demo password printed on the login page.
 
-**3:20–4:00. The buyer's view (impact).** Shield panel → **Compliance report**.
-Say:
-> "The employee gets an AI assistant. The bank's compliance team gets this:
-> everything protected, how many requests reached the AI, all of them
-> redacted, and the controls mapped to the DPDP Act. That's who pays for
-> Shield."
+**3:20–4:00. The buyer's view (impact).** Open the **organisation dashboard**
+(`http://127.0.0.1:8787/admin`, or the link on the hub). The run you just did
+is already counted. Say:
+> "The employee gets an AI assistant. The bank's security team gets this:
+> every laptop, everything hidden, every request that reached the AI — all
+> redacted — and one switch." Flip **Employees approve every request**, run
+> the KYC task again, and the panel stops to show exactly what it's about to
+> send. "That's who pays for Shield." Flip it back afterwards.
 
 **4:00–4:40. Safety (execution).** Say it, don't demo it:
 > "Three guards stop raw data leaving, and the last one searches every
-> message before it's sent. The AI can only click, type or scroll. And
-> approve, pay and submit are final: Shield does one, then a person has to
-> ask again. Our first version approved four customers in a row during
-> testing. We found it, fixed it, and wrote a test so it can't come back."
+> message before it's sent. The AI can only click, type or scroll. Approve,
+> pay and submit are final: Shield does one, then a person has to ask again.
+> And the AI has to show its working: before it may click a row, it must
+> quote the words in that row that meet the task, and our server checks them.
+> When the right employee was scrolled out of view, the AI tried to release
+> the wrong one's salary. The check refused it every time."
 
-**4:40–5:00. Numbers, then stop.** *"About 135 milliseconds on the device.
-586 automated checks. 92 of every 100 private items found on our 50-page
+**4:40–5:00. Numbers, then stop.** *"About 135 milliseconds of our own work
+on the device, before the AI replies.
+636 automated checks. 92 of every 100 private items found on our 50-page
 benchmark."*
 
 **Backup if Gemini or the wifi fails:** run **Scan** on the KYC console
@@ -178,6 +190,7 @@ play the backup video for the action.
 | Page | Task | What to point at |
 |---|---|---|
 | `08-college-admissions.html` | Shortlist the highest-ranked applicant whose documents are complete and fee is paid. | It skips ranks 1 and 2 (marksheet missing, fee pending) and picks rank 3 |
+| the-internet.herokuapp.com/tables | Delete the row for the person whose website is http://www.timconway.com | Names and emails hidden by their column headers; it picks the right row |
 | ParaBank **Register**, fake details, **new username every time** | create this account | The SSN, address and phone are hidden, and it clicks Register |
 | `test-screens/05-adversarial.html` | Scan | Seven of eight tricks caught. Point at the one we miss |
 
@@ -197,6 +210,42 @@ Hindi), but the microphone wouldn't start on the demo laptop. If asked:
 
 **Never use a real account or a real password on stage.** The screen is
 projected.
+
+### Final round: what changed after round 2
+
+- **Tables fit the screen the Shield panel leaves** (about 1000 pixels on a
+  1366 projector): decision buttons and ID cards stay on screen. Browser zoom
+  100%.
+- **The side panels open on a customer who is *not* the answer** (KYC-2046,
+  EMP-0412). If asked whether the page tells the AI what to pick: *"No. The
+  document panel is open on a different application. The AI has to find the
+  right one in the queue, and quote the row's own words to prove it."*
+- **The panel shows the run as it happens** and ends with the result in a
+  green box. **While the AI decides, the page shows what the AI sees**:
+  black labels over every private value.
+- **Two AI models, then the rules.** If the first is slow or wrong, the
+  second is asked (`/health` shows `backup_model`). Tonight's slow spell
+  (7–9 s a step) would now cost a few seconds, not the demo.
+- **The four workplaces look different**: a bank console, an admissions
+  portal of cards, a tabbed HR product, a support inbox.
+
+**Answers judges may push on:**
+
+- *"It depends on Google's AI."* "For choosing the next click, yes, and it
+  has a backup model and then safe rules. Shield works with any model that
+  speaks the standard API, including one the bank runs itself, and the private
+  data never reaches whichever model it is."
+- *"These are pages you built."* "Four are, so we could use realistic data
+  without touching real customers. Three aren't: ParaBank, OrangeHRM — real HR
+  software — and a public data table. Running on those taught our detector
+  four new things tonight. Or name any site and we'll Scan it."
+- *"Is there an admin console?"* "Yes" — open the dashboard. "Counts only:
+  no page content, no field values, no web addresses. The server refuses any
+  report carrying anything else."
+- *"What if the AI just picks the wrong row?"* "It has to quote that row's
+  words, and the server checks them against the page. A wrong row, a word
+  that isn't there, or a status like 'pending' the task didn't ask for, and
+  the click is refused."
 
 ### After each run, open "What was sent?"
 
@@ -229,8 +278,8 @@ This is the proof, so never skip it. Point at three things:
 1. **The whole local part takes about 135 milliseconds** — roughly a seventh
    of a second. Screenshot, reading the page, running the AI model, and hiding
    the private stuff, all together.
-2. **91.8% recall** — out of 100 private things on a page, we find about 92.
-   **83.4% precision** — when we flag something, we're right about 5 times out
+2. **92.4% recall** — out of 100 private things on a page, we find about 92.
+   **83.5% precision** — when we flag something, we're right about 5 times out
    of 6.
 3. **It also runs fully offline.** No internet, no cloud AI — a local model on
    the same laptop still gets the job done, just slower (about 22 seconds
@@ -264,7 +313,7 @@ This is the proof, so never skip it. Point at three things:
 > "The local part takes about 135 milliseconds. It uses the graphics chip if
 > the browser has WebGPU, and falls back to the normal processor if not."
 
-**"What does 91.8% recall actually mean for a user?"**
+**"What does 92.4% recall actually mean for a user?"**
 > "Out of 100 private things, we find about 92. We also have three guards
 > behind that. The last one searches the whole message for anything we
 > flagged, and refuses to send if it finds one."

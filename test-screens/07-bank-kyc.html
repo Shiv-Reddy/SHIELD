@@ -58,7 +58,7 @@
       .topbar .search { margin-left: 24px; flex: 0 1 320px; padding: 6px 10px; border-radius: 6px; background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); font-size: 12px; }
       .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
 
-      .shell { display: grid; grid-template-columns: 188px 1fr 290px; min-height: calc(100vh - 46px); }
+      .shell { display: grid; grid-template-columns: 172px 1fr 270px; min-height: calc(100vh - 46px); }
 
       nav.side { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; }
       nav.side a { display: flex; justify-content: space-between; padding: 7px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; font-size: 12.5px; }
@@ -80,13 +80,15 @@
       .tabs span { padding: 4px 10px; border-radius: 99px; color: var(--muted); font-size: 12px; }
       .tabs span.on { background: var(--ink); color: #fff; }
 
-      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
       table { width: 100%; border-collapse: collapse; }
       th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafcfb; padding: 7px 7px; border-bottom: 1px solid var(--line); white-space: nowrap; }
       td { padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
       tr:last-child td { border-bottom: 0; }
       td.ref { font-weight: 600; }
       td.mono { font-variant-numeric: tabular-nums; }
+      td span.line { display: block; }
+      td span.sub { display: block; color: var(--muted); font-size: 11.5px; }
 
       .chip { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 600; }
       .chip.ok { background: var(--ok-soft); color: var(--ok); }
@@ -113,12 +115,42 @@
       aside img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 6px; }
       .checks { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
       .checks li::before { content: '✓ '; color: var(--ok); font-weight: 700; }
+      .checks li.fail::before { content: '✗ '; color: var(--bad); }
 
       .foot { margin-top: 8px; color: var(--faint); font-size: 11px; }
 
       #toast[hidden] { display: none; }
       #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; text-align: center; box-shadow: 0 6px 24px rgba(15,122,79,.35); z-index: 10; }
       #toast.bad { background: var(--bad); box-shadow: 0 6px 24px rgba(180,35,24,.35); }
+
+      /*
+        With the Shield side panel open, a 1366-pixel projector leaves the page
+        about 1000 pixels. The menu and the counters go, the document panel
+        becomes a strip across the top (its ID cards still on screen, which is
+        what the whole-card blackout needs), and the queue gets the width, so
+        the Risk column and the decision buttons stay in view.
+      */
+      @media (max-width: 1250px) {
+        .shell { grid-template-columns: 1fr; }
+        nav.side, .kpis, .tabs, .topbar .search { display: none; }
+        aside.detail {
+          order: -1;
+          display: grid;
+          grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+          gap: 4px 14px;
+          align-items: start;
+          border-left: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 10px 16px;
+        }
+        aside.detail h3, aside.detail .sub, aside.detail dl, aside.detail .checks { grid-column: 1; }
+        aside.detail dl { margin-bottom: 6px; }
+        aside.detail figure { grid-row: 1 / span 4; margin: 0; }
+        aside.detail figure:nth-of-type(1) { grid-column: 2; }
+        aside.detail figure:nth-of-type(2) { grid-column: 3; }
+        aside.detail img { max-height: 118px; width: auto; max-width: 100%; }
+        td { padding: 5px 7px; }
+      }
     </style>
   </head>
   <body>
@@ -164,8 +196,8 @@
           <table>
             <thead>
               <tr>
-                <th>Application</th><th>Customer</th><th>Aadhaar</th><th>PAN</th><th>Account no.</th>
-                <th>Mobile</th><th>Deposit</th><th>Channel</th><th>Documents</th><th>Risk</th><th>Decision</th>
+                <th>Application</th><th>Customer</th><th>Aadhaar · PAN</th><th>Account · Deposit</th>
+                <th>Documents</th><th>Risk</th><th>Decision</th>
               </tr>
             </thead>
             <tbody id="queue"></tbody>
@@ -181,8 +213,8 @@
         page markup cannot describe, which only the on-device OCR can find.
       -->
       <aside class="detail">
-        <h3>Documents on file: KYC-2043</h3>
-        <p class="sub">Submitted today, 09:12 · Mobile app</p>
+        <h3>Documents on file: KYC-2046</h3>
+        <p class="sub">Opened by you at 09:40 · Branch</p>
         <dl>
           <dt>Email</dt><dd>rahul.sharma@example.com</dd>
           <dt>Branch</dt><dd>0142</dd>
@@ -199,7 +231,7 @@
         <ul class="checks">
           <li>Aadhaar OTP verified</li>
           <li>PAN matches name</li>
-          <li>Sanctions screening clear</li>
+          <li class="fail">Address proof expired (utility bill from 2023)</li>
         </ul>
       </aside>
     </div>
@@ -209,10 +241,10 @@
       const rows = [
         ['KYC-2041', 'Priya Nair', '4821 7730 5196', 'BQKPN4471C', '50100482917734', '+91 98110 22418', '₹25,000', 'Mobile app', ['bad', 'PAN missing'], ['ok', 'Low']],
         ['KYC-2042', 'Vikram Rathore', '7390 2146 8805', 'CRXPR8820K', '50100519264408', '+91 99300 81442', '₹9,80,000', 'Branch', ['ok', 'All documents verified'], ['bad', 'High']],
-        ['KYC-2043', 'Rahul Sharma', '2345 6789 0124', 'ABCDE1234F', '50100633108152', '+91 98200 45817', '₹40,000', 'Mobile app', ['ok', 'All documents verified'], ['ok', 'Low']],
+        ['KYC-2043', 'Kavya Reddy', '3981 5502 7714', 'GHKPR7720L', '50100633108152', '+91 98450 66301', '₹40,000', 'Mobile app', ['ok', 'All documents verified'], ['ok', 'Low']],
         ['KYC-2044', 'Sneha Iyer', '6604 9912 3378', 'DLMPI2093Q', '50100702563391', '+91 90040 17735', '₹15,500', 'Mobile app', ['bad', 'Photo does not match Aadhaar'], ['ok', 'Low']],
         ['KYC-2045', 'Arjun Mehta', '5127 4480 2269', 'EFGPM5561R', '50100811470025', '+91 97690 53120', '₹1,20,000', 'Partner', ['warn', 'Video KYC pending'], ['warn', 'Medium']],
-        ['KYC-2046', 'Kavya Reddy', '3981 5502 7714', 'GHKPR7720L', '50100928813306', '+91 98450 66301', '₹60,000', 'Branch', ['warn', 'Address proof expired'], ['ok', 'Low']],
+        ['KYC-2046', 'Rahul Sharma', '2345 6789 0124', 'ABCDE1234F', '50100928813306', '+91 98200 45817', '₹60,000', 'Branch', ['warn', 'Address proof expired'], ['ok', 'Low']],
         ['KYC-2047', 'Aditya Joshi', '8862 1047 3395', 'JKLPJ3348M', '50101044572219', '+91 91670 38854', '₹5,000', 'Mobile app', ['info', 'Signature pending'], ['ok', 'Low']],
         ['KYC-2048', 'Pooja Verma', '4470 9361 2208', 'MNOPV9912N', '50101158820473', '+91 93240 71196', '₹2,40,000', 'Mobile app', ['bad', 'Name mismatch on PAN'], ['warn', 'Medium']],
         ['KYC-2049', 'Karan Malhotra', '7215 6608 4471', 'PQRPM4405S', '50101263394810', '+91 98999 20437', '₹14,50,000', 'Branch', ['ok', 'All documents verified'], ['warn', 'Medium']],
@@ -223,10 +255,21 @@
       for (const [ref, name, aadhaar, pan, account, mobile, deposit, channel, docs, risk] of rows) {
         const tr = document.createElement('tr');
         tr.dataset.app = ref;
-        const cell = (content, className) => {
+        // Two values to a cell, one per line: the table fits a 1366-pixel
+        // projector with Risk and the decision buttons still on screen.
+        const cell = (content, className, sub) => {
           const td = document.createElement('td');
           if (className) td.className = className;
-          td.textContent = content;
+          const main = document.createElement('span');
+          main.className = 'line';
+          main.textContent = content;
+          td.append(main);
+          if (sub) {
+            const second = document.createElement('span');
+            second.className = 'sub';
+            second.textContent = sub;
+            td.append(second);
+          }
           tr.append(td);
         };
         const chip = ([tone, label]) => {
@@ -237,14 +280,10 @@
           td.append(span);
           tr.append(td);
         };
-        cell(ref, 'ref');
-        cell(name);
-        cell(aadhaar, 'mono');
-        cell(pan, 'mono');
-        cell(account, 'mono');
-        cell(mobile, 'mono');
-        cell(deposit, 'mono');
-        cell(channel);
+        cell(ref, 'ref', channel);
+        cell(name, '', mobile);
+        cell(aadhaar, 'mono', pan);
+        cell(account, 'mono', deposit);
         chip(docs);
         chip(risk);
         const decision = document.createElement('td');

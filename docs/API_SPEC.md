@@ -34,6 +34,7 @@ returns a structured action.
       "label": "string or null",
       "value": "string or placeholder token (e.g. '[PASSWORD]') — never a raw sensitive value",
       "filled": "boolean — whether the field held content at capture time",
+      "row": "optional integer — which table row, list item or card the element sits in, numbered in page order",
       "position": { "x": 0, "y": 0, "width": 0, "height": 0 }
     }
   ],
@@ -56,6 +57,18 @@ empty, because the token says what belongs there rather than what is there.
 `filled` restores the distinction the assistant needs — "this field still needs
 filling" and "this form is ready to submit" require different actions and are
 otherwise indistinguishable. Emptiness discloses nothing about content.
+
+**Note on `row`:** added 2026-09-26. A flat list of elements loses the row
+structure a person sees, and the model matched a status in one row to a button
+in another. `row` is a number, never text. Elements arrive in page order.
+
+**Evidence for a click in a row.** The model's reply to a click on an element
+that has a `row` must carry `evidence`: the elements from that same row whose
+words show each condition of the task is met, quoted. The server refuses the
+action if any cited element is in another row, does not contain the quoted
+words, or shows a failed status ("pending", "missing", "on hold") the task did
+not ask for. The refused request then goes to the backup model, then the rules.
+`evidence` never reaches the client; it is checked and dropped.
 
 **Note on `other`:** a region Shield judged sensitive without identifying what
 kind of data it holds — a field carrying content that no detection rule
@@ -103,8 +116,21 @@ The server should treat `other` exactly as it treats the named categories.
 
 **Response:**
 ```json
-{ "status": "ok", "model_backend": "string identifying current reasoning model" }
+{ "status": "ok", "version": "0.1.0", "reasoner": "model | rules", "model_configured": true,
+  "vision": "on | off | refused", "backup_model": "model name, or none", "prompt_version": "1.7.0" }
 ```
+
+## 4.1 The organisation dashboard — counts only
+
+Added 2026-09-26 (DECISIONS.md 299). Served by the same backend.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /fleet/report` | A laptop's whole audit history as counts: `device_id`, `device_name`, `team`, and `entries` of `at`, `kind`, `examined`, `transmitted`, `counts`, `total`, `durationMs`. Any other field refuses the whole report (422). Replaces that laptop's previous report, so repeats never double-count. Returns the current policy. |
+| `GET /fleet/summary` | Totals, laptops, categories and the last seven days, for the dashboard. |
+| `GET /fleet/policy` | `{ "requireConsent": bool, "updatedAt": ms or null }`. Laptops read it before sending; it can only add the approval step, never remove one. |
+| `POST /fleet/policy` | Sets it. Requires the `x-admin-token` header when `SHIELD_ADMIN_TOKEN` is set. |
+| `GET /admin` | The dashboard page. |
 
 ## 5. The only actions allowed
 

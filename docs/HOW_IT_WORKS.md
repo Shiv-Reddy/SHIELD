@@ -149,8 +149,8 @@ written down *before* we ran it.
 
 | Number | What it means |
 |---|---|
-| **91.8% recall** | Out of 100 private things, it finds about 92 |
-| **83.4% precision** | When it flags something, it is right about 5 times out of 6 |
+| **92.4% recall** | Out of 100 private things, it finds about 92 |
+| **83.5% precision** | When it flags something, it is right about 5 times out of 6 |
 | **83.8% redaction precision** | Of the area it covers, most of it needed covering |
 | **96.5% context kept** | It hides private parts and leaves the rest of the page readable |
 | **~135ms** | The local part takes about a seventh of a second |

@@ -34,11 +34,12 @@ import { Group, KeyButton, Row } from './components/Sheet';
 import { Voice } from './components/Voice';
 
 const VOICE_ENABLED = false;
-import { ArrowUpIcon, ClockIcon, OpenIcon, ReceiptIcon, ReportIcon, StopIcon } from './components/Mark';
+import { ArrowUpIcon, OpenIcon, ReceiptIcon, ReportIcon, StopIcon } from './components/Mark';
 import { ScanRows } from './components/ScanCard';
 import { Redactions, type Redaction } from './components/Redactions';
 import { AskFirstSwitch, MarkRows } from './components/Protect';
 import { Audit } from './components/Audit';
+import { Activity } from './components/Activity';
 import { Totals } from './components/Totals';
 import { Consent } from './components/Consent';
 import type { ConsentRequest } from '../lib/consent';
@@ -136,9 +137,9 @@ export function App() {
   }, []);
 
   const running = isRunning(state.status);
-  const hidden = summariseScan(state);
+  const hidden = summariseHidden(state);
   const totalHidden = hidden.reduce((sum, item) => sum + item.count, 0);
-  const measuredMs = state.timings.reduce((sum, timing) => sum + timing.durationMs, 0);
+  const fromRun = !state.scan && state.runHidden !== null;
 
   // One entry point for typed and spoken tasks, so a voice run is the same run.
   const start = useCallback((query: string) => {
@@ -222,8 +223,9 @@ export function App() {
         */}
         {consent ? <Consent request={consent} onDecided={() => setConsent(null)} /> : null}
 
-        {state.errorMessage || problem ? (
-          <Notice tone="alarm">{state.errorMessage ?? problem}</Notice>
+        {/* A run's own failure is already the last line of its feed. */}
+        {(state.errorMessage && state.activity.length === 0) || problem ? (
+          <Notice tone="alarm">{problem ?? state.errorMessage}</Notice>
         ) : null}
 
         {/*
@@ -236,6 +238,13 @@ export function App() {
           <Notice tone="warn">
             Graphics acceleration isn't available, so Shield is running on the CPU. Everything
             still works, just more slowly.
+          </Notice>
+        ) : null}
+
+        {state.orgRequiresConsent ? (
+          <Notice tone="warn">
+            Your organisation requires you to approve each request before it is sent. Shield
+            will show you exactly what is about to go.
           </Notice>
         ) : null}
 
@@ -252,6 +261,8 @@ export function App() {
           </Notice>
         ) : null}
 
+        <Activity state={state} />
+
         <section aria-labelledby="hero-title">
           <div className="flex items-baseline justify-between gap-3">
             <h1
@@ -259,7 +270,13 @@ export function App() {
               className="text-bright text-[17px] leading-tight font-semibold"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              {hidden.length > 0 ? 'Hidden on this page' : 'Nothing hidden yet'}
+              {hidden.length > 0
+                ? fromRun
+                  ? 'Hidden before the AI saw this screen'
+                  : 'Hidden on this page'
+                : fromRun
+                  ? 'Nothing private on this screen'
+                  : 'Nothing hidden yet'}
             </h1>
             {hidden.length > 0 ? (
               <span className="text-faint shrink-0 text-[12.5px] tabular-nums">
@@ -272,7 +289,7 @@ export function App() {
             <div className="mt-4">
               <Redactions items={hidden} />
             </div>
-          ) : (
+          ) : fromRun ? null : (
             <p className="text-dim mt-2 text-[13px] leading-relaxed">
               Shield reads this page on your device and covers anything private before the
               assistant sees it. Nothing private leaves your computer.
@@ -289,8 +306,16 @@ export function App() {
             </p>
           ) : null}
 
-          {state.coverage ? (
-            <p className="text-faint mt-2 text-[12px] leading-snug">{state.coverage.message}</p>
+          {/*
+            A run reads the screen in front of it, which is the honest limit of
+            what it sends. Said as what to do next, not as what was missed: the
+            full wording read like a failure to everyone who was not us.
+          */}
+          {state.coverage?.partial && !scan ? (
+            <p className="text-faint mt-3 text-[12px] leading-snug">
+              Shield checks the part of the page on screen, which is all the AI is sent. To
+              check the rest too, use Scan the whole page.
+            </p>
           ) : null}
         </section>
 
@@ -311,14 +336,6 @@ export function App() {
             detail={state.timings.length > 0 ? 'Last run' : 'Nothing yet'}
             trailing={<OpenIcon className="size-3.5" />}
             onClick={() => void chrome.tabs.create({ url: 'sent/sent.html' })}
-          />
-          <Row
-            icon={<ClockIcon className="size-4" />}
-            title="Where the time went"
-            detail={state.timings.length > 0 ? `${measuredMs.toFixed(0)} ms` : undefined}
-            trailing={<OpenIcon className="size-3.5" />}
-            onClick={() => void chrome.tabs.create({ url: 'sent/sent.html#timing' })}
-            disabled={state.timings.length === 0}
           />
           <Audit />
           <Row
@@ -405,17 +422,14 @@ export function App() {
 }
 
 /**
- * What to draw bars for.
- *
- * The scan's category counts, because that is the only per-category tally the
- * panel receives — a run reports timings and coverage but not a breakdown.
- * When a run has happened and no scan has, there is nothing to draw, and a
- * single undifferentiated bar for "some things were hidden" would be exactly
- * the decorative rectangle the bars exist not to be.
+ * What to draw bars for: the whole-page scan when there is one, otherwise the
+ * latest step of a run. Counts per category only, never a value.
  */
-function summariseScan(state: ShieldState): Redaction[] {
-  if (!state.scan) return [];
-  return state.scan.counts
+function summariseHidden(state: ShieldState): Redaction[] {
+  // A scan covers the whole page, so it is the wider claim and wins; without
+  // one, the latest step of a run is what the AI was kept from.
+  const counts = state.scan?.counts ?? state.runHidden ?? [];
+  return counts
     .filter((entry) => entry.count > 0)
     .map((entry) => ({ category: entry.category as string, count: entry.count }))
     .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));

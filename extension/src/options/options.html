@@ -75,6 +75,32 @@
       </section>
 
       <section class="card">
+        <h2>Your organisation</h2>
+        <p class="lede">
+          This laptop can report its counts to your organisation's dashboard on
+          the same server: how many items of each kind were hidden, and whether
+          anything was sent. Never page content, field values or web addresses.
+        </p>
+
+        <label class="field">
+          <span>This laptop's name on the dashboard</span>
+          <input type="text" id="fleet-name" maxlength="40" spellcheck="false" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Team</span>
+          <input type="text" id="fleet-team" maxlength="40" spellcheck="false" autocomplete="off" />
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="fleet-sharing" />
+          <span>
+            <strong>Report counts to the dashboard</strong>
+            Counts only. Turned off, nothing is reported.
+          </span>
+        </label>
+        <p class="note"><a id="fleet-open" href="#" target="_blank" rel="noreferrer">Open the organisation dashboard</a></p>
+      </section>
+
+      <section class="card">
         <h2>What runs, and where</h2>
         <p class="lede">
           Shield prefers your graphics hardware and falls back to the CPU on its

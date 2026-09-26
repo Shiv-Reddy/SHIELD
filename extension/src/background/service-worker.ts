@@ -13,6 +13,7 @@
  */
 
 import { isFinalClick } from '../lib/committing';
+import { capitalise, describeAction, describeHidden, pastTense } from '../lib/activity';
 import { captureViewport } from './capture';
 import {
   ensureVisionHost,
@@ -73,7 +74,8 @@ import {
 } from '../lib/consent';
 import { applyConsentDecision, askForConsent, cancelConsent } from './consent-gate';
 import { recordTransmission } from '../lib/redaction/evidence';
-import { buildAuditEntry, recordAudit } from '../lib/audit';
+import { AUDIT_STORAGE_KEY, buildAuditEntry, readAudit, recordAudit } from '../lib/audit';
+import { buildFleetReport, fleetBase, policyFrom, readFleetIdentity } from '../lib/fleet';
 import {
   clearScanProof,
   recordScanProof,
@@ -98,6 +100,7 @@ import {
   STAGE_ORDER,
   STATUS_LABEL,
   stageIndex,
+  type ActivityEntry,
   type PipelineStage,
   type ShieldState,
   type ShieldStatus,
@@ -162,8 +165,90 @@ function fail(message: string): void {
   // Every failure surfaces to the user with a specific reason. PRD.md Section 20
   // requires no silent failures and no generic "something went wrong".
   console.error('[shield]', message);
-  setStatus('error', message);
+  if (state.tabId !== null) void sendToTab(state.tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
+  setState({ status: 'error', errorMessage: message, outcome: `Couldn't finish. ${message}` });
 }
+
+// --- Organisation view ------------------------------------------------------
+
+/**
+ * The organisation's policy, as last read, and when.
+ *
+ * Cached for a few seconds so a five-step run asks the server once, not five
+ * times; short enough that an administrator flipping the switch sees the next
+ * run obey it.
+ */
+let orgPolicyAt = 0;
+let orgPolicyConsent = false;
+const ORG_POLICY_TTL_MS = 5000;
+
+async function orgRequiresConsent(endpoint: string): Promise<boolean> {
+  if (Date.now() - orgPolicyAt < ORG_POLICY_TTL_MS) return orgPolicyConsent;
+  try {
+    const response = await fetch(`${fleetBase(endpoint)}/fleet/policy`, {
+      signal: AbortSignal.timeout(1500),
+    });
+    const policy = response.ok ? policyFrom(await response.json()) : null;
+    orgPolicyConsent = policy?.requireConsent === true;
+  } catch {
+    // No dashboard is a normal set-up, not a failure: the laptop's own
+    // setting still applies. The policy can only ever add a question, so an
+    // unreachable server fails towards the laptop's choice, not past it.
+    orgPolicyConsent = false;
+  }
+  orgPolicyAt = Date.now();
+  if (state.orgRequiresConsent !== orgPolicyConsent) {
+    setState({ orgRequiresConsent: orgPolicyConsent });
+  }
+  return orgPolicyConsent;
+}
+
+let reportTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Send this laptop's counts to the dashboard, a moment after they change. */
+function scheduleOrgReport(): void {
+  if (reportTimer !== null) clearTimeout(reportTimer);
+  reportTimer = setTimeout(() => {
+    reportTimer = null;
+    void reportToOrg();
+  }, 1200);
+}
+
+async function reportToOrg(): Promise<void> {
+  try {
+    const identity = await readFleetIdentity();
+    if (!identity.sharing) return;
+    const { endpoint } = await readSettings();
+    const report = buildFleetReport(identity, await readAudit());
+    const response = await fetch(`${fleetBase(endpoint)}/fleet/report`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(report),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (response.ok) {
+      const policy = policyFrom(((await response.json()) as { policy?: unknown }).policy);
+      orgPolicyConsent = policy?.requireConsent === true;
+      orgPolicyAt = Date.now();
+      if (state.orgRequiresConsent !== orgPolicyConsent) {
+        setState({ orgRequiresConsent: orgPolicyConsent });
+      }
+    }
+  } catch {
+    // The dashboard is a view, not a dependency. A laptop with no server to
+    // report to carries on exactly as before.
+  }
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && AUDIT_STORAGE_KEY in changes) scheduleOrgReport();
+});
+
+/** Add a line to the panel's run feed. The newest thirty are kept. */
+function note(kind: ActivityEntry['kind'], text: string): void {
+  setState({ activity: [...state.activity, { at: Date.now(), kind, text }].slice(-30) });
+}
+
 
 // --- Pipeline ordering guard ------------------------------------------------
 
@@ -193,6 +278,9 @@ function beginRun(taskQuery: string, tabId: number): void {
     scan: null,
     scanProgress: null,
     coverage: null,
+    activity: [],
+    runHidden: null,
+    outcome: null,
   });
 }
 
@@ -727,6 +815,8 @@ interface StepOutcome {
    * necessary.
    */
   final?: boolean;
+  /** The action in words, from the redacted view, for the panel's feed. */
+  described?: string;
 }
 
 /** What an action does and to what, ignoring anything incidental. */
@@ -967,6 +1057,19 @@ async function runStep(
     snapshot.sensitiveRegions = regions;
     logDetections(regions, snapshot.elements);
 
+    const hiddenCounts = buildAuditEntry(regions, {
+      kind: 'run',
+      examined: 'viewport',
+      transmitted: false,
+    }).counts;
+    setState({ runHidden: hiddenCounts });
+    note(
+      'hide',
+      regions.length === 0
+        ? `Step ${state.step}: read the page. Nothing private on screen.`
+        : `Step ${state.step}: hid ${regions.length} private item${regions.length === 1 ? '' : 's'} on this laptop — ${describeHidden(hiddenCounts)}.`,
+    );
+
     // Show the user what was found, on the page, before it is sent anywhere.
     // PRD.md FR-24: everything protective happens where they cannot see it, so
     // this is the only part of the pipeline that makes the claim checkable
@@ -1094,7 +1197,8 @@ async function runStep(
      * (DECISIONS.md 240). This adds a decision, not a protection, which is why
      * it is off by default and why a run with it off is not weaker.
      */
-    if (settings.requireConsent) {
+    // The organisation's policy can add the question; it can never remove it.
+    if (settings.requireConsent || (await orgRequiresConsent(endpoint))) {
       setStatus('awaiting-consent');
 
       const decision = await askForConsent(
@@ -1135,6 +1239,12 @@ async function runStep(
     // enforcement: it accepts a sealed payload and nothing else, so there is no
     // expressible way to reach the network carrying raw page data.
     setStatus('sending');
+    note(
+      'send',
+      state.step === 1
+        ? 'Sent the safe version to the AI: labels like [NAME] in place of every value.'
+        : 'Sent the safe version of the new screen.',
+    );
 
     // Recorded before the request, not after. If the server is unreachable the
     // question "what did Shield send?" still has an answer, and a failed request
@@ -1178,6 +1288,7 @@ async function runStep(
     }
 
     const signature = actionSignature(response.action);
+    const described = describeAction(response.action, redactedDom);
 
     // Refuse a repeat before performing it, not after.
     //
@@ -1223,11 +1334,13 @@ async function runStep(
     }
 
     // Stage 5 — Action execution (Module E).
+    note('decide', `AI chose to ${described}.`);
     setStatus('acting');
     const executed = await executeOnPage(tabId, response.action, snapshot);
     markStageComplete('acting');
 
     if (!executed.ok) throw new Error(executed.message);
+    note('act', `Done on the page: ${pastTense(described)}.`);
 
     console.info(`[shield] acted: ${response.action.type} — ${executed.message}`);
     const target = snapshot.elements.find(
@@ -1242,6 +1355,7 @@ async function runStep(
       repeated: false,
       superseded: false,
       final: isFinalClick(response.action, target),
+      described: pastTense(described),
     };
   } finally {
     // Drop the reference to the raw screenshot as soon as the step is over,
@@ -1575,6 +1689,15 @@ async function runTask(taskQuery: string): Promise<void> {
 
     let actions = 0;
     let lastSignature: string | null = null;
+    let lastDone: string | null = null;
+
+    // The result line above the feed. Not repeated as a feed line: the same
+    // sentence twice in one panel reads as a glitch.
+    const finish = (_kind: 'done' | 'stop', outcome: string): void => {
+      // The AI view is solid black, so it cannot outlive the run it explains.
+      void sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
+      setState({ status: 'done', errorMessage: null, outcome });
+    };
 
     for (let step = 1; step <= MAX_STEPS; step += 1) {
       setState({ step });
@@ -1606,7 +1729,12 @@ async function runTask(taskQuery: string): Promise<void> {
         // simply looks the same, or it cannot progress — and those are
         // indistinguishable from here. Stopping is right under both readings;
         // repeating is wrong under both.
-        setStatus('done');
+        finish(
+          'stop',
+          lastDone
+            ? `${capitalise(lastDone)}. The AI then asked to repeat it, so Shield stopped.`
+            : 'Stopped: the AI asked to repeat the same step.',
+        );
         console.info(
           `[shield] stopped after ${actions} action(s): the assistant repeated ` +
             'the same action, so there was no further progress to make.',
@@ -1620,26 +1748,38 @@ async function runTask(taskQuery: string): Promise<void> {
           // finished run rather than an error: the assistant declining is a
           // legitimate answer, and calling it a failure would train people to
           // ignore real failures.
-          setStatus('done');
+          finish(
+            'stop',
+            outcome.summary
+              ? `Nothing done. ${outcome.summary}`
+              : 'Nothing done: the AI found no step to take on this screen.',
+          );
           console.info(
             `[shield] finished without acting — ${outcome.summary ?? 'no action proposed'}`,
           );
           return;
         }
 
-        setStatus('done');
+        finish(
+          'done',
+          `Finished in ${actions} step${actions === 1 ? '' : 's'}${lastDone ? `. Last: ${lastDone}` : ''}.`,
+        );
         console.info(`[shield] task complete after ${actions} action(s)`);
         return;
       }
 
       actions += 1;
       lastSignature = outcome.signature;
+      lastDone = outcome.described ?? lastDone;
 
       if (outcome.final) {
         // One commitment per request. The screen after an approval shows more
         // things that could be approved, and a stateless reasoner cannot tell
         // "done" from "next".
-        setStatus('done');
+        finish(
+          'done',
+          `${capitalise(lastDone ?? 'finished the task')}, then stopped. Each decision like this needs its own request.`,
+        );
         console.info(
           `[shield] task complete after ${actions} action(s): the last one was final ` +
             '(approve, pay, submit or similar), so Shield stopped there.',
@@ -1702,11 +1842,12 @@ async function ensureCpuFallbackProved(): Promise<void> {
 }
 
 function cancelTask(): void {
+  if (state.tabId !== null) void sendToTab(state.tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
   completedStages = new Set();
   // Any scan in flight belongs to a token that is now stale, so its loop stops
   // at the next stop boundary and puts the page back where it found it.
   scanToken += 1;
-  setState({ ...INITIAL_STATE });
+  setState({ ...INITIAL_STATE, orgRequiresConsent: state.orgRequiresConsent });
 }
 
 // --- Whole-page scan --------------------------------------------------------
@@ -1773,6 +1914,7 @@ async function scanPage(): Promise<void> {
 
     setState({
       ...INITIAL_STATE,
+      orgRequiresConsent: state.orgRequiresConsent,
       status: 'scanning',
       tabId,
       scanProgress: { stop: 0, total: 0 },
@@ -2287,6 +2429,11 @@ chrome.runtime.onMessage.addListener((message: PopupMessage, _sender, sendRespon
       // The popup is open, so a run is likely moments away. Start the inference
       // host now and let it warm while the user types. Errors are swallowed:
       // this is purely an optimisation and must never block a run.
+      scheduleOrgReport();
+      void readSettings().then(({ endpoint }) => {
+        orgPolicyAt = 0;
+        return orgRequiresConsent(endpoint);
+      });
       void ensureVisionHost()
         .then(readSettings)
         .then(({ forceBackend, forceInferenceHost }) =>

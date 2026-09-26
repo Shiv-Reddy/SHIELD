@@ -80,10 +80,11 @@ export function Totals() {
 
   return (
     <div title="Counted from your history. Nothing here is estimated.">
+      <p className="text-faint mt-0 mb-2 text-[11.5px] leading-none">On this laptop so far</p>
       <dl className="m-0 grid grid-cols-3 gap-3">
         <Tile value={totals?.hidden ?? null} label="items hidden" />
-        <Tile value={totals?.passes ?? null} label="runs and scans" />
-        <Tile value={totals?.sent ?? null} label="sent, redacted" />
+        <Tile value={totals?.passes ?? null} label="tasks and scans" />
+        <Tile value={totals?.sent ?? null} label="sent to AI, hidden first" />
       </dl>
       {note ? <p className="text-faint mt-2 mb-0 text-[11.5px] leading-snug">{note}</p> : null}
     </div>

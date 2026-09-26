@@ -682,3 +682,32 @@ claim.
 **Blockers:** voice does not start on the demo laptop (290). BENCHMARK.md predates the address rule and was not regenerated.
 
 **Next session starts with:** regenerate BENCHMARK.md and check the figures quoted in the docs still hold; then find the voice failure from the error the listening window reports.
+
+## 2026-09-26 — Before the final round
+
+**Done.** A full UI/UX review of the panel, the four workplace pages, "What was sent" and the compliance report, at projector size, found 25 problems; the buildable ones are fixed.
+- The panel shows the run as it happens: a feed of what was hidden, what was sent, what the AI chose and what was done, the result in one line, and the counts for the run instead of "Nothing hidden yet" (DECISIONS 293). Plain status words; the broken "Where the time went" row is gone; the coverage note says what to do instead of what was missed.
+- While the AI decides, the page shows what the AI sees: solid black labels over each hidden value, with a banner. Drawn after capture, removed before any action and at the end of every run. **Contradicts the run-overlay look in DECISIONS 997 and waits on the team's approval.**
+- KYC, admissions and payroll tables fit 1366 pixels with the decision buttons visible; the document panels open on non-answer rows; payroll has its own fictional PAN card (294). Gemini picked the right row every time on the new layouts (KYC 4/4, admissions 3/3, payroll 3/3).
+- "What was sent" and the scan record are light (295); the report's category bars draw (the fill was an inline span); timing labelled as on-device work (296).
+- BENCHMARK.md regenerated: recall 92.4% (was 91.8%), precision 83.5%. Docs quoting the old figures updated.
+- Tests: client 448 passing, server 84 + 60 checks passing.
+
+**Blockers.** Gemini answered in 7–9 seconds a step around midnight, past the 8-second timeout, so every call fell back to rules. Timeout raised to 20 in the local `.env` only and the backend restarted; `.env.example` keeps 5 (DECISIONS 270) until the team decides.
+
+**Next session starts with:** the team's answer on the solid AI-view overlay, then a real-browser pass of all four workplaces and ParaBank, then the backup video.
+
+## 2026-09-26 (later) — The four that could not be fixed in code, fixed
+
+**Done.**
+- **Gemini dependency (#20):** a backup model before the rules (DECISIONS 297, 302). Main `gemini-3.5-flash-lite`, backup `gemini-3.1-flash-lite`; a timeout goes straight to the backup. Proved by pointing the main model at a name that does not exist: the backup answered correctly in 2.3 s.
+- **Central admin view (#23):** `/admin` on the backend, fed by `/fleet/report` — counts only, any other field refuses the report — with one policy switch every laptop obeys (DECISIONS 299). Settings has laptop name, team and a reporting switch; the panel says when the organisation requires approval.
+- **Real websites (#21):** a live-site checker drove headless Chrome on the-internet.herokuapp.com/tables and the OrangeHRM public demo. It found four detection gaps, all fixed (DECISIONS 300): lone names in separate columns (now judged by column header, HTML tables and ARIA grids), text directly inside `div`s never examined, a name list with Indian names only, and "Password : admin123" printed as text. Benchmark unchanged — no new false positives.
+- **Pages that looked alike (#9):** admissions is a card merit list with top navigation, payroll a tabbed HR product; every workplace has a layout for the ~1000×680 page the side panel leaves (DECISIONS 301).
+- **Found on the way:** the page map sent every button before any text. Now page order, with row numbers, and a click in a row must quote that row's words as evidence, checked by the server (DECISIONS 298). At the side-panel viewport the four workplaces went from wrong on admissions and payroll to 12/12; with the right employee scrolled off, the near-miss release is refused every time. A refused or failed answer now tells the user why in plain words.
+- Hub lists three real sites and the dashboard. Team guide, README, API spec and privacy doc updated.
+- Tests: client 465, server 72 + 84 + 15 = 171, all passing.
+
+**Not verified here.** Every model check above ran text-only through the local harness; a real run also sends the redacted screenshot. The dashboard, the AI-view overlay, the narrow layouts and the policy switch have not been seen in the real browser.
+
+**Next session starts with:** a real-browser pass with the side panel open — KYC, admissions, payroll, support, ParaBank, OrangeHRM — then flip the dashboard policy and run KYC once, then the backup video. Still open from earlier: keep or revert the solid AI-view overlay (DECISIONS 997), and the `.env.example` timeout (DECISIONS 270).

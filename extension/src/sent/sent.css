@@ -44,8 +44,8 @@
 .side { padding: 16px 18px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--hairline); }
 .side h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
 .side ul { margin: 0; padding-left: 18px; color: var(--fg-muted); line-height: 1.7; }
-.side.got h3::before { content: '✓  '; color: #6fcf97; }
-.side.never h3::before { content: '✕  '; color: #ef7a7a; }
+.side.got h3::before { content: '✓  '; color: #1d7a4d; }
+.side.never h3::before { content: '✕  '; color: #b42318; }
 .side q { color: var(--fg); }
 
 .row-block { margin-bottom: 20px; }

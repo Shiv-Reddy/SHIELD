@@ -46,18 +46,28 @@ Stated plainly: a boundary a reviewer discovers is worse than one we declare.
 **Names in page text are detected only when the given name is one we ship a
 list of.** Changed 2026-09-23, and the change is narrower than it sounds.
 
-Shield carries a gazetteer of a few hundred common Indian given names and flags
+Shield carries a gazetteer of a few hundred common Indian given names — and,
+since 2026-09-26, about 270 common given names from elsewhere, after live checks
+on real sites let "Cory Yamamoto" and "John Smith" through — and flags
 a listed given name followed by any capitalised word — the surname is not
 checked against anything, so unfamiliar surnames are caught. "Account holder:
 Priya Raghunathan" is now found; neither Raghunathan nor the sentence around it
 is in any list.
 
 **This is a gazetteer, not a named-entity model, and the difference is the
-limit.** It misses every given name absent from the list — most non-Indian
-names, rare and unusually spelled ones — a surname used alone ("Mr Sundaram"),
+limit.** It misses every given name absent from the list — rare and unusually
+spelled ones, and most names from outside the regions listed — a surname used alone ("Mr Sundaram"),
 a name in ALL CAPS, and any name in a non-Latin script. A name is either on the
 list or invisible, with nothing in between, which is exactly what an NER model
 would fix and this is not one.
+
+**A table column says what its cells hold.** Also 2026-09-26: a table with
+"First Name" and "Last Name" columns puts "John" and "Smith" in separate cells,
+which no two-word rule can see. A cell whose column header names a person's
+name, email, phone, ID or address is now hidden on the header's word, for HTML
+tables and ARIA grids alike. And text written directly inside a `div` is now
+examined — before, on a real HR product, every employee name sat in `div`
+cells, was never examined, and showed unredacted in the screenshot.
 
 **Names in labels are now scrubbed too, and that correction came from a real
 page rather than from the corpus.** Superseding the earlier finding that names

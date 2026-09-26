@@ -112,7 +112,7 @@ and say them in plain words:
 
 | On screen | Say out loud |
 |---|---|
-| Recall 91.8% | "It finds about 92 out of every 100 sensitive things" |
+| Recall 92.4% | "It finds about 92 out of every 100 sensitive things" |
 | Redaction precision 83.8% | "When it covers something, it is usually right to" |
 | 96.5% context kept | "It hides the private parts and leaves the rest readable" |
 | ~135ms | "The whole local loop takes about a seventh of a second" |

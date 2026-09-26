@@ -32,97 +32,88 @@
       All data is synthetic. No external resources.
     -->
     <style>
+      /*
+        Its own shape, not the bank's: an admissions portal with navigation
+        across the top and the merit list as cards, two to a row, in rank
+        order. Reading order is still rank 1, 2, 3 — cards fill left to right,
+        then down — which is what the task depends on.
+      */
       :root {
-        --ink: #1b1d2a; --muted: #5d6275; --faint: #8b90a3; --line: #e3e5ee; --bg: #f4f5f9; --card: #fff;
-        --brand: #2a2f6b; --ok: #1d7a4d; --ok-soft: #e4f3eb; --warn: #946200; --warn-soft: #fbf1d9;
+        --ink: #1b1d2a; --muted: #5d6275; --faint: #8b90a3; --line: #e3e5ee; --bg: #f3f4f9; --card: #fff;
+        --brand: #2a2f6b; --brand-soft: #e9eaf5; --ok: #1d7a4d; --ok-soft: #e4f3eb; --warn: #946200; --warn-soft: #fbf1d9;
         --bad: #b42318; --bad-soft: #fdecea;
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font: 12.5px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; }
-      .topbar { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 20px; background: var(--brand); color: #fff; }
-      .crest { width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
-      .topbar h1 { margin: 0; font-size: 14px; font-weight: 650; }
+      .serif { font-family: Georgia, 'Times New Roman', serif; }
+      .topbar { display: flex; align-items: center; gap: 12px; height: 50px; padding: 0 22px; background: var(--brand); color: #fff; }
+      .crest { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+      .topbar h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: .01em; }
+      .topbar nav { display: flex; gap: 2px; margin-left: 22px; }
+      .topbar nav a { padding: 6px 11px; border-radius: 6px; color: rgba(255,255,255,.78); text-decoration: none; }
+      .topbar nav a.on { background: rgba(255,255,255,.16); color: #fff; font-weight: 600; }
       .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
-      .shell { display: grid; grid-template-columns: 184px 1fr; min-height: calc(100vh - 46px); }
-      nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; }
-      nav a { display: flex; justify-content: space-between; padding: 7px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; }
-      nav a.on { background: #e9eaf5; color: var(--brand); font-weight: 650; }
-      nav .group { margin: 14px 10px 6px; color: var(--faint); font-size: 11px; }
-      main { padding: 14px 18px; min-width: 0; }
-      .heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-      .heading h2 { margin: 0; font-size: 17px; }
+      main { max-width: 1180px; margin: 0 auto; padding: 16px 22px 22px; }
+      .heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 12px; }
+      .heading h2 { margin: 0; font-size: 19px; line-height: 1.2; font-weight: 700; }
       .heading span { color: var(--muted); }
-      .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
-      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
-      .kpi small { display: block; color: var(--muted); font-size: 11px; }
-      .kpi strong { font-size: 17px; font-weight: 650; }
-      .filters { display: flex; gap: 6px; margin-bottom: 8px; color: var(--muted); }
-      .filters span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--card); }
-      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-      table { width: 100%; border-collapse: collapse; }
-      th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafbfd; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-      td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-      tr:last-child td { border-bottom: 0; }
-      td.ref { font-weight: 600; }
-      td.num { text-align: right; font-variant-numeric: tabular-nums; }
-      .chip { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+      .heading .facts { margin-left: auto; display: flex; gap: 14px; }
+      .heading .facts b { color: var(--ink); }
+      .merit { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .merit li { display: grid; grid-template-columns: 38px 1fr auto; grid-template-areas: 'rank who scores' 'rank detail scores' '. status status'; gap: 4px 12px; align-items: center; padding: 10px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+      .rank { grid-area: rank; } .who-line { grid-area: who; } .scores { grid-area: scores; } .detail-line { grid-area: detail; } .status { grid-area: status; }
+      .rank { width: 34px; height: 34px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+      .who-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+      .who-line .ref { font-weight: 700; }
+      .who-line .cat, .who-line .parent { color: var(--muted); font-size: 11.5px; }
+      .who-line .name { font-weight: 600; }
+      .detail-line .name { color: var(--ink); font-weight: 600; font-size: 12.5px; }
+      .detail-line { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--muted); font-size: 11.5px; min-width: 0; }
+      .scores { text-align: right; font-variant-numeric: tabular-nums; }
+      .scores strong { display: block; font-size: 17px; }
+      .scores span { color: var(--muted); font-size: 11px; }
+      .status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+      .chip { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
       .chip.ok { background: var(--ok-soft); color: var(--ok); }
       .chip.warn { background: var(--warn-soft); color: var(--warn); }
       .chip.bad { background: var(--bad-soft); color: var(--bad); }
-      .actions { display: flex; gap: 5px; }
-      button { font: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+      .actions { margin-left: auto; display: flex; gap: 5px; }
+      button { font: inherit; font-size: 11.5px; font-weight: 600; padding: 4px 11px; border-radius: 99px; cursor: pointer; }
       .go { border: 0; background: var(--brand); color: #fff; }
       .hold { border: 1px solid var(--line); background: #fff; color: var(--ink); }
       .done { font-weight: 650; color: var(--ok); }
       .done.held { color: var(--warn); }
-      .foot { margin-top: 8px; color: var(--faint); font-size: 11px; }
+      .foot { margin-top: 10px; color: var(--faint); font-size: 11px; }
       #toast[hidden] { display: none; }
       #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; box-shadow: 0 6px 24px rgba(29,122,77,.35); z-index: 10; }
       #toast.held { background: var(--warn); }
+      @media (max-width: 1100px) { .topbar nav { display: none; } }
+      @media (max-width: 760px) { .merit { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
     <p id="toast" role="status" hidden></p>
     <header class="topbar">
-      <div class="crest" aria-hidden="true">N</div>
-      <h1>Northfield Institute of Technology · Admissions office</h1>
-      <span class="who">B.Tech 2026 · Round 1 counselling</span>
-    </header>
-    <div class="shell">
+      <div class="crest serif" aria-hidden="true">N</div>
+      <h1 class="serif">Northfield Institute of Technology</h1>
       <nav aria-label="Admissions">
         <a href="#">Overview</a>
-        <a href="#" class="on">Applications <span>10</span></a>
-        <a href="#">Document checks</a>
-        <a href="#">Fee payments</a>
+        <a href="#" class="on">Merit list</a>
+        <a href="#">Documents</a>
+        <a href="#">Fees</a>
         <a href="#">Seat matrix</a>
-        <div class="group">Scholarships</div>
-        <a href="#">Merit scholarship</a>
-        <a href="#">Need-based aid</a>
       </nav>
-      <main>
-        <div class="heading">
-          <h2>Computer Science · merit list, round 1</h2>
-          <span id="note">10 applicants · 1 seat left in this round</span>
-        </div>
-        <section class="kpis">
-          <div class="kpi"><small>Seats</small><strong>120</strong></div>
-          <div class="kpi"><small>Filled</small><strong id="k-filled">119</strong></div>
-          <div class="kpi"><small>Waiting review</small><strong id="k-waiting">10</strong></div>
-          <div class="kpi"><small>Cut-off percentile</small><strong>96.50</strong></div>
-          <div class="kpi"><small>Round closes</small><strong>28 Sep</strong></div>
-        </section>
-        <div class="filters"><span>Branch: Computer Science</span><span>Round 1</span><span>All categories</span></div>
-        <section class="panel">
-          <table>
-            <thead>
-              <tr><th>Merit rank</th><th>Application</th><th>Applicant</th><th>Aadhaar</th><th>Mobile</th><th>Email</th><th>Parent</th><th>Category</th><th>JEE percentile</th><th>Class 12</th><th>Documents</th><th>Fee</th><th>Decision</th></tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
-        </section>
-        <p class="foot">Fictional institute, synthetic applicants. Not a real service, not real people.</p>
-      </main>
-    </div>
+      <span class="who">Admissions office · B.Tech 2026</span>
+    </header>
+    <main>
+      <div class="heading">
+        <h2 class="serif">Computer Science merit list, round 1</h2>
+        <span id="note">10 applicants · 1 seat left in this round</span>
+        <span class="facts"><span>Filled <b id="k-filled">119</b> of 120</span><span>Waiting <b id="k-waiting">10</b></span><span>Cut-off <b>96.50</b></span></span>
+      </div>
+      <ol class="merit" id="rows"></ol>
+      <p class="foot">Fictional institute, synthetic applicants. Not a real service, not real people.</p>
+    </main>
     <script>
       // [ref, applicant, aadhaar, mobile, email, parent, category, percentile, class12, [tone, docs], [tone, fee]]
       const rows = [
@@ -138,21 +129,43 @@
         ['ADM-3110', 'Pooja Rao', '4413 6627 9056', '+91 90190 84475', 'pooja.rao@example.com', 'Suresh Rao', 'OBC', '94.73', '87.9%', ['ok', 'Documents complete'], ['ok', 'Fee paid']],
       ];
       const body = document.getElementById('rows');
+      const make = (tag, className, text) => {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        if (text !== undefined) el.textContent = text;
+        return el;
+      };
       for (const [index, [ref, name, aadhaar, mobile, email, parent, category, pct, c12, docs, fee]] of rows.entries()) {
-        const tr = document.createElement('tr');
-        tr.dataset.ref = ref;
-        const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; tr.append(c); };
-        const chip = ([tone, text]) => { const c = document.createElement('td'); const s = document.createElement('span'); s.className = `chip ${tone}`; s.textContent = text; c.append(s); tr.append(c); };
-        td(String(index + 1), 'num'); td(ref, 'ref'); td(name); td(aadhaar); td(mobile); td(email); td(parent); td(category); td(pct, 'num'); td(c12, 'num'); chip(docs); chip(fee);
-        const d = document.createElement('td');
-        d.innerHTML = `<div class="actions"><button class="go" aria-label="Shortlist applicant ${ref}">Shortlist</button><button class="hold" aria-label="Hold applicant ${ref}">Hold</button></div>`;
-        tr.append(d);
-        body.append(tr);
+        const li = document.createElement('li');
+        li.dataset.ref = ref;
+        const rank = make('span', 'rank serif', String(index + 1));
+        rank.setAttribute('aria-label', `Merit rank ${index + 1}`);
+        li.append(rank);
+        const who = make('div', 'who-line');
+        who.append(make('span', 'ref', ref), make('span', 'cat', category));
+        li.append(who);
+        // The statuses follow the application number in reading order, and
+        // are placed at the foot of the card by the grid. Read after the name,
+        // scores and contact details, the model lost track of which card a
+        // "Fee pending" belonged to and skipped rank 3 for rank 5.
+        const status = make('div', 'status');
+        status.append(make('span', `chip ${docs[0]}`, docs[1]), make('span', `chip ${fee[0]}`, fee[1]));
+        const actions = make('div', 'actions');
+        actions.innerHTML = `<button class="go" aria-label="Shortlist applicant ${ref}">Shortlist</button><button class="hold" aria-label="Hold applicant ${ref}">Hold</button>`;
+        status.append(actions);
+        li.append(status);
+        const scores = make('div', 'scores');
+        scores.append(make('strong', '', pct), make('span', '', `JEE percentile · Class 12 ${c12}`));
+        li.append(scores);
+        const detail = make('div', 'detail-line');
+        detail.append(make('span', 'name', name), make('span', '', `Parent: ${parent}`), make('span', '', aadhaar), make('span', '', mobile), make('span', '', email));
+        li.append(detail);
+        body.append(li);
       }
       body.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
-        const ref = button.closest('tr').dataset.ref;
+        const ref = button.closest('li').dataset.ref;
         const shortlisted = button.classList.contains('go');
         button.parentElement.parentElement.innerHTML = shortlisted ? '<span class="done">Shortlisted</span>' : '<span class="done held">On hold</span>';
         const waiting = document.getElementById('k-waiting');

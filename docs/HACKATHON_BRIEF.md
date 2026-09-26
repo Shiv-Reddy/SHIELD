@@ -32,8 +32,8 @@ Memorise this block. Judges test whether you know your own project.
 
 | | |
 |---|---|
-| **PII recall** | **91.8%** — 156 of 170 labelled items, across 50 pages |
-| **PII precision** | **83.4%** |
+| **PII recall** | **92.4%** — 157 of 170 labelled items, across 50 pages |
+| **PII precision** | **83.5%** |
 | **Redaction precision** | **83.8%** — of everything covered, how much needed covering |
 | **Context kept** | **96.5%** of non-sensitive elements still readable |
 | **Area painted** | **0.79x** what was needed |
@@ -66,7 +66,7 @@ show the baseline table:
 | Blanket blur | 100.0% | 32.9% | 3.04x | **0.0%** |
 | Hide every value | 94.1% | 39.4% | 1.71x | 55.6% |
 | Hide every field | 77.1% | 77.1% | 0.73x | 95.2% |
-| **Shield** | **91.8%** | **83.8%** | **0.79x** | **96.5%** |
+| **Shield** | **92.4%** | **83.9%** | **0.79x** | **96.5%** |
 
 **This table is the strongest single artifact in the project.** It scores four
 strategies somebody could plausibly have shipped instead, on the same corpus,
@@ -273,7 +273,7 @@ and what the fallback is.
 - "It is 100% secure" — say what is guaranteed and what is bounded.
 - "We detect names" — say *a list, not a model*.
 - "CPU is about 1%" — retracted number. 87–93% for a scan.
-- "Our accuracy is 91.8%" — that is PII recall. Metric 1 is 22.2%. Do not blur them.
+- "Our accuracy is 92.4%" — that is PII recall. Metric 1 is 22.2%. Do not blur them.
 - Quoting redaction coverage on its own.
 - Any per-page metric-1 number.
 - Claiming a component you cannot walk through.

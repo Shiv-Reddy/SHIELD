@@ -29,15 +29,15 @@
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font: 12.5px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; }
-      .topbar { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 20px; background: var(--brand); color: #fff; }
-      .logo { width: 24px; height: 24px; border-radius: 7px; background: #fff; color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
-      .topbar h1 { margin: 0; font-size: 14px; font-weight: 650; }
-      .topbar .who { margin-left: auto; font-size: 12px; opacity: .85; }
-      .shell { display: grid; grid-template-columns: 184px 1fr 270px; min-height: calc(100vh - 46px); }
-      nav { background: var(--card); border-right: 1px solid var(--line); padding: 14px 10px; }
-      nav a { display: block; padding: 7px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; }
-      nav a.on { background: #eeebf6; color: var(--brand); font-weight: 650; }
-      nav .group { margin: 14px 10px 6px; color: var(--faint); font-size: 11px; }
+      .topbar { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 22px; background: var(--card); border-bottom: 1px solid var(--line); }
+      .logo { width: 28px; height: 28px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+      .topbar h1 { margin: 0; font-size: 15px; font-weight: 700; color: var(--brand); }
+      .topbar .who { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+      .topbar .avatar { width: 26px; height: 26px; border-radius: 50%; background: #eeebf6; color: var(--brand); display: grid; place-items: center; font-weight: 700; font-size: 11px; }
+      nav.tabs { display: flex; gap: 4px; padding: 0 22px; background: var(--card); border-bottom: 1px solid var(--line); }
+      nav.tabs a { padding: 11px 12px 10px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; }
+      nav.tabs a.on { color: var(--brand); font-weight: 650; border-bottom-color: var(--brand); }
+      .shell { display: grid; grid-template-columns: 1fr 280px; min-height: calc(100vh - 94px); }
       main { padding: 14px 16px; min-width: 0; }
       .heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
       .heading h2 { margin: 0; font-size: 17px; }
@@ -46,7 +46,7 @@
       .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; }
       .kpi small { display: block; color: var(--muted); font-size: 11px; }
       .kpi strong { font-size: 17px; font-weight: 650; }
-      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
       table { width: 100%; border-collapse: collapse; }
       th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafbfc; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
       td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -75,26 +75,46 @@
       #toast[hidden] { display: none; }
       #toast { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 12px 22px; border-radius: 10px; background: var(--ok); color: #fff; font-size: 15px; font-weight: 650; box-shadow: 0 6px 24px rgba(29,122,77,.35); z-index: 10; }
       #toast.held { background: var(--warn); }
+      td span.line { display: block; }
+      td span.sub { display: block; color: var(--muted); font-size: 11.5px; }
+      .chip { white-space: normal; }
+
+      /*
+        With the Shield side panel open the page is about 1000 pixels wide.
+        The counters go, the table gets the width, and the document panel moves
+        below it. Above the table it pushed EMP-0415 off the bottom of a
+        680-pixel screen, and the model then chose a near miss rather than
+        scroll — the prompt now forbids that, and the page no longer invites it.
+      */
+      @media (max-width: 1250px) {
+        .shell { grid-template-columns: 1fr; }
+        .kpis, nav.tabs a:nth-child(n + 5) { display: none; }
+        aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 16px; border-left: 0; border-bottom: 1px solid var(--line); padding: 10px 22px; }
+        aside h3, aside .sub, aside dl { grid-column: 1; }
+        aside figure { grid-column: 2; grid-row: 1 / span 3; }
+        aside img { max-height: 118px; width: auto; max-width: 100%; }
+        main { padding: 12px 22px; }
+        td { padding: 5px 7px; }
+      }
     </style>
   </head>
   <body>
     <p id="toast" role="status" hidden></p>
     <header class="topbar">
       <div class="logo" aria-hidden="true">L</div>
-      <h1>Lumen Softworks Pvt Ltd · People &amp; Payroll</h1>
-      <span class="who">Payroll desk · September 2026 run</span>
+      <h1>Lumen People</h1>
+      <span class="who">Payroll desk · September 2026 run <span class="avatar" aria-hidden="true">PD</span></span>
     </header>
+    <nav class="tabs" aria-label="Payroll">
+      <a href="#">Dashboard</a>
+      <a href="#" class="on">Salary release</a>
+      <a href="#">Attendance</a>
+      <a href="#">Reimbursements</a>
+      <a href="#">Full and final</a>
+      <a href="#">TDS</a>
+      <a href="#">Provident fund</a>
+    </nav>
     <div class="shell">
-      <nav aria-label="Payroll">
-        <a href="#">Dashboard</a>
-        <a href="#" class="on">Salary release</a>
-        <a href="#">Attendance</a>
-        <a href="#">Reimbursements</a>
-        <a href="#">Full and final</a>
-        <div class="group">Statutory</div>
-        <a href="#">TDS</a>
-        <a href="#">Provident fund</a>
-      </nav>
       <main>
         <div class="heading">
           <h2>Salary release · September 2026</h2>
@@ -109,7 +129,7 @@
         <section class="panel">
           <table>
             <thead>
-              <tr><th>Employee ID</th><th>Employee</th><th>Department</th><th>PAN</th><th>Bank account</th><th>IFSC</th><th>Net pay</th><th>Attendance</th><th>Payroll status</th><th>Action</th></tr>
+              <tr><th>Employee ID</th><th>Employee</th><th>Department</th><th>PAN</th><th>Bank account · IFSC</th><th>Net pay · attendance</th><th>Payroll status</th><th>Action</th></tr>
             </thead>
             <tbody id="rows"></tbody>
           </table>
@@ -117,16 +137,16 @@
         <p class="foot">Fictional company, synthetic employees. Not a real service, not real people.</p>
       </main>
       <aside>
-        <h3>Tax documents: EMP-0415</h3>
-        <p class="sub">Verified for TDS this quarter</p>
+        <h3>Tax documents: EMP-0412</h3>
+        <p class="sub">Opened by you at 10:05 · salary account not on file</p>
         <dl>
-          <dt>Work email</dt><dd>rahul.sharma@example.com</dd>
-          <dt>Location</dt><dd>Pune</dd>
+          <dt>Work email</dt><dd>rohit.sen@example.com</dd>
+          <dt>Location</dt><dd>Bengaluru</dd>
           <dt>Tax regime</dt><dd>New</dd>
         </dl>
         <figure>
           <figcaption>PAN card on file</figcaption>
-          <img src="pan_sample.svg" alt="PAN card image on file" />
+          <img src="pan_sample_payroll.svg" alt="PAN card image on file" />
         </figure>
       </aside>
     </div>
@@ -139,7 +159,7 @@
         ['EMP-0412', 'Rohit Sen', 'Engineering', 'EFGPS5561R', '20038847112', 'SBIN0011452', '₹1,62,000', '22/22', ['bad', 'Bank details missing']],
         ['EMP-0413', 'Divya Menon', 'Support', 'GHKPM7720L', '40019375521', 'KKBK0000958', '₹54,800', '21/22', ['ok', 'Ready']],
         ['EMP-0414', 'Arjun Rao', 'Engineering', 'JKLPR3348M', '60024418890', 'HDFC0002231', '₹1,21,300', '22/22', ['bad', 'On hold, exit in progress']],
-        ['EMP-0415', 'Rahul Sharma', 'Engineering', 'ABCDE1234F', '70031156284', 'ICIC0000719', '₹1,35,600', '22/22', ['ok', 'Ready']],
+        ['EMP-0415', 'Manish Kulkarni', 'Engineering', 'MKLPK7719D', '70031156284', 'ICIC0000719', '₹1,35,600', '22/22', ['ok', 'Ready']],
         ['EMP-0416', 'Sneha Pillai', 'Design', 'MNOPP9912N', '80047729036', 'UTIB0003304', '₹1,02,700', '20/22', ['warn', 'Reimbursement pending']],
         ['EMP-0417', 'Vikram Shah', 'Engineering', 'PQRPS4405S', '90052286147', 'SBIN0004408', '₹1,74,500', '22/22', ['warn', 'Awaiting manager sign-off']],
         ['EMP-0418', 'Neha Das', 'Marketing', 'STUPD6627T', '11064490373', 'KKBK0001662', '₹88,900', '22/22', ['warn', 'Awaiting manager sign-off']],
@@ -148,8 +168,16 @@
       for (const [id, name, dept, pan, account, ifsc, net, attendance, status] of rows) {
         const tr = document.createElement('tr');
         tr.dataset.ref = id;
-        const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text; tr.append(c); };
-        td(id, 'ref'); td(name); td(dept); td(pan); td(account); td(ifsc); td(net); td(attendance);
+        // Two values to a cell where they belong together, so the table fits a
+        // 1366-pixel projector with the Release and Hold buttons on screen.
+        const td = (text, cls, sub) => {
+          const c = document.createElement('td');
+          if (cls) c.className = cls;
+          const main = document.createElement('span'); main.className = 'line'; main.textContent = text; c.append(main);
+          if (sub) { const second = document.createElement('span'); second.className = 'sub'; second.textContent = sub; c.append(second); }
+          tr.append(c);
+        };
+        td(id, 'ref'); td(name); td(dept); td(pan); td(account, '', ifsc); td(net, '', `${attendance} days`);
         const c = document.createElement('td'); const s = document.createElement('span'); s.className = `chip ${status[0]}`; s.textContent = status[1]; c.append(s); tr.append(c);
         const d = document.createElement('td');
         d.innerHTML = `<div class="actions"><button class="go" aria-label="Release salary for ${id}">Release</button><button class="hold" aria-label="Hold salary for ${id}">Hold</button></div>`;

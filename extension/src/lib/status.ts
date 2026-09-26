@@ -48,15 +48,15 @@ export type ShieldStatus = (typeof SHIELD_STATUSES)[number];
 
 /** Human-facing label for each status. Kept short enough for the popup chip. */
 export const STATUS_LABEL: Record<ShieldStatus, string> = {
-  idle: 'Idle',
-  reading: 'Reading screen',
-  detecting: 'Finding sensitive data',
-  redacting: 'Hiding sensitive data',
-  sending: 'Sending redacted context',
-  thinking: 'Assistant is thinking',
-  acting: 'Acting on the page',
+  idle: 'Ready',
+  reading: 'Reading the page',
+  detecting: 'Finding private data',
+  redacting: 'Hiding private data',
+  sending: 'Sending the safe version',
+  thinking: 'AI is choosing a step',
+  acting: 'Doing it on the page',
   done: 'Done',
-  error: 'Error',
+  error: "Couldn't finish",
   scanning: 'Scanning the page',
   'awaiting-consent': 'Waiting for you',
 };
@@ -128,6 +128,26 @@ export interface ShieldState {
   scan: ScanSummary | null;
   /** How far a scan in flight has got, so a ten-second wait is not a blank one. */
   scanProgress: { stop: number; total: number } | null;
+  /**
+   * What this run has done so far, one line per event, for the panel's feed.
+   *
+   * Written from the redacted view only — the labels the AI was shown, never
+   * the page's own text — so the panel can be on a projector without showing
+   * the very values the product exists to hide.
+   */
+  activity: ActivityEntry[];
+  /** Per-category counts hidden on the latest step of a run. Counts only. */
+  runHidden: { category: string; count: number }[] | null;
+  /** The run's result in one plain sentence, once it has ended. */
+  outcome: string | null;
+  /** The organisation's dashboard requires approval before each send. */
+  orgRequiresConsent: boolean;
+}
+
+export interface ActivityEntry {
+  at: number;
+  kind: 'hide' | 'send' | 'decide' | 'act';
+  text: string;
 }
 
 export const INITIAL_STATE: ShieldState = {
@@ -142,4 +162,8 @@ export const INITIAL_STATE: ShieldState = {
   coverage: null,
   scan: null,
   scanProgress: null,
+  activity: [],
+  runHidden: null,
+  outcome: null,
+  orgRequiresConsent: false,
 };
