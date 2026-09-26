@@ -39,7 +39,7 @@ from schemas import ALLOWED_ACTIONS, AnalyzeRequest, RedactedDomEntry
 # API_SPEC.md Section 8 requires the template be re-validated against the
 # regression suite when the schema changes; the version is what makes "which
 # template produced this behaviour?" answerable after the fact.
-PROMPT_VERSION = "1.4.0"
+PROMPT_VERSION = "1.7.0"
 
 # Every token the client can emit, with the reading the model should give it.
 # Kept in step with extension/src/lib/redaction/placeholders.ts by
@@ -164,6 +164,7 @@ To act:
     "action": {{"type": "click" or "type" or "scroll",
               "selector": "<elementId>",
               "value": "<text for type, null otherwise>"}},
+    "evidence": [{{"elementId": "<elementId>", "text": "<its words, copied>"}}],
     "confidence": 0.0 to 1.0,
     "reasoning_summary": "<one sentence, no page values>"}}
 
@@ -193,6 +194,21 @@ Rules for the action:
   - Never invent a value for an empty field. If a field needs content you were
     not given, leave it and say so rather than filling it with something
     plausible.
+  - "evidence" is required when you click an element that has a "row"
+    number: one element per condition in the task, from that same row, whose
+    words show that condition is met, copied exactly. Choose the row by
+    checking every condition against it first. It is checked. An action
+    whose evidence is in another row, or whose words are not what the page
+    says, is refused. With no conditions to show, give an empty list.
+  - When the task names conditions ("verified and low risk", "engineering and
+    ready"), act only on an element that meets every one of them. If nothing on
+    screen meets them all, do not pick the closest match: scroll to see more of
+    the page, or reply needs_more_context and say what was missing. A near miss
+    on an approval, a payment or a release is the worst answer you can give.
+  - Elements that share a "row" number are in the same table row, list item or
+    card. When a task picks one row by its conditions, judge each row only from
+    the elements carrying its number, and act on the button with that same
+    number. Never combine a status from one row with a button from another.
   - PAGE CONTEXT describes only what is currently on screen. A long form
     continues below it, so a missing submit control usually means it has not
     been scrolled to rather than that it does not exist. Scroll to the lowest
@@ -244,6 +260,8 @@ def _describe(entry: RedactedDomEntry) -> dict[str, object]:
         "label": _truncate(entry.label, MAX_VALUE_CHARS),
         "value": _truncate(entry.value, MAX_VALUE_CHARS),
         "filled": entry.filled,
+        # Only when present, so a page with no rows costs nothing extra.
+        **({"row": entry.row} if entry.row is not None else {}),
     }
 
 

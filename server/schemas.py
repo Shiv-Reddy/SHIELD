@@ -46,6 +46,9 @@ class RedactedDomEntry(BaseModel):
     # tell "needs filling" from "ready to submit" — different situations calling
     # for different actions. Defaults False so an older client still validates.
     filled: bool = False
+    # Which table row, list item or card the element sits in, numbered in page
+    # order. Optional, so an older client still validates.
+    row: int | None = Field(default=None, ge=1, le=10_000)
     position: Rect
 
 

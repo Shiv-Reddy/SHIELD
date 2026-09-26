@@ -18,6 +18,7 @@ from __future__ import annotations
 import sys
 
 import asyncio
+import json
 
 import model_reasoner
 from model_reasoner import ModelUnavailable, interpret
@@ -505,6 +506,83 @@ REPLY = {
 # A page that is not a login or sign-up form, so it reaches the model: the two
 # known shapes go to the rules even with a model configured. e2 is the button the
 # stubbed REPLY clicks, as it was on LOGIN.
+_rowed = _element("e2", "text", "Ready")
+_rowed["row"] = 7
+ROWS = _request([_element("e1", "text", "Salary release"), _rowed])
+rows_prompt = build_prompt(ROWS).user
+check(
+    "an element's row number reaches the model",
+    '"elementId": "e2", "type": "text", "label": null, "value": "Ready", "filled": true, "row": 7' in rows_prompt,
+    rows_prompt[-300:],
+)
+check(
+    "an element outside any row carries no row key",
+    '"value": "Salary release", "filled": true}' in rows_prompt,
+)
+check(
+    "the model is told what a row number means",
+    "share a \"row\" number" in build_prompt(ROWS).system,
+)
+
+def _in_row(element, row):
+    element["row"] = row
+    return element
+
+
+PAYROLL = _request(
+    [
+        _in_row(_element("r1", "text", "Engineering"), 1),
+        _in_row(_element("r2", "text", "Bank details missing"), 1),
+        _in_row(_element("r3", "button", None, label="Release salary for EMP-0412"), 1),
+        _in_row(_element("r4", "text", "Engineering"), 2),
+        _in_row(_element("r5", "text", "Ready"), 2),
+        _in_row(_element("r6", "button", None, label="Release salary for EMP-0415"), 2),
+        _element("r7", "button", None, label="Send reply"),
+    ],
+    task="Release the salary for the engineering employee whose payroll is ready.",
+)
+
+
+def _click(selector, evidence):
+    reply = {"status": "action_ready", "action": {"type": "click", "selector": selector, "value": None}}
+    if evidence is not None:
+        reply["evidence"] = [{"elementId": e, "text": t} for e, t in evidence]
+    return reply
+
+
+def _refused(reply):
+    try:
+        model_reasoner.interpret(reply, PAYROLL)
+    except model_reasoner.ModelUnavailable:
+        return True
+    return False
+
+
+check(
+    "a row click with evidence from its own row is accepted",
+    not _refused(_click("r6", [("r4", "Engineering"), ("r5", "Ready")])),
+)
+check(
+    "a row click with no evidence is refused",
+    _refused(_click("r6", None)),
+)
+check(
+    "evidence from another row is refused",
+    _refused(_click("r3", [("r4", "Engineering"), ("r5", "Ready")])),
+)
+check(
+    "evidence quoting words the element does not say is refused",
+    _refused(_click("r3", [("r1", "Engineering"), ("r2", "Ready")])),
+)
+check(
+    "evidence showing a failed condition the task did not ask for is refused",
+    _refused(_click("r3", [("r1", "Engineering"), ("r2", "Bank details missing")])),
+)
+check(
+    "a click outside any row needs no evidence",
+    not _refused(_click("r7", None)),
+)
+
 QUEUE = _request(
     [
         _element("e0", "text", "KYC-2043"),
@@ -516,7 +594,7 @@ QUEUE = _request(
 )
 
 
-def _with_fake_provider(behaviour, request=QUEUE):
+def _with_fake_provider(behaviour, request=QUEUE, backup=""):
     """Run one decision against a stubbed provider, and restore everything after.
 
     The latch in `decide_with_model` is module state on purpose — it is a fact
@@ -529,7 +607,11 @@ def _with_fake_provider(behaviour, request=QUEUE):
         model_reasoner.MODEL_NAME,
         model_reasoner.MODEL_ENDPOINT,
         model_reasoner._vision_refused,
+        model_reasoner.BACKUP_NAME,
     )
+    # No backup unless a check asks for one, so a teammate's .env cannot change
+    # what these checks mean.
+    model_reasoner.BACKUP_NAME = backup
     model_reasoner.MODEL_KEY = "test-key"
     model_reasoner.MODEL_NAME = "test-model"
     model_reasoner.MODEL_ENDPOINT = "https://example.invalid/v1/chat/completions"
@@ -545,6 +627,7 @@ def _with_fake_provider(behaviour, request=QUEUE):
             model_reasoner.MODEL_NAME,
             model_reasoner.MODEL_ENDPOINT,
             model_reasoner._vision_refused,
+            model_reasoner.BACKUP_NAME,
         ) = original
 
 
@@ -656,6 +739,60 @@ check(
     "but only once: a second timeout falls back to the rules",
     len(attempts) == 2 and path == "rules-fallback",
     f"got {path} after {len(attempts)} attempt(s)",
+)
+
+attempts.clear()
+
+
+def _main_hangs(body, endpoint=None, key=None):
+    attempts.append(body["model"])
+    if body["model"] == "test-model":
+        raise model_reasoner.ProviderTimeout("provider call timed out")
+    return REPLY
+
+
+decision, path = _with_fake_provider(_main_hangs, backup="backup-model")
+check(
+    "with a backup configured, a timeout goes straight to the backup model",
+    attempts == ["test-model", "backup-model"]
+    and path == "backup-vision"
+    and decision.action is not None,
+    f"got {path} after {attempts}",
+)
+
+attempts.clear()
+
+
+def _both_fail(body, endpoint=None, key=None):
+    attempts.append(body["model"])
+    raise model_reasoner.ModelUnavailable("provider returned HTTP 503")
+
+
+decision, path = _with_fake_provider(_both_fail, backup="backup-model")
+check(
+    "and when the backup fails too, the rules answer",
+    attempts == ["test-model", "backup-model"] and path == "rules-fallback",
+    f"got {path} after {attempts}",
+)
+
+attempts.clear()
+
+
+def _backup_breaks_allowlist(body, endpoint=None, key=None):
+    attempts.append(body["model"])
+    if body["model"] == "test-model":
+        raise model_reasoner.ModelUnavailable("provider returned HTTP 503")
+    return {"choices": [{"message": {"content": json.dumps({
+        "status": "action_ready",
+        "action": {"type": "navigate", "selector": "e1", "value": None},
+    })}}]}
+
+
+decision, path = _with_fake_provider(_backup_breaks_allowlist, backup="backup-model")
+check(
+    "the backup's answer passes the same allowlist, or it is not used",
+    path == "rules-fallback",
+    f"got {path}",
 )
 
 check(

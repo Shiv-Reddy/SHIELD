@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shield · Organisation dashboard</title>
+    <!--
+      The buyer's view. One page an organisation's security or compliance team
+      keeps open: every laptop running Shield, what it hid, how much reached the
+      AI, and the one policy that applies to all of them. Built only from the
+      counts each laptop reports (fleet.py). Refreshes itself, so a run on any
+      laptop shows up here within seconds.
+    -->
+    <style>
+      :root {
+        --ink: #111111;
+        --body: #3d3d3d;
+        --muted: #767676;
+        --line: #e6e6e6;
+        --soft: #f6f6f6;
+        --paper: #ffffff;
+        --ok: #1d7a4d;
+        --ok-soft: #e8f3ed;
+        --warn: #8a5a00;
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--soft); color: var(--body); font: 14px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      header.bar { display: flex; align-items: center; gap: 14px; padding: 14px 28px; background: var(--paper); border-bottom: 1px solid var(--line); }
+      .brand { display: flex; align-items: center; gap: 9px; color: var(--ink); font-weight: 650; font-size: 16px; }
+      .brand svg { width: 24px; height: 24px; }
+      .sep { width: 1px; height: 18px; background: var(--line); }
+      .org { color: var(--ink); font-weight: 600; }
+      .where { color: var(--muted); }
+      .live { margin-left: auto; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12.5px; }
+      .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+      .live.stale i { background: #b42318; }
+
+      main { max-width: 1160px; margin: 0 auto; padding: 28px 28px 48px; }
+      h1 { margin: 0 0 20px; max-width: 860px; color: var(--ink); font-size: 26px; line-height: 1.3; font-weight: 650; }
+
+      .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 18px; }
+      .kpi { padding: 18px 22px; }
+      .kpi + .kpi { border-left: 1px solid var(--line); }
+      .kpi strong { display: block; color: var(--ink); font-size: 30px; line-height: 1.1; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .kpi span { display: block; margin-top: 6px; color: var(--muted); font-size: 12.5px; }
+
+      .grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+      .card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+      .card h2 { margin: 0 0 14px; color: var(--ink); font-size: 15px; font-weight: 650; }
+      .stack { display: grid; gap: 18px; }
+
+      table { width: 100%; border-collapse: collapse; }
+      th { text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; padding: 0 10px 8px 0; border-bottom: 1px solid var(--line); }
+      td { padding: 11px 10px 11px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+      tr:last-child td { border-bottom: 0; }
+      td.name { color: var(--ink); font-weight: 600; }
+      td.num, th.num { text-align: right; }
+      .fresh { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: var(--ok); vertical-align: 1px; }
+      .fresh.old { background: var(--line); }
+      .empty { margin: 6px 0 0; color: var(--muted); }
+
+      .policy { border-color: var(--ink); }
+      .switch { display: flex; gap: 14px; align-items: flex-start; }
+      .switch button { flex-shrink: 0; position: relative; width: 44px; height: 26px; margin-top: 2px; border: 0; border-radius: 99px; background: #cfcfcf; cursor: pointer; transition: background 120ms; }
+      .switch button::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 120ms; }
+      .switch button[aria-checked='true'] { background: var(--ink); }
+      .switch button[aria-checked='true']::after { transform: translateX(18px); }
+      .switch button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+      .switch strong { display: block; color: var(--ink); font-size: 14px; }
+      .switch p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+      .policy-state { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--body); font-size: 13px; }
+
+      .bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+      .bars li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
+      .bars .label { color: var(--ink); font-size: 13px; }
+      .bars .count { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+      .bars .track { grid-column: 1 / -1; height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+      .bars .fill { display: block; height: 100%; border-radius: 99px; background: var(--ink); }
+
+      .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 120px; }
+      .week div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+      .week b { font-size: 11px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+      .week i { display: block; width: 100%; max-width: 26px; border-radius: 5px 5px 2px 2px; background: var(--ink); }
+      .week span { font-size: 11px; color: var(--muted); }
+
+      footer { margin-top: 22px; color: var(--muted); font-size: 12.5px; max-width: 860px; }
+
+      @media (max-width: 900px) {
+        .grid { grid-template-columns: 1fr; }
+        .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .kpi:nth-child(3) { border-left: 0; }
+        .kpi:nth-child(n + 3) { border-top: 1px solid var(--line); }
+        header.bar { flex-wrap: wrap; padding: 12px 16px; }
+        main { padding: 20px 16px 40px; }
+        h1 { font-size: 21px; }
+        .card { overflow-x: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="bar">
+      <span class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 725 725" fill="#111111" aria-hidden="true">
+<clipPath id="half"><rect x="0" y="0" width="347.5" height="725"/></clipPath>
+<path d="M347.5 0C245 28 128 92 47.5 163C47.5 380 140 600 347.5 725ZM100 352C165 245 258 232 347.5 232C347.5 232 347.5 472 347.5 472C258 472 165 459 100 352ZM363 352C363 390.659932486 331.659932486 422 293 422C254.340067514 422 223 390.659932486 223 352C223 313.340067514 254.340067514 282 293 282C331.659932486 282 363 313.340067514 363 352ZM349 352C349 362.4934102462 340.4934102462 371 330 371C319.5065897538 371 311 362.4934102462 311 352C311 341.5065897538 319.5065897538 333 330 333C340.4934102462 333 349 341.5065897538 349 352Z" fill-rule="evenodd" clip-path="url(#half)"/>
+<rect x="352" y="214" width="40" height="40"/><rect x="352" y="297" width="36" height="36"/><rect x="352" y="372" width="36" height="36"/><rect x="352" y="449" width="40" height="40"/><rect x="398" y="258" width="46" height="46"/><rect x="400" y="340" width="28" height="28"/><rect x="398" y="398" width="44" height="44"/><rect x="452" y="166" width="50" height="50"/><rect x="455" y="320" width="30" height="30"/><rect x="452" y="440" width="48" height="48"/><rect x="505" y="96" width="34" height="34"/><rect x="512" y="250" width="56" height="56"/><rect x="515" y="355" width="36" height="36"/><rect x="500" y="512" width="50" height="50"/><rect x="568" y="158" width="46" height="46"/><rect x="566" y="310" width="50" height="50"/><rect x="560" y="440" width="40" height="40"/><rect x="530" y="592" width="36" height="36"/><rect x="636" y="232" width="28" height="28"/><rect x="640" y="366" width="34" height="34"/><rect x="620" y="536" width="28" height="28"/><rect x="478" y="610" width="24" height="24"/>
+</svg>Shield</span>
+      <span class="sep" aria-hidden="true"></span>
+      <span class="org" id="org">Your organisation</span>
+      <span class="where">Organisation dashboard</span>
+      <span class="live" id="live" role="status"><i aria-hidden="true"></i><span id="live-text">Connecting…</span></span>
+    </header>
+
+    <main>
+      <h1 id="headline">Waiting for the first laptop to report.</h1>
+
+      <section class="kpis" aria-label="Totals">
+        <div class="kpi"><strong id="k-devices">0</strong><span id="k-devices-label">laptops protected</span></div>
+        <div class="kpi"><strong id="k-hidden">0</strong><span>private items hidden before any AI saw them</span></div>
+        <div class="kpi"><strong id="k-tasks">0</strong><span>AI tasks run by employees</span></div>
+        <div class="kpi"><strong id="k-sent">0</strong><span>requests sent to the AI, every one redacted first</span></div>
+      </section>
+
+      <div class="grid">
+        <section class="card" aria-labelledby="devices-title">
+          <h2 id="devices-title">Laptops</h2>
+          <table>
+            <thead>
+              <tr><th>Laptop</th><th>Team</th><th>Last activity</th><th class="num">Items hidden</th><th class="num">Tasks</th><th class="num">Scans</th><th class="num">Sent, redacted</th></tr>
+            </thead>
+            <tbody id="devices"></tbody>
+          </table>
+          <p class="empty" id="devices-empty">No laptop has reported yet. Open the Shield panel on a laptop that uses this server, and it appears here.</p>
+        </section>
+
+        <div class="stack">
+          <section class="card policy" aria-labelledby="policy-title">
+            <h2 id="policy-title">Policy for every laptop</h2>
+            <div class="switch">
+              <button type="button" role="switch" id="consent" aria-checked="false" aria-labelledby="consent-label"></button>
+              <div>
+                <strong id="consent-label">Employees approve every request before it is sent</strong>
+                <p>Each laptop shows exactly what is about to go to the AI, already redacted, and sends nothing until the employee approves it.</p>
+              </div>
+            </div>
+            <p class="policy-state" id="policy-state">Off. Laptops send redacted requests without asking.</p>
+          </section>
+
+          <section class="card" aria-labelledby="cat-title">
+            <h2 id="cat-title">What was protected</h2>
+            <ul class="bars" id="bars"></ul>
+            <p class="empty" id="bars-empty">Nothing yet.</p>
+          </section>
+
+          <section class="card" aria-labelledby="week-title">
+            <h2 id="week-title">Private items hidden, last 7 days</h2>
+            <div class="week" id="week"></div>
+          </section>
+        </div>
+      </div>
+
+      <footer>
+        Laptops report counts only: when a task or scan happened, whether anything was sent, and how
+        many items of each kind were hidden. No page content, field values or web addresses reach this
+        dashboard, and a report carrying anything else is refused.
+      </footer>
+    </main>
+
+    <script>
+      const LABEL = {
+        id_number: 'ID and account numbers', name: 'Names', phone: 'Phone numbers', email: 'Email addresses',
+        address: 'Addresses', password: 'Passwords', face: 'Faces', other: 'Other private data, like amounts',
+      };
+      const number = new Intl.NumberFormat('en-IN');
+      const $ = (id) => document.getElementById(id);
+      const token = new URLSearchParams(location.search).get('token') || '';
+      let lastOk = 0;
+
+      function ago(ms) {
+        if (!ms) return '—';
+        const seconds = Math.max(0, Math.round((Date.now() - ms) / 1000));
+        if (seconds < 60) return seconds < 5 ? 'just now' : `${seconds} s ago`;
+        const minutes = Math.round(seconds / 60);
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 24) return `${hours} h ago`;
+        return new Date(ms).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      }
+
+      function cell(row, text, className) {
+        const td = document.createElement('td');
+        if (className) td.className = className;
+        td.textContent = text;
+        row.append(td);
+        return td;
+      }
+
+      function render(data) {
+        $('org').textContent = data.org;
+        const t = data.totals;
+        $('k-devices').textContent = number.format(t.devices);
+        $('k-devices-label').textContent = t.devices === 1 ? 'laptop protected' : 'laptops protected';
+        $('k-hidden').textContent = number.format(t.hidden);
+        $('k-tasks').textContent = number.format(t.tasks);
+        $('k-sent').textContent = number.format(t.sent);
+
+        $('headline').textContent = t.devices === 0
+          ? 'Waiting for the first laptop to report.'
+          : `Across ${t.devices} laptop${t.devices === 1 ? '' : 's'}, Shield hid ${number.format(t.hidden)} private items. ` +
+            (t.sent === 0 ? 'Nothing has been sent to the AI yet.'
+            : t.sent === 1 ? '1 request reached the AI, and it was redacted on the laptop first.'
+            : `${number.format(t.sent)} requests reached the AI, and every one was redacted on the laptop first.`);
+
+        const body = $('devices');
+        body.replaceChildren();
+        for (const device of data.devices) {
+          const row = document.createElement('tr');
+          const name = cell(row, '', 'name');
+          const dot = document.createElement('span');
+          dot.className = 'fresh' + (device.seen && Date.now() - device.seen < 10 * 60 * 1000 ? '' : ' old');
+          dot.title = `Last report ${ago(device.seen)}`;
+          name.append(dot, device.name);
+          cell(row, device.team);
+          cell(row, ago(device.lastActivity));
+          cell(row, number.format(device.hidden), 'num');
+          cell(row, number.format(device.tasks), 'num');
+          cell(row, number.format(device.scans), 'num');
+          cell(row, number.format(device.sent), 'num');
+          body.append(row);
+        }
+        $('devices-empty').hidden = data.devices.length > 0;
+
+        const bars = $('bars');
+        bars.replaceChildren();
+        const largest = Math.max(1, ...data.categories.map((c) => c.count));
+        const total = data.categories.reduce((sum, c) => sum + c.count, 0) || 1;
+        for (const item of data.categories) {
+          const li = document.createElement('li');
+          const label = document.createElement('span'); label.className = 'label'; label.textContent = LABEL[item.category] || item.category;
+          const count = document.createElement('span'); count.className = 'count'; count.textContent = `${number.format(item.count)} · ${Math.round((item.count / total) * 100)}%`;
+          const track = document.createElement('span'); track.className = 'track';
+          const fill = document.createElement('span'); fill.className = 'fill'; fill.style.width = `${Math.max(2, (item.count / largest) * 100)}%`;
+          track.append(fill); li.append(label, count, track); bars.append(li);
+        }
+        $('bars-empty').hidden = data.categories.length > 0;
+
+        const week = $('week');
+        week.replaceChildren();
+        const peak = Math.max(1, ...data.lastSevenDays);
+        data.lastSevenDays.forEach((value, index) => {
+          const day = new Date(data.generatedAt - (6 - index) * 86400000);
+          const column = document.createElement('div');
+          const b = document.createElement('b'); b.textContent = value ? number.format(value) : '';
+          const bar = document.createElement('i'); bar.style.height = `${Math.max(3, (value / peak) * 88)}px`;
+          if (!value) bar.style.background = 'var(--line)';
+          const label = document.createElement('span'); label.textContent = day.toLocaleDateString('en-IN', { weekday: 'short' });
+          column.append(b, bar, label); week.append(column);
+        });
+
+        renderPolicy(data.policy);
+      }
+
+      function renderPolicy(policy) {
+        const on = policy.requireConsent === true;
+        $('consent').setAttribute('aria-checked', String(on));
+        $('policy-state').textContent = on
+          ? `On${policy.updatedAt ? ` since ${new Date(policy.updatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : ''}. Every laptop asks before its next request.`
+          : 'Off. Laptops send redacted requests without asking.';
+      }
+
+      async function refresh() {
+        try {
+          const response = await fetch('/fleet/summary', { cache: 'no-store' });
+          if (!response.ok) throw new Error(String(response.status));
+          render(await response.json());
+          lastOk = Date.now();
+        } catch {
+          // Shown, not hidden: a dashboard that silently stops updating looks
+          // like an organisation where nothing is happening.
+        }
+        const stale = Date.now() - lastOk > 12000;
+        $('live').classList.toggle('stale', stale);
+        $('live-text').textContent = stale ? 'Not reaching the server' : 'Live · updates every few seconds';
+      }
+
+      $('consent').addEventListener('click', async () => {
+        const next = $('consent').getAttribute('aria-checked') !== 'true';
+        const response = await fetch('/fleet/policy', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-admin-token': token },
+          body: JSON.stringify({ requireConsent: next }),
+        });
+        if (response.status === 403) {
+          $('policy-state').textContent = 'Changing the policy needs the admin token. Open this page with ?token=… in the address.';
+          return;
+        }
+        if (response.ok) renderPolicy(await response.json());
+      });
+
+      void refresh();
+      setInterval(refresh, 4000);
+    </script>
+  </body>
+</html>

@@ -69,7 +69,7 @@ from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 
-from model_reasoner import decide_with_model, is_configured, vision_state  # noqa: E402
+from model_reasoner import backup_state, decide_with_model, is_configured, vision_state  # noqa: E402
 from prompt import PROMPT_VERSION  # noqa: E402
 from schemas import (  # noqa: E402
     ALLOWED_ACTIONS,
@@ -95,7 +95,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["POST", "GET", "OPTIONS"],
-    allow_headers=["content-type"],
+    allow_headers=["content-type", "x-admin-token"],
 )
 
 
@@ -121,6 +121,10 @@ def health() -> dict[str, object]:
         # statement is named after is not in use. That is worth being able to
         # read off /health rather than inferring from a log line.
         "vision": vision_state(),
+        # The model tried when the first one fails, before the rules. "none"
+        # means a slow free tier goes straight to the rules, which cannot read a
+        # queue page.
+        "backup_model": backup_state(),
         "prompt_version": PROMPT_VERSION,
     }
 
@@ -205,3 +209,53 @@ async def analyze(request: Request) -> JSONResponse:
             reasoning_summary=decision.summary,
         ).model_dump()
     )
+
+
+# --- Organisation view (fleet.py) -------------------------------------------
+#
+# Counts only, validated field by field; see fleet.py for what a laptop may
+# send and why nothing else is accepted.
+
+import fleet  # noqa: E402
+from fastapi.responses import HTMLResponse  # noqa: E402
+from pydantic import ValidationError  # noqa: E402
+
+_ADMIN_PAGE = Path(__file__).with_name("admin.html")
+
+
+@app.post("/fleet/report")
+async def fleet_report(http_request: Request) -> JSONResponse:
+    try:
+        report = fleet.FleetReport.model_validate(await http_request.json())
+    except (ValidationError, ValueError):
+        # Refused whole, and without echoing what was sent: a report that does
+        # not fit the counts-only shape is exactly the one not to repeat back.
+        return JSONResponse(status_code=422, content={"ok": False, "error": "not a counts-only report"})
+    fleet.record_report(report)
+    return JSONResponse(content={"ok": True, "policy": fleet.get_policy()})
+
+
+@app.get("/fleet/summary")
+def fleet_summary() -> dict[str, object]:
+    return fleet.summary()
+
+
+@app.get("/fleet/policy")
+def fleet_policy() -> dict[str, object]:
+    return fleet.get_policy()
+
+
+@app.post("/fleet/policy")
+async def fleet_set_policy(http_request: Request) -> JSONResponse:
+    if not fleet.token_accepted(http_request.headers.get("x-admin-token")):
+        return JSONResponse(status_code=403, content={"ok": False, "error": "admin token required"})
+    try:
+        policy = fleet.Policy.model_validate(await http_request.json())
+    except (ValidationError, ValueError):
+        return JSONResponse(status_code=422, content={"ok": False, "error": "not a policy"})
+    return JSONResponse(content=fleet.set_policy(policy))
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page() -> HTMLResponse:
+    return HTMLResponse(_ADMIN_PAGE.read_text(encoding="utf-8"))

@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import os
 import urllib.error
 import urllib.request
@@ -42,6 +43,17 @@ logger = logging.getLogger("shield.model")
 MODEL_KEY = os.environ.get("SHIELD_MODEL_KEY", "").strip()
 MODEL_NAME = os.environ.get("SHIELD_MODEL_NAME", "").strip()
 MODEL_ENDPOINT = os.environ.get("SHIELD_MODEL_ENDPOINT", "").strip()
+
+# A second model, tried when the first times out or answers with something
+# unusable, before the rules. On 2026-09-26 the configured free-tier model took
+# 7-9 seconds a step for an hour around midnight and every request fell back to
+# the rules, which cannot read a queue page: the demo would have done nothing.
+# A different model on the same key sits in a different capacity pool, and any
+# other OpenAI-compatible provider works too. Endpoint and key default to the
+# main model's, so naming a model is enough.
+BACKUP_NAME = os.environ.get("SHIELD_MODEL_BACKUP_NAME", "").strip()
+BACKUP_ENDPOINT = os.environ.get("SHIELD_MODEL_BACKUP_ENDPOINT", "").strip()
+BACKUP_KEY = os.environ.get("SHIELD_MODEL_BACKUP_KEY", "").strip()
 
 # Free tiers are rate-limited and occasionally slow. The budget is short on
 # purpose: a request that takes 30 seconds has already failed as far as the user
@@ -120,6 +132,36 @@ def is_configured() -> bool:
     return bool(MODEL_KEY and MODEL_NAME and MODEL_ENDPOINT)
 
 
+class Provider:
+    """Which model to ask, and where. Read at call time so tests can swap it."""
+
+    def __init__(self, name: str, endpoint: str, key: str, label: str) -> None:
+        self.name = name
+        self.endpoint = endpoint
+        self.key = key
+        self.label = label
+
+
+def _main_provider() -> Provider:
+    return Provider(MODEL_NAME, MODEL_ENDPOINT, MODEL_KEY, "model")
+
+
+def _backup_provider() -> Provider | None:
+    if not BACKUP_NAME:
+        return None
+    endpoint = BACKUP_ENDPOINT or MODEL_ENDPOINT
+    key = BACKUP_KEY or MODEL_KEY
+    if not endpoint or not key:
+        return None
+    return Provider(BACKUP_NAME, endpoint, key, "backup")
+
+
+def backup_state() -> str:
+    """Which backup model is configured, for /health. Never the key."""
+    backup = _backup_provider()
+    return backup.name if backup else "none"
+
+
 def _messages(request: AnalyzeRequest, with_frame: bool) -> list[dict[str, object]]:
     # The flag reaches the template as well as the message list. They used to
     # disagree: the template described a screenshot unconditionally while the
@@ -152,7 +194,9 @@ def _messages(request: AnalyzeRequest, with_frame: bool) -> list[dict[str, objec
     ]
 
 
-def _call_model(body: dict[str, object]) -> dict[str, object]:
+def _call_model(
+    body: dict[str, object], endpoint: str | None = None, key: str | None = None
+) -> dict[str, object]:
     """One blocking HTTP call, using the standard library.
 
     `urllib` rather than an HTTP client library because this is the only
@@ -163,11 +207,11 @@ def _call_model(body: dict[str, object]) -> dict[str, object]:
     """
     payload = json.dumps(body).encode("utf-8")
     http_request = urllib.request.Request(
-        MODEL_ENDPOINT,
+        endpoint or MODEL_ENDPOINT,
         data=payload,
         headers={
             "content-type": "application/json",
-            "authorization": f"Bearer {MODEL_KEY}",
+            "authorization": f"Bearer {key or MODEL_KEY}",
         },
         method="POST",
     )
@@ -288,6 +332,7 @@ def interpret(reply: dict[str, object], request: AnalyzeRequest) -> Decision:
 
     if action_type == "click":
         _refuse_optional_opt_in(selector, request)
+        _check_row_evidence(reply.get("evidence"), selector, request)
 
     confidence = reply.get("confidence")
     if not isinstance(confidence, (int, float)) or not 0.0 <= float(confidence) <= 1.0:
@@ -301,6 +346,63 @@ def interpret(reply: dict[str, object], request: AnalyzeRequest) -> Decision:
         confidence=float(confidence),
         summary=_clean_summary(reply.get("reasoning_summary")),
     )
+
+
+def _check_row_evidence(evidence: object, selector: str, request: AnalyzeRequest) -> None:
+    """Refuse a click in a row unless the model shows, from that row, why.
+
+    Measured on the payroll console with the right employee scrolled out of
+    view: told in plain words never to act on a near miss, the model released
+    the salary of an engineer whose bank details were missing, three times out
+    of three. Instructions do not hold a lite model; a check does. So a click
+    on anything inside a table row, list item or card must come with the
+    elements that satisfy the task, quoted, and every one of them must be in
+    the same row as the button and actually say what the model claims.
+
+    Words are compared, not meanings: the check cannot tell whether "Ready"
+    satisfies "payroll is ready". It can tell that the model quoted a row it is
+    not clicking, or a word that is not on the page — which is how a near miss
+    reads when it is made to show its working.
+    """
+    entries = {entry.elementId: entry for entry in request.redacted_dom_summary}
+    target = entries.get(selector)
+    if target is None or target.row is None:
+        return
+
+    if not isinstance(evidence, list):
+        raise ModelUnavailable("model clicked in a row without showing evidence from it")
+
+    for item in evidence:
+        if not isinstance(item, dict):
+            raise ModelUnavailable("model evidence was not a list of elements")
+        cited = entries.get(str(item.get("elementId")))
+        quoted = item.get("text")
+        if cited is None or not isinstance(quoted, str) or not quoted.strip():
+            raise ModelUnavailable("model evidence named an element that is not on the page")
+        if cited.row != target.row:
+            raise ModelUnavailable("model evidence came from a different row than its click")
+        said = " ".join(part for part in (cited.value, cited.label) if part).lower()
+        if " ".join(quoted.lower().split()) not in " ".join(said.split()):
+            raise ModelUnavailable("model evidence quoted words the element does not contain")
+
+        # Evidence that reads as a failed condition the task never asked for.
+        # Measured: asked for an applicant whose "fee is paid", the model cited
+        # "Fee pending" as its evidence and shortlisted them. Its own working
+        # showed the mistake; this reads it.
+        task = request.task_query.lower()
+        for word in _FAILURE_WORDS:
+            if re.search(rf"\b{word}\b", said) and not re.search(rf"\b{word}\b", task):
+                raise ModelUnavailable("model evidence shows a condition that is not met")
+
+
+# Status words that say a condition is not met. A row showing one of these is
+# not evidence for a task unless the task itself asks for it ("hold the salary
+# of the employee whose attendance is a mismatch").
+_FAILURE_WORDS = (
+    "pending", "missing", "mismatch", "expired", "unclear", "rejected", "failed",
+    "incomplete", "hold", "blocked", "overdue", "awaiting", "not", "unpaid",
+    "unverified", "invalid", "high", "medium",
+)
 
 
 def _refuse_optional_opt_in(selector: str, request: AnalyzeRequest) -> None:
@@ -363,9 +465,11 @@ def _check_typed_value(
     return value
 
 
-def _body(request: AnalyzeRequest, with_frame: bool) -> dict[str, object]:
+def _body(
+    request: AnalyzeRequest, with_frame: bool, model: str | None = None
+) -> dict[str, object]:
     return {
-        "model": MODEL_NAME,
+        "model": model or MODEL_NAME,
         "messages": _messages(request, with_frame),
         # Deterministic where the provider honours it. Two identical screens
         # should produce the same action; a rehearsed demo that varies run to
@@ -375,27 +479,68 @@ def _body(request: AnalyzeRequest, with_frame: bool) -> dict[str, object]:
     }
 
 
-async def _ask(request: AnalyzeRequest, with_frame: bool) -> Decision:
-    body = _body(request, with_frame)
+async def _send(body: dict[str, object], provider: Provider) -> dict[str, object]:
+    if provider.label == "model":
+        # The main model keeps the one-argument call the tests replace.
+        return await asyncio.to_thread(_call_model, body)
+    return await asyncio.to_thread(_call_model, body, provider.endpoint, provider.key)
+
+
+async def _ask(
+    request: AnalyzeRequest,
+    with_frame: bool,
+    provider: Provider | None = None,
+    retry_timeout: bool = True,
+) -> Decision:
+    provider = provider or _main_provider()
+    body = _body(request, with_frame, provider.name)
     try:
-        raw = await asyncio.to_thread(_call_model, body)
+        raw = await _send(body, provider)
     except ProviderTimeout:
+        if not retry_timeout:
+            raise
         # Once, and only for a timeout. See ProviderTimeout for why a second
         # attempt is worth its cost here and nowhere else.
         logger.warning("request %s timed out; retrying once", request.request_id)
-        raw = await asyncio.to_thread(_call_model, body)
+        raw = await _send(body, provider)
     return interpret(_parse_json_object(_extract_text(raw)), request)
 
 
+async def _decide_with(
+    request: AnalyzeRequest, provider: Provider, retry_timeout: bool
+) -> tuple[Decision, str]:
+    """One provider's answer, or ModelUnavailable. Never the rules."""
+    global _vision_refused
+
+    with_frame = SEND_FRAME and not _vision_refused
+    try:
+        decision = await _ask(request, with_frame, provider, retry_timeout)
+        return decision, f"{provider.label}-vision" if with_frame else provider.label
+    except ProviderRejectedRequest:
+        # Sending an image to a text-only model is a 4xx, and it is the one
+        # mistake worth correcting rather than reporting. Without this, turning
+        # vision on by default would break every text-only configuration that
+        # worked before — silently, because the rules fallback still answers.
+        if not with_frame:
+            raise
+        decision = await _ask(request, False, provider, retry_timeout)
+        if provider.label == "model":
+            _vision_refused = True
+            logger.warning(
+                "request %s: the configured model refused an image; "
+                "sending text only from here on",
+                request.request_id,
+            )
+        return decision, f"{provider.label}-text-only"
+
+
 async def decide_with_model(request: AnalyzeRequest) -> tuple[Decision, str]:
-    """Decide using the model, falling back to the rules on any failure.
+    """Decide using the model, then the backup model, then the rules.
 
     Returns the decision and which path produced it, because "the model was
     configured" and "the model answered this request" are different facts and
     the second is the one worth logging.
     """
-    global _vision_refused
-
     if not is_configured():
         return decide_by_rules(request), "rules"
 
@@ -407,44 +552,55 @@ async def decide_with_model(request: AnalyzeRequest) -> tuple[Decision, str]:
     if recognised_form(request) is not None:
         return decide_by_rules(request), "rules-known-form"
 
-    with_frame = SEND_FRAME and not _vision_refused
+    backup = _backup_provider()
 
     try:
-        decision = await _ask(request, with_frame)
-        return decision, "model-vision" if with_frame else "model"
-    except ProviderRejectedRequest as rejected:
-        # Sending an image to a text-only model is a 4xx, and it is the one
-        # mistake worth correcting rather than reporting. Without this, turning
-        # vision on by default would break every text-only configuration that
-        # worked before — silently, because the rules fallback still answers.
-        if not with_frame:
-            logger.warning(
-                "request %s fell back to rules: %s", request.request_id, rejected
-            )
-            return decide_by_rules(request), "rules-fallback"
-
-        try:
-            decision = await _ask(request, with_frame=False)
-        except ModelUnavailable as reason:
-            # The image was not the problem. Report the original refusal, which
-            # is the one that describes what the provider actually said.
-            logger.warning(
-                "request %s fell back to rules: %s", request.request_id, reason
-            )
-            return decide_by_rules(request), "rules-fallback"
-
-        _vision_refused = True
-        logger.warning(
-            "request %s: the configured model refused an image (%s); "
-            "sending text only from here on",
-            request.request_id,
-            rejected,
-        )
-        return decision, "model-text-only"
+        # With a backup waiting, a timeout goes straight to it: a fresh request
+        # to a different model is at least as likely to answer as a second one
+        # to the model that just hung, and it does not double the wait.
+        return await _decide_with(request, _main_provider(), retry_timeout=backup is None)
     except ModelUnavailable as reason:
         # Every message raised in this module is written from our own side of
         # the exchange — a status code, a shape, a rule that was broken — and
         # never from the provider's body or the page description, so it is safe
         # to log next to the request id.
+        if backup is None:
+            logger.warning("request %s fell back to rules: %s", request.request_id, reason)
+            return _rules_after(reason, request), "rules-fallback"
+        logger.warning(
+            "request %s: main model unavailable (%s); asking the backup model",
+            request.request_id,
+            reason,
+        )
+
+    try:
+        return await _decide_with(request, backup, retry_timeout=False)
+    except ModelUnavailable as reason:
         logger.warning("request %s fell back to rules: %s", request.request_id, reason)
-        return decide_by_rules(request), "rules-fallback"
+        return _rules_after(reason, request), "rules-fallback"
+
+
+def _rules_after(reason: ModelUnavailable, request: AnalyzeRequest) -> Decision:
+    """The rules' answer, or, when they have none, why nothing was done.
+
+    The user reads this summary. "No recognised form on this screen" is true
+    of the rules and says nothing about what happened: the AI answered and was
+    refused, or never answered. Written from our side of the exchange only —
+    never the provider's words or the page's.
+    """
+    decision = decide_by_rules(request)
+    if decision.action is not None:
+        return decision
+    text = str(reason)
+    if isinstance(reason, ProviderTimeout):
+        summary = "The AI service did not answer in time, so Shield did nothing. Try again in a moment."
+    elif "evidence" in text:
+        summary = (
+            "The AI's choice did not match what this page says, so Shield refused it and did "
+            "nothing. If the right item is further down, scroll to it and ask again."
+        )
+    elif "allowlist" in text or "element that was not" in text or "redacted field" in text:
+        summary = "The AI proposed something Shield does not allow, so nothing was done."
+    else:
+        summary = "The AI service could not give a usable answer, so Shield did nothing."
+    return Decision(action=None, confidence=0.0, summary=summary)
