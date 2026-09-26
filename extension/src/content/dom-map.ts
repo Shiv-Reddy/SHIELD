@@ -51,11 +51,24 @@ const SKIPPED_TAGS = new Set([
 /** `input` types that are really buttons, and should be classified as such. */
 const BUTTON_INPUT_TYPES = new Set(['submit', 'button', 'reset', 'image']);
 
-/** Elements whose direct text is worth capturing as a `text` region. */
+/**
+ * Elements whose direct text is worth capturing as a `text` region.
+ *
+ * `div` and the other generic containers are here because modern web apps put
+ * their text straight into them. Found on a live HR product (the OrangeHRM
+ * public demo): every employee row was `div` cells with the names as direct
+ * text, none of it was examined, and the screenshot — which the model is sent
+ * — showed every name unredacted. A wrapper whose text lives in its children
+ * has no direct text, so it is still skipped; only the element that actually
+ * holds the words is reported.
+ */
 const TEXT_TAGS = new Set([
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'p', 'label', 'span', 'li', 'td', 'th', 'legend', 'figcaption',
   'strong', 'em', 'small', 'dt', 'dd', 'summary', 'caption', 'output',
+  'div', 'b', 'i', 'u', 'mark', 'time', 'abbr', 'cite', 'address', 'blockquote',
+  'pre', 'code', 'section', 'article', 'header', 'footer', 'aside', 'nav', 'main',
+  'font', 'center', 'big', 'sub', 'sup', 'ins', 'del', 'q', 's', 'bdi', 'data',
 ]);
 
 const IMAGE_TAGS = new Set(['img', 'svg', 'canvas', 'video', 'picture']);
@@ -222,6 +235,62 @@ export function resolveLabel(element: Element): string | null {
   // it is worth passing along rather than reporting nothing.
   const name = element.getAttribute('name');
   return name ? clamp(name, MAX_TEXT_LENGTH) : null;
+}
+
+/**
+ * The header of the table column this element sits in, if it sits in one.
+ *
+ * The header row is the `<thead>`'s last row when there is one, else the
+ * table's first row when it is made of `<th>` cells. Cells spanning columns
+ * make the index a guess, so a table using `colspan` in its header is not read
+ * at all — a wrong header is worse than none, since it would hide the wrong
+ * column and leave the right one showing.
+ */
+export function columnHeaderOf(element: Element): string | null {
+  const ariaCell = element.closest('[role="cell"], [role="gridcell"]');
+  if (ariaCell) return ariaColumnHeaderOf(ariaCell);
+
+  const cell = element.closest('td');
+  if (!cell || !(cell instanceof HTMLTableCellElement)) return null;
+  const table = cell.closest('table');
+  if (!table) return null;
+  const headerRow =
+    table.tHead?.rows[table.tHead.rows.length - 1] ??
+    (table.rows[0] && [...table.rows[0].cells].every((c) => c.localName === 'th') ? table.rows[0] : null);
+  if (!headerRow || [...headerRow.cells].some((c) => c.colSpan > 1)) return null;
+  const header = headerRow.cells[cell.cellIndex];
+  return header ? headerText(header) : null;
+}
+
+/**
+ * The same, for grids built from `div`s with ARIA roles, which is how most
+ * component libraries draw a table. Cells are matched to headers by position
+ * among their row's cells; a grid whose header count differs from the row's
+ * cell count is not read, for the same reason `colspan` is not.
+ */
+function ariaColumnHeaderOf(cell: Element): string | null {
+  const row = cell.closest('[role="row"]');
+  const grid = cell.closest('[role="table"], [role="grid"], [role="treegrid"]');
+  if (!row || !grid) return null;
+  const cells = [...row.querySelectorAll('[role="cell"], [role="gridcell"]')].filter(
+    (candidate) => candidate.closest('[role="row"]') === row,
+  );
+  const headerRow = grid.querySelector('[role="columnheader"]')?.closest('[role="row"]');
+  if (!headerRow) return null;
+  const headers = [...headerRow.querySelectorAll('[role="columnheader"]')];
+  if (headers.length !== cells.length) return null;
+  const header = headers[cells.indexOf(cell)];
+  return header ? headerText(header) : null;
+}
+
+/**
+ * A header's own words. Its direct text first, because component libraries
+ * put sort menus and icons inside the header ("First Name" followed by a
+ * hidden "Ascending Descending"), and those would stop the header matching.
+ */
+function headerText(header: Element): string | null {
+  const own = directText(header) || collapseWhitespace(header.textContent ?? '');
+  return own ? clamp(own, MAX_TEXT_LENGTH) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -459,7 +528,32 @@ export function extractDomMap(): ExtractDomResult {
   // Interactive elements first, so that if anything is dropped it is background
   // text rather than the field or button the task depends on.
   const budget = Math.max(0, MAX_ELEMENTS - interactive.length);
-  const selected = [...interactive, ...remainingPassive.slice(0, budget)];
+  const chosen = [...interactive, ...remainingPassive.slice(0, budget)];
+
+  // Chosen interactive-first, SENT in page order. The order is what tells the
+  // model which text belongs with which button: with every button listed ahead
+  // of every piece of text, "Release salary for EMP-0415" sat forty entries
+  // away from the row that said "Ready", and on a queue page the lite model
+  // matched statuses to the wrong rows. Priority decides what survives the
+  // budget; it has no business deciding the reading order.
+  const selected = chosen.sort((a, b) =>
+    a.element === b.element
+      ? 0
+      : a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_FOLLOWING
+        ? -1
+        : 1,
+  );
+
+  // Which row, list item or card each element sits in, numbered in page order.
+  // A flat list of elements loses the row structure a person sees at a glance,
+  // and the model was matching a status in one row to a button in another.
+  const rowNumbers = new Map<Element, number>();
+  const rowOf = (element: Element): number | null => {
+    const row = element.closest('tr, li, [role="row"], [role="listitem"], article');
+    if (!row || row.closest('nav, header, footer')) return null;
+    if (!rowNumbers.has(row)) rowNumbers.set(row, rowNumbers.size + 1);
+    return rowNumbers.get(row) ?? null;
+  };
 
   let unresolvedSelectors = 0;
   const elements: DomElement[] = selected.map((candidate, index) => {
@@ -499,6 +593,8 @@ export function extractDomMap(): ExtractDomResult {
       // without these the rule engine is blind to them.
       name: candidate.element.getAttribute('name'),
       placeholder: candidate.element.getAttribute('placeholder'),
+      columnHeader: candidate.elementType === 'text' ? columnHeaderOf(candidate.element) : null,
+      row: rowOf(candidate.element),
       position: candidate.rect,
     };
   });

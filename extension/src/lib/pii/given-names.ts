@@ -1,5 +1,6 @@
 /**
- * Common Indian given names, for detecting a person's name in running prose.
+ * Common given names — Indian first, then global — for detecting a person's
+ * name in running prose.
  *
  * WHAT THIS IS, AND THE CLAIM IT DOES NOT SUPPORT
  *
@@ -79,7 +80,58 @@ const NAMES = [
   'vidya', 'vinita', 'yamini', 'yashoda', 'zoya',
 ] as const;
 
-export const GIVEN_NAMES: ReadonlySet<string> = new Set(NAMES);
+/**
+ * Common given names from outside India.
+ *
+ * Added after a live check on a real HR product (the OrangeHRM public demo)
+ * and a real table page (the-internet.herokuapp.com): "Cory Yamamoto" in the
+ * header and "John Smith" in the rows reached the model, because the list above
+ * holds Indian names only and Indian companies' software is full of everyone
+ * else's. Written from common given names worldwide — English, European,
+ * Arabic, East Asian, African, Latin American — not from any page we test on.
+ *
+ * Left out on purpose: names that are also everyday interface words, where the
+ * two-token rule would fire on buttons and headings rather than people — Mark
+ * (as read), Will, Grace (period), Hope, Faith, Joy, May, June, April, August,
+ * Rose, Bill (to), Art, Pat, Frank, Guy, Ray, Dawn, Summer, Max, Chase, Sterling,
+ * Rich, Don, Sunny, Page, Victor(y), Amber, Crystal, Sky, Iris, Ivy, Jade, Holly.
+ */
+const GLOBAL_NAMES = [
+  // English and European
+  'aaron', 'adam', 'adrian', 'alan', 'albert', 'alex', 'alexander', 'alexandra', 'alice', 'alicia',
+  'allison', 'amanda', 'amelia', 'amy', 'andrea', 'andrew', 'angela', 'anna', 'anne', 'anthony',
+  'antonio', 'ashley', 'barbara', 'benjamin', 'brandon', 'brian', 'caroline', 'carlos', 'catherine', 'charles',
+  'charlotte', 'chloe', 'chris', 'christina', 'christine', 'christopher', 'claire', 'cory', 'daniel', 'david',
+  'deborah', 'dennis', 'diana', 'donald', 'dorothy', 'edward', 'elena', 'elizabeth', 'ella', 'emily',
+  'emma', 'eric', 'ethan', 'eva', 'fiona', 'francesca', 'gary', 'george', 'hannah', 'harry',
+  'heather', 'helen', 'henry', 'isabella', 'jacob', 'james', 'jane', 'janet', 'jason', 'jeffrey',
+  'jennifer', 'jessica', 'joan', 'john', 'johnny', 'jonathan', 'joseph', 'joshua', 'julia', 'julie',
+  'justin', 'karen', 'katherine', 'kathleen', 'kelly', 'kenneth', 'kevin', 'kimberly', 'laura', 'lauren',
+  'linda', 'lisa', 'lucas', 'lucy', 'margaret', 'maria', 'marie', 'martin', 'mary', 'matthew',
+  'megan', 'melissa', 'michael', 'michelle', 'nancy', 'natalie', 'nathan', 'nicholas', 'nicole', 'noah',
+  'oliver', 'olivia', 'patricia', 'patrick', 'paul', 'peter', 'rachel', 'rebecca', 'richard', 'robert',
+  'ronald', 'ryan', 'samantha', 'samuel', 'sandra', 'sarah', 'scott', 'sean', 'sharon', 'sophia',
+  'sophie', 'stephanie', 'stephen', 'steven', 'susan', 'thomas', 'timothy', 'tim', 'tom', 'tyler',
+  'victoria', 'william', 'zachary', 'hans', 'klaus', 'lukas', 'sven', 'ingrid', 'pierre', 'jean',
+  'giulia', 'marco', 'luca', 'sofia', 'ivan', 'dmitri', 'olga', 'natalia', 'piotr', 'katarzyna',
+  // Arabic, Persian, Turkish
+  'ahmed', 'ahmad', 'ali', 'amir', 'aisha', 'fatima', 'hassan', 'hussein', 'ibrahim', 'khalid',
+  'layla', 'mariam', 'mohammed', 'mohammad', 'muhammad', 'mustafa', 'omar', 'rashid', 'salma', 'yousef',
+  'youssef', 'zainab', 'reza', 'mehmet', 'emre', 'elif',
+  // East and South-East Asian (romanised)
+  'wei', 'jing', 'li', 'ming', 'xiao', 'yan', 'hui', 'jun', 'hiroshi', 'kenji',
+  'takashi', 'yuki', 'haruto', 'sakura', 'akira', 'minji', 'jisoo', 'seojun', 'thanh', 'linh',
+  'nguyen', 'siti', 'nur', 'putri', 'budi',
+  // African
+  'kwame', 'kofi', 'ama', 'chinedu', 'ngozi', 'oluwaseun', 'tunde', 'amara', 'thabo', 'sipho',
+  'zanele', 'wanjiru', 'otieno', 'abebe', 'desta',
+  // Latin American and Iberian
+  'alejandro', 'ana', 'camila', 'diego', 'fernando', 'gabriel', 'isabel', 'javier', 'jorge', 'jose',
+  'juan', 'luis', 'lucia', 'manuel', 'mateo', 'miguel', 'pablo', 'pedro', 'rafael', 'valentina',
+  'joao', 'thiago', 'beatriz',
+] as const;
+
+export const GIVEN_NAMES: ReadonlySet<string> = new Set([...NAMES, ...GLOBAL_NAMES]);
 
 /**
  * Tokens that are on the list but are also ordinary words, so they are only

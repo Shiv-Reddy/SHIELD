@@ -59,6 +59,18 @@ export interface DomElement {
    */
   name: string | null;
   placeholder: string | null;
+  /**
+   * For text inside a table cell: that column's header text. Read by the
+   * detector only, and never added to the payload — it is the page's own
+   * heading, but the payload carries exactly the fields API_SPEC.md lists.
+   */
+  columnHeader?: string | null;
+  /**
+   * Which table row, list item or card the element sits in, numbered in page
+   * order; null outside one. A number, never text: it carries the page's
+   * structure to the model and nothing the page says.
+   */
+  row?: number | null;
   position: Rect;
 }
 
@@ -265,6 +277,8 @@ export interface RedactedDomEntry {
    * at all.
    */
   filled: boolean;
+  /** See DomElement.row. Omitted when the element is not in a row. */
+  row?: number;
   position: Rect;
 }
 

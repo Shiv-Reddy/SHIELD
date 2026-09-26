@@ -190,6 +190,11 @@ const AUTHOR_SUPPLIED_VALUE_TYPES: ReadonlySet<string> = new Set([
  * unreadable to the reasoning model, which fails the task a different way.
  */
 export const CONTENT_PATTERNS: ReadonlyArray<readonly [SensitiveCategory, RegExp]> = [
+  // A secret written out as text: "Password : admin123", "OTP = 482913". Found
+  // on a live login page that prints its demo credentials, and the same shape
+  // appears in IT tickets, onboarding emails and Wi-Fi notices. First, so the
+  // word and the secret go as one span rather than the digits alone as an ID.
+  ['password', /\b(?:password|passcode|passwd|pwd|pin|otp|one[- ]time password)\s*[:=]\s*\S+/i],
   ['email', /[\w.+-]+@[\w-]+\.[\w.-]+/],
   // An Indian PAN, or a long unbroken digit run: card numbers, Aadhaar,
   // account numbers. Nine digits is above any plausible year, price or count.
@@ -574,6 +579,56 @@ export function classifyTextContent(text: string): DomRuleHit | null {
 }
 
 /**
+ * What a table's column header says its cells hold.
+ *
+ * Found on a live site we did not build: a table with separate "First Name"
+ * and "Last Name" columns puts "John" in one cell and "Smith" in the next, and
+ * the gazetteer — which needs a given name AND a surname together — sees
+ * neither. The page states outright what the column holds, the same way a
+ * form label does, so a cell is judged by its header when its own text says
+ * nothing. Narrower than the form-field patterns on purpose: a "City" or
+ * "Country" column is not a person's address, and an "Item name" is not a
+ * person's name.
+ */
+const COLUMN_HEADER_PATTERNS: ReadonlyArray<readonly [SensitiveCategory, RegExp]> = [
+  ['email', /\be[-_\s]?mail\b/],
+  ['phone', /\b(phone|mobile|telephone|contact[-_\s]?(no|number)|whatsapp)\b/],
+  [
+    'id_number',
+    /\b(aadhaar|aadhar|pan|ssn|social[-_\s]?security|passport|account[-_\s]?(no|number)|card[-_\s]?(no|number)|iban|national[-_\s]?id|tax[-_\s]?id)\b/,
+  ],
+  ['address', /\b(address|street|pincode|postcode|zip[-_\s]?code)\b/],
+  [
+    'name',
+    /^(name|full name|first name|last name|given name|family name|middle name|surname|forename|customer|customer name|applicant|applicant name|employee|employee name|patient|patient name|student|student name|client|client name|candidate|holder|account holder|contact|contact name|parent|guardian|father'?s name|mother'?s name)$/,
+  ],
+];
+
+export function classifyByColumn(header: string | null | undefined): DomRuleHit | null {
+  if (!header) return null;
+  // "First (& Middle) Name" reads as "first name": asides in brackets and
+  // stray punctuation are not what a header says its column holds.
+  const text = header
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^\p{L}\p{N}'·\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  for (const [category, pattern] of COLUMN_HEADER_PATTERNS) {
+    if (pattern.test(text)) {
+      return {
+        category,
+        confidence: CONFIDENCE.textPattern,
+        // The header, not the cell: this names the column, which is the
+        // page's own heading and never the value under it.
+        reason: `in a column headed like ${category}`,
+      };
+    }
+  }
+  return null;
+}
+
+/**
  * Reconcile a field's declared purpose with what it actually contains.
  *
  * A field can say one thing and hold another, and the declaration usually wins
@@ -656,7 +711,7 @@ export function detectDomPii(elements: readonly DomElement[]): SensitiveRegion[]
         }
       }
     } else if (element.elementType === 'text' && element.value) {
-      hit = classifyTextContent(element.value);
+      hit = classifyTextContent(element.value) ?? classifyByColumn(element.columnHeader);
     }
 
     if (!hit) continue;

@@ -170,6 +170,7 @@ export function redactDomElements(
       // password reader in dom-map.ts returns '[has value]' rather than the
       // password itself, so even this check never touches the real string.
       filled: element.value !== null && element.value !== '',
+      ...(typeof element.row === 'number' ? { row: element.row } : {}),
       position: element.position,
     };
   });
