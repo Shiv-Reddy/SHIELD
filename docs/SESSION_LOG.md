@@ -711,3 +711,13 @@ claim.
 **Not verified here.** Every model check above ran text-only through the local harness; a real run also sends the redacted screenshot. The dashboard, the AI-view overlay, the narrow layouts and the policy switch have not been seen in the real browser.
 
 **Next session starts with:** a real-browser pass with the side panel open — KYC, admissions, payroll, support, ParaBank, OrangeHRM — then flip the dashboard policy and run KYC once, then the backup video. Still open from earlier: keep or revert the solid AI-view overlay (DECISIONS 997), and the `.env.example` timeout (DECISIONS 270).
+
+## 2026-09-26 (polish) — Product-level UI pass
+
+**Done.** Reviewed every surface as a shipped product (DECISIONS 303–304). Panel: sliders settings mark; status text no longer clipped; the task is the heading, the result box is coloured by `outcomeTone`, steps are ticks on a rail with a spinner for the current one, "Run again" and the on-laptop time under the result; the feed's hide line no longer repeats the chart; the composer grows with the text and empties on send; totals moved out of the dock and hidden at zero; "Clear" inline; the approval switch shows locked-on under organisation policy. Settings: light, logo header, switches, plain wording, testing controls under Advanced. Dashboard: laptops and the week chart on the left, policy and categories on the right; the switch reads "Approve before sending" (TEAM_GUIDE updated). Sent page headline balanced.
+
+- Tests: client 465, server 171, all passing. Build clean.
+
+**Not verified here.** Screenshots came from a stubbed preview, not the real extension. The consent card and the locked switch were not rendered.
+
+**Next session starts with:** reload the extension and look at the panel through one KYC run, one "Ask before sending" run and one dashboard policy flip.

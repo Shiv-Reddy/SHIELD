@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Shield · Organisation dashboard</title>
+    <title>Shield organisation dashboard</title>
     <!--
       The buyer's view. One page an organisation's security or compliance team
       keeps open: every laptop running Shield, what it hid, how much reached the
@@ -25,7 +25,7 @@
         color-scheme: light;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--soft); color: var(--body); font: 14px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      body { margin: 0; background: var(--soft); color: var(--body); font: 14px/1.55 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
       header.bar { display: flex; align-items: center; gap: 14px; padding: 14px 28px; background: var(--paper); border-bottom: 1px solid var(--line); }
       .brand { display: flex; align-items: center; gap: 9px; color: var(--ink); font-weight: 650; font-size: 16px; }
       .brand svg { width: 24px; height: 24px; }
@@ -37,7 +37,7 @@
       .live.stale i { background: #b42318; }
 
       main { max-width: 1160px; margin: 0 auto; padding: 28px 28px 48px; }
-      h1 { margin: 0 0 20px; max-width: 860px; color: var(--ink); font-size: 26px; line-height: 1.3; font-weight: 650; }
+      h1 { margin: 0 0 20px; max-width: 860px; color: var(--ink); font: 650 26px/1.3 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; text-wrap: balance; }
 
       .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 18px; }
       .kpi { padding: 18px 22px; }
@@ -78,10 +78,10 @@
       .bars .track { grid-column: 1 / -1; height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; }
       .bars .fill { display: block; height: 100%; border-radius: 99px; background: var(--ink); }
 
-      .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 120px; }
+      .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; align-items: end; height: 132px; }
       .week div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
       .week b { font-size: 11px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-      .week i { display: block; width: 100%; max-width: 26px; border-radius: 5px 5px 2px 2px; background: var(--ink); }
+      .week i { display: block; width: 100%; max-width: 40px; border-radius: 5px 5px 2px 2px; background: var(--ink); }
       .week span { font-size: 11px; color: var(--muted); }
 
       footer { margin-top: 22px; color: var(--muted); font-size: 12.5px; max-width: 860px; }
@@ -116,12 +116,19 @@
 
       <section class="kpis" aria-label="Totals">
         <div class="kpi"><strong id="k-devices">0</strong><span id="k-devices-label">laptops protected</span></div>
-        <div class="kpi"><strong id="k-hidden">0</strong><span>private items hidden before any AI saw them</span></div>
+        <div class="kpi"><strong id="k-hidden">0</strong><span>private items hidden before the AI</span></div>
         <div class="kpi"><strong id="k-tasks">0</strong><span>AI tasks run by employees</span></div>
-        <div class="kpi"><strong id="k-sent">0</strong><span>requests sent to the AI, every one redacted first</span></div>
+        <div class="kpi"><strong id="k-sent">0</strong><span>requests sent, all redacted</span></div>
       </section>
 
       <div class="grid">
+        <!--
+          Laptops and the week on the left, policy and categories on the right.
+          With the week under the categories the right column ran twice the
+          length of the left, which left a hole beside a short table and put
+          the chart below the fold on a laptop screen.
+        -->
+        <div class="stack">
         <section class="card" aria-labelledby="devices-title">
           <h2 id="devices-title">Laptops</h2>
           <table>
@@ -133,14 +140,20 @@
           <p class="empty" id="devices-empty">No laptop has reported yet. Open the Shield panel on a laptop that uses this server, and it appears here.</p>
         </section>
 
+        <section class="card" aria-labelledby="week-title">
+          <h2 id="week-title">Private items hidden, last 7 days</h2>
+          <div class="week" id="week"></div>
+        </section>
+        </div>
+
         <div class="stack">
           <section class="card policy" aria-labelledby="policy-title">
             <h2 id="policy-title">Policy for every laptop</h2>
             <div class="switch">
               <button type="button" role="switch" id="consent" aria-checked="false" aria-labelledby="consent-label"></button>
               <div>
-                <strong id="consent-label">Employees approve every request before it is sent</strong>
-                <p>Each laptop shows exactly what is about to go to the AI, already redacted, and sends nothing until the employee approves it.</p>
+                <strong id="consent-label">Approve before sending</strong>
+                <p>Every laptop shows the employee exactly what is about to go to the AI, already redacted, and sends nothing until they approve it.</p>
               </div>
             </div>
             <p class="policy-state" id="policy-state">Off. Laptops send redacted requests without asking.</p>
@@ -150,11 +163,6 @@
             <h2 id="cat-title">What was protected</h2>
             <ul class="bars" id="bars"></ul>
             <p class="empty" id="bars-empty">Nothing yet.</p>
-          </section>
-
-          <section class="card" aria-labelledby="week-title">
-            <h2 id="week-title">Private items hidden, last 7 days</h2>
-            <div class="week" id="week"></div>
           </section>
         </div>
       </div>

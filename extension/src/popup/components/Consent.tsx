@@ -28,7 +28,7 @@
 import { useCallback } from 'react';
 import { MSG } from '../../lib/messages';
 import type { ConsentRequest } from '../../lib/consent';
-import { categoryLabel } from './Redactions';
+import { describeHidden } from '../../lib/activity';
 import { Card, GhostButton, Title } from './Sheet';
 
 export function Consent({
@@ -73,11 +73,7 @@ export function Consent({
 
       {request.hidden.length > 0 ? (
         <p className="text-dim border-edge mt-3 border-t pt-2.5 text-[12px] leading-snug">
-          Hidden before sending:{' '}
-          {request.hidden
-            .map(({ category, count }) => `${count} ${categoryLabel(category).toLowerCase()}`)
-            .join(', ')}
-          .
+          Hidden before sending: {describeHidden(request.hidden)}.
         </p>
       ) : (
         <p className="text-dim border-edge mt-3 border-t pt-2.5 text-[12px] leading-snug">

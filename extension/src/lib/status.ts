@@ -140,6 +140,11 @@ export interface ShieldState {
   runHidden: { category: string; count: number }[] | null;
   /** The run's result in one plain sentence, once it has ended. */
   outcome: string | null;
+  /**
+   * What kind of ending `outcome` describes. A run that did nothing is not a
+   * success and not a failure, and drawing it green said it was the first.
+   */
+  outcomeTone: 'done' | 'stop' | 'error' | null;
   /** The organisation's dashboard requires approval before each send. */
   orgRequiresConsent: boolean;
 }
@@ -165,5 +170,6 @@ export const INITIAL_STATE: ShieldState = {
   activity: [],
   runHidden: null,
   outcome: null,
+  outcomeTone: null,
   orgRequiresConsent: false,
 };

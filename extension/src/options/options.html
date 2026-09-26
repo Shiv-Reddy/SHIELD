@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Shield — settings</title>
+    <title>Shield settings</title>
     <link rel="stylesheet" href="./options.css" />
   </head>
   <body>
@@ -35,17 +35,23 @@
       state is a settings page that can be closed having done nothing.
     -->
     <header class="masthead">
-      <h1>Shield</h1>
-      <p>Settings</p>
+      <span class="brand">
+        <svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 725 725" fill="currentColor">
+          <clipPath id="sh-o"><rect x="0" y="0" width="347.5" height="725"/></clipPath>
+          <path d="M347.5 0C245 28 128 92 47.5 163C47.5 380 140 600 347.5 725ZM100 352C165 245 258 232 347.5 232C347.5 232 347.5 472 347.5 472C258 472 165 459 100 352ZM363 352C363 390.659932486 331.659932486 422 293 422C254.340067514 422 223 390.659932486 223 352C223 313.340067514 254.340067514 282 293 282C331.659932486 282 363 313.340067514 363 352ZM349 352C349 362.4934102462 340.4934102462 371 330 371C319.5065897538 371 311 362.4934102462 311 352C311 341.5065897538 319.5065897538 333 330 333C340.4934102462 333 349 341.5065897538 349 352Z" fill-rule="evenodd" clip-path="url(#sh-o)"/>
+          <rect x="352" y="214" width="40" height="40"/><rect x="352" y="297" width="36" height="36"/><rect x="352" y="372" width="36" height="36"/><rect x="352" y="449" width="40" height="40"/><rect x="398" y="258" width="46" height="46"/><rect x="400" y="340" width="28" height="28"/><rect x="398" y="398" width="44" height="44"/><rect x="452" y="166" width="50" height="50"/><rect x="455" y="320" width="30" height="30"/><rect x="452" y="440" width="48" height="48"/><rect x="505" y="96" width="34" height="34"/><rect x="512" y="250" width="56" height="56"/><rect x="515" y="355" width="36" height="36"/><rect x="500" y="512" width="50" height="50"/><rect x="568" y="158" width="46" height="46"/><rect x="566" y="310" width="50" height="50"/><rect x="560" y="440" width="40" height="40"/><rect x="530" y="592" width="36" height="36"/><rect x="636" y="232" width="28" height="28"/><rect x="640" y="366" width="34" height="34"/><rect x="620" y="536" width="28" height="28"/><rect x="478" y="610" width="24" height="24"/>
+        </svg>
+        <span class="brand-name">Shield</span>
+      </span>
+      <h1>Settings</h1>
     </header>
 
     <main>
       <section class="card">
         <h2>How hard Shield looks</h2>
         <p class="lede">
-          Shield always hides what it is sure about. This sets the smallest
-          image it will bother reading text out of — which is the one part of
-          detection that was ever a judgement call rather than a rule.
+          Shield always hides everything it recognises. This sets how small an
+          image can be and still have its text read.
         </p>
 
         <!--
@@ -60,15 +66,14 @@
       </section>
 
       <section class="card">
-        <h2>Where redacted context is sent</h2>
+        <h2>Where the safe version is sent</h2>
         <p class="lede">
-          Only sanitised context ever reaches this address. Change it to point
-          at a different backend — a hosted one, or a second machine on your
-          network.
+          Only the redacted page ever reaches this address. Point it at your
+          organisation's server, or a second machine on your network.
         </p>
 
         <label class="field">
-          <span>Backend endpoint</span>
+          <span>Server address</span>
           <input type="url" id="endpoint" spellcheck="false" autocomplete="off" />
         </label>
         <p class="note" id="endpoint-note"></p>
@@ -91,72 +96,78 @@
           <input type="text" id="fleet-team" maxlength="40" spellcheck="false" autocomplete="off" />
         </label>
         <label class="switch">
-          <input type="checkbox" id="fleet-sharing" />
           <span>
             <strong>Report counts to the dashboard</strong>
-            Counts only. Turned off, nothing is reported.
+            Counts only. Switched off, nothing is reported.
           </span>
+          <input type="checkbox" role="switch" id="fleet-sharing" />
         </label>
         <p class="note"><a id="fleet-open" href="#" target="_blank" rel="noreferrer">Open the organisation dashboard</a></p>
       </section>
 
       <section class="card">
-        <h2>What runs, and where</h2>
-        <p class="lede">
-          Shield prefers your graphics hardware and falls back to the CPU on its
-          own. These pin that choice, so the fallback can be exercised on a
-          machine where it would otherwise never run — which is the only honest
-          way to know it still works.
+        <h2>Before Shield sends</h2>
+
+        <label class="switch">
+          <span>
+            <strong>Ask before sending</strong>
+            Shows what is about to go, every step. No answer means it is not sent.
+          </span>
+          <input type="checkbox" role="switch" id="require-consent" />
+        </label>
+
+        <p class="note">
+          This adds a look before anything goes. What keeps your data on this
+          laptop is enforced either way.
         </p>
+      </section>
+
+      <!--
+        For testing, not for everyday use, so folded away rather than removed:
+        each one, once switched on, must stay switchable off from somewhere
+        (tests/popup-parity.test.ts), and observe-only is how Shield is pointed
+        at sites we do not own (DECISIONS.md 111, 213).
+      -->
+      <details class="card advanced">
+        <summary>
+          <span>
+            <strong>Advanced</strong>
+            Testing controls. Most people never need these.
+          </span>
+        </summary>
+
+        <label class="switch">
+          <span>
+            <strong>Watch without acting</strong>
+            Runs everything, then reports the action instead of performing it.
+            For trying Shield on a site safely.
+          </span>
+          <input type="checkbox" role="switch" id="observe-only" />
+        </label>
 
         <label class="field">
-          <span>Inference backend</span>
+          <span>Where detection runs</span>
           <select id="force-backend">
-            <option value="">Automatic — prefer graphics, fall back to CPU</option>
-            <option value="webgpu">Always graphics (WebGPU)</option>
-            <option value="wasm">Always CPU (WebAssembly)</option>
+            <option value="">Automatic: graphics card, else the processor</option>
+            <option value="webgpu">Always the graphics card (WebGPU)</option>
+            <option value="wasm">Always the processor (WebAssembly)</option>
           </select>
         </label>
 
         <label class="field">
-          <span>Inference host</span>
+          <span>How detection is hosted</span>
           <select id="force-host">
-            <option value="">Automatic — per browser</option>
+            <option value="">Automatic, per browser</option>
             <option value="document">Offscreen document (Chrome default)</option>
             <option value="worker">Dedicated worker (Firefox default)</option>
           </select>
         </label>
 
         <p class="note">
-          Changing either rebuilds the loaded model, which takes about a second
-          on Chrome and about ten on Firefox.
+          Changing either reloads the detection model: about a second on Chrome,
+          about ten on Firefox.
         </p>
-      </section>
-
-      <section class="card">
-        <h2>Before Shield acts</h2>
-
-        <label class="switch">
-          <input type="checkbox" id="observe-only" />
-          <span>
-            <strong>Watch without acting</strong>
-            Runs everything, then reports the action instead of performing it.
-          </span>
-        </label>
-
-        <label class="switch">
-          <input type="checkbox" id="require-consent" />
-          <span>
-            <strong>Ask before sending</strong>
-            Shows what is about to go, every step. No answer means it is not sent.
-          </span>
-        </label>
-
-        <p class="note">
-          Neither of these is what keeps your data on this device. That is
-          enforced whether they are on or off — see the privacy note below.
-        </p>
-      </section>
+      </details>
 
       <section class="card quiet">
         <h2>What is not configurable, and why</h2>

@@ -1,5 +1,6 @@
 /**
- * Three running totals, pinned to the bottom of the popup.
+ * Three running totals, at the end of the panel's list once there is anything
+ * to count.
  *
  * WHY EVERY NUMBER HERE IS COUNTED AND NONE IS ESTIMATED
  *
@@ -33,25 +34,24 @@ import {
 
 const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 
-function Tile({ value, label }: { value: number | null; label: string }) {
+function Tile({ value, label }: { value: number; label: string }) {
   return (
     // Label first in the markup so a screen reader hears "items hidden, 42"
     // rather than a bare number; reversed only visually.
-    <div className="flex flex-col-reverse">
-      <dt className="text-faint mt-0.5 text-[11.5px] leading-tight">{label}</dt>
+    <div className="flex flex-col-reverse px-3.5 py-3">
+      <dt className="text-faint mt-1 text-[12px] leading-tight">{label}</dt>
       <dd
-        className="text-bright m-0 text-[15px] leading-none font-semibold tabular-nums"
+        className="text-bright m-0 text-[16px] leading-none font-semibold tabular-nums"
         style={{ fontFamily: 'var(--font-display)' }}
       >
-        {value === null ? '–' : compact.format(value)}
+        {compact.format(value)}
       </dd>
     </div>
   );
 }
 
 /** Said only when it changes what the numbers mean. */
-function noteFor(totals: AuditTotals | null): string | null {
-  if (totals === null || totals.passes === 0) return 'These count up as Shield works.';
+function noteFor(totals: AuditTotals): string | null {
   if (totals.capped) return `Counted from your last ${MAX_ENTRIES} runs and scans.`;
   return null;
 }
@@ -76,17 +76,21 @@ export function Totals() {
     return () => chrome.storage.onChanged.removeListener(onChange);
   }, []);
 
+  // Three zeros are not information, and on a first open they were the
+  // loudest thing in the dock. The strip appears once there is something to
+  // count; until then the panel's own empty state says what will happen.
+  if (totals === null || totals.passes === 0) return null;
   const note = noteFor(totals);
 
   return (
-    <div title="Counted from your history. Nothing here is estimated.">
-      <p className="text-faint mt-0 mb-2 text-[11.5px] leading-none">On this laptop so far</p>
-      <dl className="m-0 grid grid-cols-3 gap-3">
-        <Tile value={totals?.hidden ?? null} label="items hidden" />
-        <Tile value={totals?.passes ?? null} label="tasks and scans" />
-        <Tile value={totals?.sent ?? null} label="sent to AI, hidden first" />
+    <section title="Counted from your history. Nothing here is estimated.">
+      <h2 className="text-faint mb-1.5 px-1 text-[12px] leading-none">On this laptop so far</h2>
+      <dl className="bg-card rounded-card divide-edge m-0 grid grid-cols-3 divide-x">
+        <Tile value={totals.hidden} label="items hidden" />
+        <Tile value={totals.passes} label="tasks and scans" />
+        <Tile value={totals.sent} label="sent, redacted" />
       </dl>
-      {note ? <p className="text-faint mt-2 mb-0 text-[11.5px] leading-snug">{note}</p> : null}
-    </div>
+      {note ? <p className="text-faint mt-2 mb-0 px-1 text-[12px] leading-snug">{note}</p> : null}
+    </section>
   );
 }

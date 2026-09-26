@@ -119,6 +119,96 @@ and one row exactly as the AI read it. Read that sentence out loud.
 **Let the judge choose:** offer to run **Scan** on any website they name. It
 sends nothing, so it's safe anywhere, and nothing builds trust faster.
 
+### Final round: the pitch (use this one)
+
+Rounds 1 and 2 put us in the middle. Teams land there when judges hear a
+list of features before they see anything happen. So in the final: **show it
+working in the first 45 seconds, tell one story, and close on one line they
+will remember.** The round 2 run below stays as the fuller reference.
+
+#### The hook: first 45 seconds, no slides
+
+The KYC console is on screen, full of names and ID cards. The opener faces the
+judges, not the laptop.
+
+> **"Quick question: would you let an AI agent look at this screen?"**
+> *(pause, point)*
+>
+> "This is a bank's KYC queue. Ten customers: Aadhaar, PAN, account numbers,
+> faces. Every AI agent today works by taking a screenshot of exactly this and
+> sending it to a server. That's why Samsung banned its staff from generative
+> AI in 2023, and why under India's DPDP Act a leak like that can cost up to
+> ₹250 crore. So the people who'd gain most from AI agents — bank officers,
+> HR, admissions, support desks — aren't allowed to use them.
+>
+> **Watch.**" *(the driver presses Enter; the page turns into black labels)*
+>
+> **"This is everything the AI gets."** *(it approves KYC-2043)*
+>
+> "It picked the right customer out of ten, and it never learned who anyone
+> was. We're Team Anarchy, and this is **Shield**."
+
+Why it works: a question pulls the judges in, the stakes are real, and the
+wow moment lands before anyone has time to drift.
+
+#### The 5 minutes
+
+| Time | Part | Do and say |
+|---|---|---|
+| 0:00–0:45 | **Hook** | As above |
+| 0:45–1:15 | **How it works, in one breath** | "Three steps, all on the laptop: find private data, cover it, check again. Only the covered version goes to the AI, and the AI can only click, type or scroll." Open **What was sent** and point at `[NAME]`, `[ID_NUMBER]` and the blacked-out picture. |
+| 1:15–2:15 | **Let the judges choose** | *"Pick one: payroll, the support desk, or real HR software we didn't build."* Run their choice. OrangeHRM is the strongest: every employee's name hidden, even the password printed on the page. If a judge names any website, *"We'll scan it"*: a scan sends nothing, so it's safe. |
+| 2:15–3:00 | **Who pays** | Open the dashboard. *"The employee gets an AI assistant. The security team gets this."* Flip **Approve before sending**, run KYC, and the panel stops to show what it's about to send. *"One switch, every laptop."* Flip it back. |
+| 3:00–3:45 | **Why you can trust it (the story)** | *"In testing, the right employee was scrolled out of view, and the AI tried to release the wrong person's salary. So now it must quote the row's own words as evidence, and our server checks them. It refused the wrong one every time. And approve, pay and submit are final: Shield does one, then a person has to ask again."* |
+| 3:45–4:30 | **Proof in numbers** | *"92 of every 100 private items found on 50 test pages. About 135 milliseconds of work on the laptop. 636 automated checks. And a backup AI model, so a slow service doesn't stop the work."* |
+| 4:30–5:00 | **Close** | The line below, then stop talking. |
+
+**The closing line, said slowly:**
+
+> "Every company wants AI agents. Every compliance team says no.
+> **Shield is how they both say yes.**"
+
+**If there are only 3 minutes:** the hook, then **What was sent**, then the
+dashboard flip, then the close.
+
+#### How to handle the judges
+
+- **One voice at a time.** One speaks, one drives the laptop, everyone else
+  stands still and looks at the judges, not the screen.
+- **Short answer first.** Yes or no in one sentence, then *"Want me to show
+  you?"* Showing beats explaining.
+- **Say our limits before they find them.** *"We miss one of eight tricks on
+  our trick page. Here it is, and here's the fix."* Judges trust a team that
+  knows its weak spots.
+- **Get a judge involved.** Let them pick the scenario or type the task. Hand
+  them the laptop if they want it. A judge who touched it remembers it.
+- **Use their words.** "The customer's Aadhaar", not "PII entity". "On this
+  laptop", not "client-side inference".
+- **If something fails, don't apologise at length.** *"That's exactly why we
+  have a backup,"* then run **Scan** on the KYC page (it sends nothing) or
+  play the video, and carry on.
+
+#### Tough questions, short answers
+
+| They ask | We say |
+|---|---|
+| "Why not run the whole AI on the laptop?" | "Laptop models aren't reliable enough to act yet. So the part that sees private data runs on the laptop, and the cloud AI only ever sees labels. It also works with a model the bank hosts itself." |
+| "What if detection misses something?" | "92% on our benchmark, and when it's unsure it hides. A second check searches every message before it leaves. It isn't 100%, which is why an organisation can require approval before every send." |
+| "Isn't this just DLP?" | "Data-loss tools block AI. Redaction tools clean text you paste into a chat. Shield works on the live screen, for an agent that acts, and lets the work happen instead of blocking it." |
+| "These are your own pages." | "Four are, so we don't touch real customer data. Three aren't: ParaBank, OrangeHRM and a public table. Name any site and we'll scan it now." |
+| "Business model?" | "Per laptop, for banks, colleges and companies, with the dashboard and compliance report for their security team. The buyer is compliance, not the employee." |
+| "How fast is it?" | "About 135 ms of our own work, plus about 2 seconds for the AI's reply." |
+
+#### Before walking in
+
+- Backend running; `/health` shows the model on and the backup model named.
+- Tabs open in order: KYC, What was sent, the hub, OrangeHRM (already logged
+  in), the dashboard.
+- Browser zoom 100%, the Shield panel open, backup video ready, phone hotspot
+  ready.
+- Rehearse **three times with a timer**, and once with someone playing a rude
+  judge.
+
 ### Round 2: the 5-minute run (innovation, impact, execution)
 
 Judges score **innovation, impact and execution**. Each part of the run below
@@ -163,7 +253,7 @@ user's name, even the demo password printed on the login page.
 is already counted. Say:
 > "The employee gets an AI assistant. The bank's security team gets this:
 > every laptop, everything hidden, every request that reached the AI — all
-> redacted — and one switch." Flip **Employees approve every request**, run
+> redacted — and one switch." Flip **Approve before sending**, run
 > the KYC task again, and the panel stops to show exactly what it's about to
 > send. "That's who pays for Shield." Flip it back afterwards.
 

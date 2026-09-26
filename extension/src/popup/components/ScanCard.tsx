@@ -102,6 +102,11 @@ export function ScanRows({
         detail={scanDetail(state, onPage)}
         onClick={onScan}
         disabled={busy}
+        aside={
+          carrying > 0
+            ? { label: 'Clear', onClick: onClear, disabled: busy, describe: 'Clear scan results' }
+            : undefined
+        }
       />
 
       {/*
@@ -117,16 +122,6 @@ export function ScanRows({
           title="See what it looked at"
           trailing={<OpenIcon className="size-3.5" />}
           onClick={openRecord}
-        />
-      ) : null}
-
-      {carrying > 0 ? (
-        <Row
-          tone="quiet"
-          indent
-          title="Clear scan results"
-          onClick={onClear}
-          disabled={busy}
         />
       ) : null}
     </>

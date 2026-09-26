@@ -4,7 +4,7 @@
  * THE SHAPE
  *
  * A header, a scrolling middle, and a dock pinned to the foot of the window
- * holding the totals and the composer. It is the shape of an assistant panel —
+ * holding the composer. It is the shape of an assistant panel —
  * the place a person expects to type an instruction is the bottom edge, where
  * it stays however far the middle is scrolled.
  *
@@ -87,7 +87,7 @@ export function App() {
   const [problem, setProblem] = useState<string | null>(null);
   const [forcedBackend, setForcedBackend] = useState<ExecutionBackend | null>(null);
   const [consent, setConsent] = useState<ConsentRequest | null>(null);
-  const taskBox = useRef<HTMLInputElement>(null);
+  const taskBox = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const listen = (message: {
@@ -105,12 +105,6 @@ export function App() {
         // a card left on screen would invite a click that authorises nothing.
         if (message.state.status !== 'awaiting-consent') setConsent(null);
         setState(message.state);
-        // Reopened mid-run with an empty box and a run in flight reads as "it
-        // forgot what I asked". The worker still knows, so the box is refilled
-        // from it — but only when empty, or this would overwrite what the user
-        // is in the middle of typing.
-        const asked = message.state.taskQuery;
-        if (asked) setTask((current) => current || asked);
       }
     };
     chrome.runtime.onMessage.addListener(listen);
@@ -126,10 +120,7 @@ export function App() {
 
     void (async () => {
       const current = await toWorker<ShieldState>({ type: MSG.GET_STATE });
-      if (current) {
-        setState(current);
-        if (current.taskQuery) setTask((task) => task || current.taskQuery || '');
-      }
+      if (current) setState(current);
       if (!current || !isRunning(current.status)) taskBox.current?.focus();
     })();
 
@@ -142,9 +133,14 @@ export function App() {
   const fromRun = !state.scan && state.runHidden !== null;
 
   // One entry point for typed and spoken tasks, so a voice run is the same run.
+  //
+  // The box empties on send, as every composer people know does. The task is
+  // not lost: it becomes the heading of the run above, with "Run again" under
+  // it. Leaving it in the box made the same sentence appear twice on screen.
   const start = useCallback((query: string) => {
     if (!query) return;
     setProblem(null);
+    setTask('');
     // Painted immediately so the control cannot be pressed twice while the
     // worker spins up. The broadcast that follows replaces it.
     setState({ ...INITIAL_STATE, status: 'reading', taskQuery: query });
@@ -163,13 +159,16 @@ export function App() {
 
   // Stable, because the voice control subscribes to messages with these and
   // would otherwise resubscribe on every render.
-  const heardTask = useCallback(
-    (text: string) => {
-      setTask(text);
-      start(text);
-    },
-    [start],
-  );
+  const heardTask = useCallback((text: string) => start(text), [start]);
+
+  // Grows with what is typed, up to about five lines, then scrolls. A single
+  // line cut every realistic task off mid-sentence.
+  useEffect(() => {
+    const box = taskBox.current;
+    if (!box) return;
+    box.style.height = 'auto';
+    box.style.height = `${Math.min(box.scrollHeight, 120)}px`;
+  }, [task]);
   const listeningChanged = useCallback((now: boolean) => {
     setListening(now);
     if (now) {
@@ -241,13 +240,6 @@ export function App() {
           </Notice>
         ) : null}
 
-        {state.orgRequiresConsent ? (
-          <Notice tone="warn">
-            Your organisation requires you to approve each request before it is sent. Shield
-            will show you exactly what is about to go.
-          </Notice>
-        ) : null}
-
         {forcedBackend ? (
           <Notice tone="warn">
             Shield is pinned to {forcedBackend === 'wasm' ? 'the CPU' : forcedBackend} in Settings.{' '}
@@ -261,13 +253,20 @@ export function App() {
           </Notice>
         ) : null}
 
-        <Activity state={state} />
+        <Activity state={state} onRunAgain={start} />
 
         <section aria-labelledby="hero-title">
+          {/*
+            Second in rank once a run is on screen: the task is the heading
+            then, and two headings of one size gave the eye two places to
+            start.
+          */}
           <div className="flex items-baseline justify-between gap-3">
-            <h1
+            <h2
               id="hero-title"
-              className="text-bright text-[17px] leading-tight font-semibold"
+              className={`text-bright leading-tight font-semibold ${
+                state.taskQuery ? 'text-[13.5px]' : 'text-[16px]'
+              }`}
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {hidden.length > 0
@@ -277,7 +276,7 @@ export function App() {
                 : fromRun
                   ? 'Nothing private on this screen'
                   : 'Nothing hidden yet'}
-            </h1>
+            </h2>
             {hidden.length > 0 ? (
               <span className="text-faint shrink-0 text-[12.5px] tabular-nums">
                 {totalHidden} item{totalHidden === 1 ? '' : 's'}
@@ -291,8 +290,9 @@ export function App() {
             </div>
           ) : fromRun ? null : (
             <p className="text-dim mt-2 text-[13px] leading-relaxed">
-              Shield reads this page on your device and covers anything private before the
-              assistant sees it. Nothing private leaves your computer.
+              Shield reads this page on your laptop and covers anything private before the AI
+              sees it. Type a task below to start, or scan the page to see what would be
+              hidden.
             </p>
           )}
 
@@ -347,8 +347,10 @@ export function App() {
         </Group>
 
         <Group label="Options">
-          <AskFirstSwitch />
+          <AskFirstSwitch enforced={state.orgRequiresConsent} />
         </Group>
+
+        <Totals />
 
         {/*
           Compiled out entirely unless the build asked for it. The define makes
@@ -360,25 +362,44 @@ export function App() {
         {__SHIELD_DEV__ ? <CorpusCapture /> : null}
       </main>
 
-      <footer className="border-edge shrink-0 space-y-3.5 border-t px-4 pt-3.5 pb-4">
-        <Totals />
-
+      {/*
+        Only the composer is pinned. The lifetime totals used to share the
+        dock and took a sixth of the window on every view, for figures that
+        are read once a session; they are at the end of the list now.
+      */}
+      <footer className="border-edge shrink-0 border-t px-4 pt-3 pb-4">
         <form
           onSubmit={run}
-          className="bg-card border-edge focus-within:border-dim/60 flex items-center gap-2 rounded-[14px] border py-1.5 pr-1.5 pl-3.5 transition-colors duration-100"
+          className="bg-card border-edge focus-within:border-dim/60 flex items-end gap-2 rounded-[14px] border py-1.5 pr-1.5 pl-3.5 transition-colors duration-100"
         >
           <label htmlFor="task" className="sr-only">
             What should Shield do on this page?
           </label>
-          <input
+          <textarea
             id="task"
             ref={taskBox}
+            rows={1}
             value={task}
             onChange={(event) => setTask(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter sends and Shift+Enter breaks the line, as in every chat
+              // box. Not while an input method is composing a character.
+              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                start(task.trim());
+              }
+            }}
             disabled={running}
-            placeholder={listening ? 'Listening…' : 'Tell Shield what to do on this page'}
+            placeholder={
+              listening
+                ? 'Listening…'
+                : running
+                  ? 'Shield is working. Stop to change the task.'
+                  : 'Tell Shield what to do on this page'
+            }
             autoComplete="off"
-            className="text-bright placeholder:text-faint min-w-0 flex-1 bg-transparent py-1.5 text-[13.5px] outline-none focus-visible:outline-none disabled:opacity-60"
+            spellCheck={false}
+            className="text-bright placeholder:text-faint panel-scroll min-w-0 flex-1 resize-none bg-transparent py-[7px] text-[13.5px] leading-[18px] outline-none focus-visible:outline-none disabled:opacity-60"
           />
 
           {/*

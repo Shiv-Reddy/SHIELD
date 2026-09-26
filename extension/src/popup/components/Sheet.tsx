@@ -53,6 +53,7 @@ export function Row({
   tone = 'normal',
   expanded,
   indent = false,
+  aside,
 }: {
   icon?: ReactNode;
   title: string;
@@ -67,17 +68,25 @@ export function Row({
    * what the row above made" — lines its words up with that row's.
    */
   indent?: boolean;
+  /**
+   * A small second action at the row's right edge — "Clear" beside what the
+   * row produced. It used to be a whole row of its own, which made a group of
+   * two things five rows long.
+   */
+  aside?: { label: string; onClick: () => void; disabled?: boolean; describe?: string } | undefined;
 }) {
   const titleColour =
     tone === 'quiet' ? 'text-dim' : tone === 'warn' ? 'text-warn' : 'text-bright';
 
-  return (
+  const main = (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       aria-expanded={expanded}
-      className="hover:bg-card-raised flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors duration-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+      className={`hover:bg-card-raised flex min-w-0 items-center gap-3 px-3.5 py-3 text-left transition-colors duration-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${
+        aside ? 'flex-1 pr-2' : 'w-full'
+      }`}
     >
       {icon ? (
         <span className="text-dim shrink-0">{icon}</span>
@@ -90,6 +99,23 @@ export function Row({
       ) : null}
       {trailing ? <span className="text-faint shrink-0">{trailing}</span> : null}
     </button>
+  );
+
+  if (!aside) return main;
+
+  return (
+    <div className="flex items-stretch">
+      {main}
+      <button
+        type="button"
+        onClick={aside.onClick}
+        disabled={aside.disabled}
+        aria-label={aside.describe ?? aside.label}
+        className="text-dim hover:text-bright hover:bg-card-raised shrink-0 px-3.5 text-[12.5px] transition-colors duration-100 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {aside.label}
+      </button>
+    </div>
   );
 }
 
@@ -105,19 +131,25 @@ export function SwitchRow({
   description,
   checked,
   onChange,
+  locked = false,
 }: {
   title: string;
   description?: string;
   checked: boolean;
   onChange: (next: boolean) => void;
+  /** Held on by someone else — the organisation — and shown so, not hidden. */
+  locked?: boolean;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="hover:bg-card-raised flex w-full items-start gap-3 px-3.5 py-3 text-left transition-colors duration-100"
+      aria-disabled={locked}
+      onClick={() => (locked ? undefined : onChange(!checked))}
+      className={`flex w-full items-start gap-3 px-3.5 py-3 text-left transition-colors duration-100 ${
+        locked ? 'cursor-default' : 'hover:bg-card-raised'
+      }`}
     >
       <span className="min-w-0 flex-1">
         <span className="text-bright block text-[13.5px] leading-snug">{title}</span>
@@ -129,7 +161,7 @@ export function SwitchRow({
         aria-hidden="true"
         className={`relative mt-0.5 h-[18px] w-[30px] shrink-0 rounded-full transition-colors duration-150 ${
           checked ? 'bg-bright' : 'bg-card-raised ring-edge-lit ring-1 ring-inset'
-        }`}
+        } ${locked ? 'opacity-50' : ''}`}
       >
         <span
           className={`absolute top-[3px] size-3 rounded-full transition-[left] duration-150 ${

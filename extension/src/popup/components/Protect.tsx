@@ -115,15 +115,16 @@ export function MarkRows({ onProblem }: { onProblem: (message: string) => void }
         detail={busy ? 'Opening…' : marks > 0 ? `${marks} marked` : undefined}
         onClick={beginMarking}
         disabled={busy}
+        aside={
+          marks > 0
+            ? {
+                label: 'Clear',
+                onClick: clearMarks,
+                describe: `Clear ${marks} marked area${marks === 1 ? '' : 's'}`,
+              }
+            : undefined
+        }
       />
-      {marks > 0 ? (
-        <Row
-          tone="quiet"
-          indent
-          title={`Clear ${marks} marked area${marks === 1 ? '' : 's'}`}
-          onClick={clearMarks}
-        />
-      ) : null}
     </>
   );
 }
@@ -136,7 +137,7 @@ export function MarkRows({ onProblem }: { onProblem: (message: string) => void }
  * and swept before this ever appears, by three mechanisms that ask nobody
  * (DECISIONS.md 240). What this adds is a look before it goes.
  */
-export function AskFirstSwitch() {
+export function AskFirstSwitch({ enforced = false }: { enforced?: boolean }) {
   const [askFirst, setAskFirst] = useState(false);
 
   useEffect(() => {
@@ -146,10 +147,18 @@ export function AskFirstSwitch() {
   }, []);
 
   return (
+    // When the organisation requires it, the switch shows on and says who
+    // holds it. Showing "off" while every run stops to ask was a switch that
+    // contradicted what the panel then did.
     <SwitchRow
       title="Ask before sending"
-      description="See what is about to be sent, at every step. No answer means it is not sent."
-      checked={askFirst}
+      description={
+        enforced
+          ? 'Required by your organisation. Every request waits for your approval.'
+          : 'See what is about to be sent, at every step. No answer means it is not sent.'
+      }
+      checked={askFirst || enforced}
+      locked={enforced}
       onChange={(next) => {
         setAskFirst(next);
         void setRequireConsent(next);

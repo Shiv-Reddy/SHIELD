@@ -12,7 +12,7 @@
  */
 
 import type { ShieldStatus } from '../../lib/status';
-import { GearIcon, ShieldMark } from './Mark';
+import { SettingsIcon, ShieldMark } from './Mark';
 
 /**
  * Statuses where the pipeline is mid-flight.
@@ -75,7 +75,9 @@ export function Masthead({
 
       <span className="ml-auto flex min-w-0 items-center gap-1.5" role="status">
         <span className={`size-1.5 shrink-0 rounded-full ${dotColour(status)}`} aria-hidden="true" />
-        <span className="text-dim truncate text-[12.5px] leading-none">
+        {/* Normal leading: `leading-none` with `truncate` clipped every
+            descender, so "choosing a step" lost the bottom of its g and p. */}
+        <span className="text-dim truncate text-[12.5px] leading-normal">
           {running && step > 1 ? <span className="text-faint">Step {step}: </span> : null}
           {shown}
         </span>
@@ -88,7 +90,7 @@ export function Masthead({
         title="Settings"
         className="text-dim hover:text-bright hover:bg-card rounded-control -mr-1.5 p-1.5 transition-colors duration-100"
       >
-        <GearIcon className="size-4.5" />
+        <SettingsIcon className="size-4.5" />
       </button>
 
       {/*

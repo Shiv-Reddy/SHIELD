@@ -74,11 +74,55 @@ function Icon({
   );
 }
 
-export function GearIcon({ className = '' }: { className?: string }) {
+/**
+ * Settings, as two sliders. The old mark — a circle with eight short spokes —
+ * read as a brightness control to everyone who was asked, which on a dark
+ * panel invites the one click that does something else.
+ */
+export function SettingsIcon({ className = '' }: { className?: string }) {
   return (
     <Icon className={className}>
-      <circle cx="10" cy="10" r="2.6" />
-      <path d="M10 2.6v1.8M10 15.6v1.8M17.4 10h-1.8M4.4 10H2.6M15.23 4.77l-1.27 1.27M6.04 13.96l-1.27 1.27M15.23 15.23l-1.27-1.27M6.04 6.04 4.77 4.77" />
+      <path d="M3 6.5h7.5M14.5 6.5H17M3 13.5h2.5M9.5 13.5H17" />
+      <circle cx="12.5" cy="6.5" r="2" />
+      <circle cx="7.5" cy="13.5" r="2" />
+    </Icon>
+  );
+}
+
+/** A finished step in the run feed. */
+export function CheckIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="m5 10.5 3.2 3L15 6.5" />
+    </Icon>
+  );
+}
+
+/** A run that ended without acting, or stopped short. */
+export function InfoIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <circle cx="10" cy="10" r="7" />
+      <path d="M10 9v4.5M10 6.6v.1" />
+    </Icon>
+  );
+}
+
+/** A run that failed. */
+export function AlertIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <circle cx="10" cy="10" r="7" />
+      <path d="M10 6.2v4.6M10 13.4v.1" />
+    </Icon>
+  );
+}
+
+/** Run the same task again. */
+export function AgainIcon({ className = '' }: { className?: string }) {
+  return (
+    <Icon className={className}>
+      <path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.5v3h-3" />
     </Icon>
   );
 }

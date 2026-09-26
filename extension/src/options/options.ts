@@ -55,24 +55,23 @@ const LEVELS: ReadonlyArray<{
     level: 'standard',
     name: 'Standard',
     detail:
-      'Reads text out of images large enough to be a document — an ID card, a ' +
-      'statement, a screenshot. The floor, not the middle.',
-    measured: '69.2% redaction precision · 1.00x area covered',
+      'Reads text in images the size of a document: an ID card, a statement, a ' +
+      'screenshot. The lowest setting there is.',
+    measured: '69% of what it covers is private',
   },
   {
     level: 'thorough',
     name: 'Thorough',
     detail: 'Also reads smaller images: avatars, thumbnails, inline badges.',
-    measured: '56.3% redaction precision · 1.23x area covered',
+    measured: '56% of what it covers is private · covers 1.2× as much of the page',
   },
   {
     level: 'maximum',
     name: 'Maximum',
     detail:
-      'Reads almost every image on the page. Recall barely moves and a great ' +
-      'deal more of the page is covered — worth it only if you would rather ' +
-      'lose the page than miss anything.',
-    measured: '27.3% redaction precision · 2.54x area covered',
+      'Reads almost every image. It finds little more and covers much more of ' +
+      'the page, so use it only if you would rather lose the page than miss anything.',
+    measured: '27% of what it covers is private · covers 2.5× as much of the page',
   },
 ];
 
@@ -130,7 +129,7 @@ function drawLevels(current: RedactionLevel): void {
       figures.className = 'choice-measured';
       // The floor is read from the same constant the detector uses, so the
       // number on screen cannot drift from the number in force.
-      figures.textContent = `images from ${floor.width}x${floor.height}px · ${measured}`;
+      figures.textContent = `Images from ${floor.width} × ${floor.height} px · ${measured}`;
 
       text.append(title, body, figures);
       row.append(radio, text);

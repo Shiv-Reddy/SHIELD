@@ -13,7 +13,7 @@
  */
 
 import { isFinalClick } from '../lib/committing';
-import { capitalise, describeAction, describeHidden, pastTense } from '../lib/activity';
+import { capitalise, describeAction, pastTense } from '../lib/activity';
 import { captureViewport } from './capture';
 import {
   ensureVisionHost,
@@ -166,7 +166,12 @@ function fail(message: string): void {
   // requires no silent failures and no generic "something went wrong".
   console.error('[shield]', message);
   if (state.tabId !== null) void sendToTab(state.tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
-  setState({ status: 'error', errorMessage: message, outcome: `Couldn't finish. ${message}` });
+  setState({
+    status: 'error',
+    errorMessage: message,
+    outcome: `Couldn't finish. ${message}`,
+    outcomeTone: 'error',
+  });
 }
 
 // --- Organisation view ------------------------------------------------------
@@ -281,6 +286,7 @@ function beginRun(taskQuery: string, tabId: number): void {
     activity: [],
     runHidden: null,
     outcome: null,
+    outcomeTone: null,
   });
 }
 
@@ -1063,11 +1069,15 @@ async function runStep(
       transmitted: false,
     }).counts;
     setState({ runHidden: hiddenCounts });
+    // The count only. The breakdown is the chart directly beneath the feed,
+    // and the same numbers twice on one screen is noise, not proof.
+    const prefix = state.step > 1 ? `Step ${state.step}: ` : '';
+    const found = `${regions.length} private item${regions.length === 1 ? '' : 's'}`;
     note(
       'hide',
       regions.length === 0
-        ? `Step ${state.step}: read the page. Nothing private on screen.`
-        : `Step ${state.step}: hid ${regions.length} private item${regions.length === 1 ? '' : 's'} on this laptop — ${describeHidden(hiddenCounts)}.`,
+        ? `${prefix}Read the page on this laptop. Nothing private on screen.`
+        : `${prefix}Hid ${found} on this laptop, before anything was sent.`,
     );
 
     // Show the user what was found, on the page, before it is sent anywhere.
@@ -1693,10 +1703,10 @@ async function runTask(taskQuery: string): Promise<void> {
 
     // The result line above the feed. Not repeated as a feed line: the same
     // sentence twice in one panel reads as a glitch.
-    const finish = (_kind: 'done' | 'stop', outcome: string): void => {
+    const finish = (kind: 'done' | 'stop', outcome: string): void => {
       // The AI view is solid black, so it cannot outlive the run it explains.
       void sendToTab(tabId, { type: MSG.SHOW_OVERLAY, regions: [] });
-      setState({ status: 'done', errorMessage: null, outcome });
+      setState({ status: 'done', errorMessage: null, outcome, outcomeTone: kind });
     };
 
     for (let step = 1; step <= MAX_STEPS; step += 1) {
