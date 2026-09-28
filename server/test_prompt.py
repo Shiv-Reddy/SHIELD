@@ -869,5 +869,44 @@ def _check_dotenv():
 
 _check_dotenv()
 
+
+def _check_reasoning_blocks() -> None:
+    """Open-weights models that think aloud still have their answer read.
+
+    Gemma 4 on Google's endpoint writes a <thought> block before its JSON and
+    cannot be told not to; Qwen and others use <think>. The braces inside the
+    block are the model's working, and must never be mistaken for the answer.
+    """
+    answer = '{"status": "action_ready", "action": {"type": "click", "selector": "e47"}}'
+    thought = '<thought>Row 4 {KYC-2043} meets both. Action: click e47.</thought>'
+    parsed = model_reasoner._parse_json_object(thought + answer)
+    check(
+        "a <thought> block before the JSON is skipped, braces and all",
+        parsed.get("action", {}).get("selector") == "e47",
+        f"got {parsed}",
+    )
+    parsed = model_reasoner._parse_json_object("<think>\n{not json}\n</think>\n" + answer)
+    check("a <think> block is skipped the same way", parsed.get("status") == "action_ready", f"got {parsed}")
+
+    try:
+        model_reasoner._parse_json_object('<thought>Row 4 meets both {"status": "action_ready"')
+    except ModelUnavailable as reason:
+        check(
+            "a reply cut off inside its reasoning is refused, and says to raise the budget",
+            "MAX_TOKENS" in str(reason),
+            str(reason),
+        )
+    else:
+        check("a reply cut off inside its reasoning is refused", False, "it was parsed")
+
+    check(
+        "the token budget is 400 unless configured",
+        model_reasoner.MAX_TOKENS == 400 or "SHIELD_MODEL_MAX_TOKENS" in __import__("os").environ,
+        f"got {model_reasoner.MAX_TOKENS}",
+    )
+
+
+_check_reasoning_blocks()
+
 print(f"{len(failures)} failing check(s)" if failures else "all checks pass")
 sys.exit(1 if failures else 0)

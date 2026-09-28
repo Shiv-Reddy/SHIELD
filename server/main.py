@@ -180,7 +180,8 @@ async def analyze(request: Request) -> JSONResponse:
         return JSONResponse(
             content=NeedsMoreContextResponse(
                 request_id=request_id, reasoning_summary=decision.summary
-            ).model_dump()
+            ).model_dump(),
+            headers={"x-shield-path": path},
         )
 
     # The allowlist, enforced server-side. The model path checks it too, before
@@ -201,13 +202,18 @@ async def analyze(request: Request) -> JSONResponse:
         (time.perf_counter() - started) * 1000,
     )
 
+    # Which reasoner answered — model, backup, or one of the rule paths — as a
+    # header rather than a body field, so the response schema the extension
+    # validates is unchanged. It names a path, never page content, and is what
+    # lets tools/bench tell a model's own answer from a fallback's.
     return JSONResponse(
         content=ActionReadyResponse(
             request_id=request_id,
             action=decision.action,
             confidence=decision.confidence,
             reasoning_summary=decision.summary,
-        ).model_dump()
+        ).model_dump(),
+        headers={"x-shield-path": path},
     )
 
 

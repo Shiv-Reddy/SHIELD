@@ -60,6 +60,14 @@ BACKUP_KEY = os.environ.get("SHIELD_MODEL_BACKUP_KEY", "").strip()
 # is concerned, and falling back to the rules is faster than waiting for it.
 REQUEST_TIMEOUT_S = float(os.environ.get("SHIELD_MODEL_TIMEOUT", "12"))
 
+# How many tokens the model may write. 400 is ample for the JSON answer alone,
+# and it was the whole budget until open-weights models that reason before they
+# answer — Gemma 4 writes a <thought> block first and cannot be told not to on
+# Google's endpoint. At 400 that model spent the budget thinking and never
+# reached the answer, which it had right. Raised per deployment, not by default,
+# because every token a model is allowed is latency it may use.
+MAX_TOKENS = int(os.environ.get("SHIELD_MODEL_MAX_TOKENS", "400"))
+
 # The model's own words are shown to the user, so they are capped. A summary is
 # one sentence; anything longer is the model ignoring its instructions, and the
 # UI is not the place to find that out.
@@ -251,6 +259,23 @@ def _extract_text(response: dict[str, object]) -> str:
     return content
 
 
+# A reasoning block some open-weights models write before their answer. Its
+# braces are the model thinking aloud, not the answer, and the object search
+# below would otherwise start inside it.
+_REASONING_BLOCK = re.compile(r"<(think|thought|thinking)>.*?</\1>", re.DOTALL | re.IGNORECASE)
+
+
+def _strip_reasoning(text: str) -> str:
+    stripped = _REASONING_BLOCK.sub("", text)
+    # An unclosed block means the model stopped mid-thought: the budget ran
+    # out before it answered, and whatever braces follow are not an answer.
+    lowered = stripped.lower()
+    for tag in ("<think>", "<thought>", "<thinking>"):
+        if tag in lowered:
+            raise ModelUnavailable("model reply ended inside its reasoning; raise SHIELD_MODEL_MAX_TOKENS")
+    return stripped
+
+
 def _parse_json_object(text: str) -> dict[str, object]:
     """Pull one JSON object out of the model's reply.
 
@@ -259,6 +284,7 @@ def _parse_json_object(text: str) -> dict[str, object]:
     answer. The braces are located rather than the fences stripped, because
     there are several fence dialects and only one object.
     """
+    text = _strip_reasoning(text)
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end <= start:
@@ -475,7 +501,7 @@ def _body(
         # should produce the same action; a rehearsed demo that varies run to
         # run cannot be rehearsed.
         "temperature": 0,
-        "max_tokens": 400,
+        "max_tokens": MAX_TOKENS,
     }
 
 

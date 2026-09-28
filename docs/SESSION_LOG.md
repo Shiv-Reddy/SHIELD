@@ -721,3 +721,16 @@ claim.
 **Not verified here.** Screenshots came from a stubbed preview, not the real extension. The consent card and the locked switch were not rendered.
 
 **Next session starts with:** reload the extension and look at the panel through one KYC run, one "Ask before sending" run and one dashboard policy flip.
+
+## 2026-09-28 — Turned toward SIH 2026 (PS 26171); benchmark built; first open-weights measurements
+
+**Done.**
+- SIH is the target (DECISIONS 305–308). The SIH phase is at the top of TASKS.md; CLAUDE.md's milestone and server rule say so. Vanshika Chamoli joins and owns testing (CLAUDE.md, README, TEAM_GUIDE, where the testing questions moved to her section).
+- `npm run bench` (extension/tools/bench): drives the extension's own DOM reader and executor in Chrome over CDP, runs its rules, redaction and payload sealer (with the zero-leak checks) in Node, and posts to a real server, one per model with the backup off. It reports pass/fail per task, server and local latency, and which reasoner answered. Local work measured 6–26ms per step.
+- The server reports which reasoner answered in an `x-shield-path` response header (schema unchanged).
+- Gemma 4 measured (DECISIONS 309); `SHIELD_MODEL_MAX_TOKENS` added; reasoning blocks stripped before parsing, with four new checks in test_prompt.py.
+- Tests: client 465, server all passing (reasoner, prompt, fleet).
+
+**Blocker.** A free API key for a fast open-weights host (Groq, Cerebras or OpenRouter) — the one thing S1 needs that cannot be done from here.
+
+**Next session starts with:** with the key, `npm run bench -- --models <a>,<b> --repeat 3` and again with `--frame`; pin primary and backup. Without it, S2's first box: the DOM-labelled screenshot dataset generator, which needs neither a key nor a GPU.

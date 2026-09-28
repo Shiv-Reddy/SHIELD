@@ -268,11 +268,12 @@ and it goes away, because Shield has no permission there. Firefox uses a popup.
 
 | Name | Owns |
 |---|---|
-| Shivkumar Reddy | Lead. Local model, integration, demo. Testing and data — test screens, zero-leak runs, latency |
+| Shivkumar Reddy | Lead. Local vision model and its training data, integration, demo |
 | Shashank Kumar | PII detection — DOM rules, UltraFace + OCR, placeholders |
 | Ayush Verma | Backend — FastAPI, prompt builder, action builder |
 | Satyanand Gupta | Extension and UI — MV3 shell, executor, consent UI, inspector |
 | Isha Kumari | Docs and demo — task upkeep, README, deck |
+| Vanshika Chamoli | Testing — benchmark runs, test screens, zero-leak runs, latency and resource measurements |
 
 ---
 

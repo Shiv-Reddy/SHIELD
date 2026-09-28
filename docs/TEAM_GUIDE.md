@@ -346,22 +346,23 @@ This is the proof, so never skip it. Point at three things:
 
 ---
 
-## Shivkumar Reddy — Lead, local AI model, and testing
+## Shivkumar Reddy — Lead, and the local AI model
 
 ### Your one-line intro
 
 > "I'm Shivkumar, the lead. I built the local AI model that reads the screen,
-> and I put together how everything connects — extension to server and back.
-> I also run our tests and measure how well everything actually works."
+> and I put together how everything connects — extension to server and back."
 
 ### What you own
 
 - **The local AI model** — the part that runs inside the browser and finds
-  faces and reads text inside pictures
+  faces and reads text inside pictures, and the data it learns from
 - **Wiring it all together** — how the screenshot, the page reading, the
   hiding, and the sending all happen in the right order
-- **Testing and measurement** — the 50-page test set, the numbers, and the
-  page built to try to break our own detector
+- **The demo** — what runs on stage, in what order
+
+Testing and measurement moved to Vanshika. If asked how the numbers were
+measured, point to her.
 
 ### Three facts to know cold
 
@@ -383,14 +384,6 @@ This is the proof, so never skip it. Point at three things:
 > a number printed inside an image — we run a small AI model right there in
 > the browser. Nothing about the screen leaves the computer until after both of
 > those have already hidden the private parts."
-
-### Say this if asked "how do you know it actually works?"
-
-> "We built a 50-page test set with every private thing marked by hand, and we
-> score ourselves against it automatically, every time we change the code. We
-> also built a page specifically designed to trick our own detector, and wrote
-> down what we expected to happen before we ever ran it — seven out of eight
-> tricky cases are caught."
 
 ### More questions you may get
 
@@ -698,6 +691,53 @@ instructions'?"**
 
 ---
 
+## Vanshika Chamoli — Testing, and proving the numbers
+
+### Your one-line intro
+
+> "I'm Vanshika. I test Shield and measure it — every number we show you
+> comes from a run I can repeat in front of you."
+
+### What you own
+
+- **The benchmark** — the 50-page test set with every private thing marked by
+  hand, and the scores it produces
+- **The test pages** — including the one built to trick our own detector
+- **Zero-leak runs** — checking that nothing private is in what was sent
+- **Latency and resource numbers** — how fast, how much memory, how much
+  processor, on Chrome and Firefox
+- **The generalisation sweep** — real websites nobody pointed Shield at
+
+### Three facts to know cold
+
+1. **92.4% recall, 83.5% precision** on 50 pages — out of 100 private things
+   we find about 92, and when we flag something we're right about 5 times in 6.
+2. **636 automated checks** run on every change, on the extension and the
+   server.
+3. **Seven of eight tricks** on the adversarial page are caught, and we show
+   the one that isn't.
+
+### Say this if asked "how do you know it actually works?"
+
+> "We built a 50-page test set with every private thing marked by hand, and we
+> score ourselves against it automatically, every time we change the code. We
+> also built a page specifically designed to trick our own detector, and wrote
+> down what we expected to happen before we ever ran it — seven out of eight
+> tricky cases are caught."
+
+### More questions you may get
+
+**"Did you mark the test pages yourselves?"**
+> "Yes, by hand, before scoring. And we wrote down what we expected before
+> running, so a number couldn't be tuned after we saw it."
+
+**"How do you measure resource use?"**
+> "Memory and processor from the browser's own task manager during a scan and
+> during a run, on both Chrome and Firefox, several runs back to back to check
+> nothing grows."
+
+---
+
 ## Hard questions anyone can get
 
 If it's your part, answer it. If not, point to the right person.
@@ -731,7 +771,7 @@ If it's your part, answer it. If not, point to the right person.
 | If a judge asks about... | Point to |
 |---|---|
 | How the local AI model works, faces, OCR internals | Shivkumar |
-| The overall numbers, testing, how well it performs | Shivkumar |
+| The overall numbers, testing, how well it performs | Vanshika |
 | How something specific gets detected as private | Shashank |
 | What gets missed and why | Shashank |
 | What happens on the server, the AI model, the three allowed actions | Ayush |
@@ -740,6 +780,7 @@ If it's your part, answer it. If not, point to the right person.
 | Whether an action is safe to actually run | Satyanand |
 | The bigger picture, the story, "what's next" | Isha |
 | Anything about docs, the README, our numbers on paper | Isha |
+| How a number was measured, the test set, resource use | Vanshika |
 
 ---
 

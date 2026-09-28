@@ -1,0 +1,35 @@
+[
+  {
+    "name": "kyc",
+    "url": "test-screens/07-bank-kyc.html",
+    "task": "Approve the KYC application that has every document verified and low risk.",
+    "expect": [{ "type": "click", "target": ["Approve", "KYC-2043"] }]
+  },
+  {
+    "name": "admissions",
+    "url": "test-screens/08-college-admissions.html",
+    "task": "Shortlist the highest-ranked applicant whose documents are complete and fee is paid.",
+    "expect": [{ "type": "click", "target": ["Shortlist", "ADM-3106"] }]
+  },
+  {
+    "name": "payroll",
+    "url": "test-screens/09-hr-payroll.html",
+    "task": "Release the salary for the engineering employee whose payroll is ready.",
+    "expect": [{ "type": "click", "target": ["Release", "EMP-0415"] }]
+  },
+  {
+    "name": "support",
+    "url": "test-screens/10-support-desk.html",
+    "task": "Tell the customer a free replacement will be delivered within 3 days, and send the reply.",
+    "expect": [
+      { "type": "type", "target": ["reply"] },
+      { "type": "click", "target": ["Send reply"] }
+    ]
+  },
+  {
+    "name": "tables",
+    "url": "https://the-internet.herokuapp.com/tables",
+    "task": "Delete the row for the person whose website is http://www.timconway.com",
+    "expect": [{ "type": "click", "target": ["delete"], "sameRowAs": "timconway" }]
+  }
+]

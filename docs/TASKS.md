@@ -8,6 +8,73 @@ next.
 
 ---
 
+## SIH 2026 — the phase in force (from 2026-09-28)
+
+**Problem statement 26171, ISRO: On-device Visual Perception for Light-weight
+Browser Agents.** Idea deck submitted. Screening results in October; 36-hour
+grand finale in November–December. Scored on the five metrics below; the
+finale's use cases are unseen until the day. DECISIONS.md 305–308.
+
+Work top to bottom. Owners say who a question goes to, not who may touch it.
+
+### S1 — Open-weights server model, measured (Ayush) — DECISIONS 306
+- [x] **A benchmark that drives the real code** — `npm run bench` in
+      extension/ (tools/bench). The extension's own DOM reader and executor in
+      Chrome, its own rules, redaction and sealer in Node, a real server per
+      model. Cases in `tools/bench/cases.json`. Done 2026-09-28
+- [x] List the open-weights models reachable with the keys we have — the
+      Google key reaches `gemma-4-26b-a4b-it` and `gemma-4-31b-it`. Done
+      2026-09-28
+- [x] **Gemma 4 measured, and not viable as primary** (DECISIONS 309): right
+      whenever it answered (KYC, admissions, tables), but 12–15s a step and
+      frequent HTTP 500/503 on the free tier. It cannot switch its thinking off
+      on Google's endpoint; the budget is now `SHIELD_MODEL_MAX_TOKENS`
+- [ ] **Operator: a free key for a fast open-weights host** (Groq, Cerebras or
+      OpenRouter) — see what each lists; vision-capable and Apache-2.0 first
+- [ ] Measure those on the same cases, `--repeat 3`, with and without
+      `--frame`
+- [ ] Pin primary and backup, both open-weights; `.env.example`, `/health`
+      and API_SPEC say which
+- [ ] Offline path re-checked: local `qwen2.5vl:7b` answers the KYC task
+
+### S2 — On-device UI-element detector (Shiv) — metric 1, the PS's namesake — DECISIONS 307
+- [ ] **Dataset from the DOM.** Render pages at several viewports and save the
+      screenshot with every element's box and class (button, text field,
+      password field, checkbox, dropdown, link, text, image) as COCO JSON.
+      Local, no GPU
+- [ ] **Training** on a free cloud GPU (Kaggle or Colab): an Apache-2.0
+      DETR-family detector, small variant; export to ONNX, quantise
+- [ ] **In the browser**: offscreen host, ONNX Runtime Web, WebGPU with WASM
+      fallback. Latency measured on this laptop before choosing run path or
+      scan path (188)
+- [ ] **Fused with the DOM map**: detections where the DOM has nothing
+      (canvas, image, cross-origin frame) become elements; a detected password
+      box with no DOM behind it is redacted
+- [ ] Metric 1 re-measured on the ten pages, before and after
+
+### S3 — Redaction coverage 60% → 85%, precision held ≥ 80% (Shashank) — metric 3
+### S4 — Scan CPU from ~90% to under 50% (Satyanand; measured by Vanshika) — metric 4
+### S5 — Firefox parity for everything built since 2026-09-21 (Satyanand; verified by Vanshika)
+Side panel, AI-view overlay, run feed, organisation reporting, evidence check.
+
+### S6 — Finale kit (Vanshika)
+One command that takes a new page and task and prints all five metrics, so the
+finale's use cases can be scored within minutes of being handed over.
+
+### S7 — Generalisation sweep: ≥20 real sites, 3 task types (Vanshika) — T2.3
+### S8 — Indian documents and Hindi text in images (Shashank)
+Aadhaar, PAN and passport images; Devanagari text read from pictures.
+
+### S9 — The latency–accuracy trade-off, as a chart (Vanshika)
+The problem statement asks for the trade-off to be balanced; the three
+detection levels are already measured — draw it.
+
+### S10 — Finale readiness (Isha, everyone)
+Offline kit (local model on the laptop), backup video, the pitch rebuilt around
+the five metrics with ISRO-specific answers, a 36-hour shift plan.
+
+---
+
 ## The five metrics, and where we actually stand
 
 | # | Metric | Weight | State |

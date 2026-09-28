@@ -8,8 +8,13 @@ only sanitized context is sent; the cloud model returns one allowlisted action.
 
 Team Anarchy. An independent project.
 
-**Next milestone: a 30-hour national college hackathon, 25-26 September 2026.
-Code freezes 23 September.**
+**Next milestone: Smart India Hackathon 2026, problem statement 26171 (ISRO,
+"On-device Visual Perception for Light-weight Browser Agents").** The idea deck
+is submitted; screening results come in October and the 36-hour grand finale
+is in November–December (check the SIH portal for dates). The national college
+hackathon of 25–26 September is done. Everything is judged by the problem
+statement's five metrics (docs/EVALUATION_CRITERIA.md); its test cases are
+given only at the finale, so generalisation beats polishing a prepared page.
 
 ## Hard Constraints — never violate
 
@@ -29,7 +34,9 @@ Code freezes 23 September.**
   implementation** — where they disagree, Chrome's behaviour is preserved, and
   a change that breaks Chrome to serve Firefox is not taken. Edge runs the same
   Chromium bundle. See DECISIONS.md 214–216.
-- Server model: free-tier, provider-agnostic. Nothing paid committed.
+- Server model: free-tier, provider-agnostic, **open-weights** — the problem
+  statement allows only open-source/open-weights models on the server
+  (DECISIONS.md 306). Nothing paid committed.
 - Primary demo: the bank KYC review console (test-screens/07-bank-kyc.html),
   since round one of the event (DECISIONS.md 279). Must be perfect. Login stays
   a test screen.
@@ -110,11 +117,12 @@ Read the relevant one before starting related work.
 
 | Name | Role | Owns |
 |---|---|---|
-| Shivkumar Reddy | Lead, ML/Vision; Testing & Data | Local model, integration, demo; test screens, zero-leak runs, latency |
+| Shivkumar Reddy | Lead, ML/Vision; Data | Local vision model and its training data, integration, demo |
 | Shashank Kumar | PII Detection | DOM rules, UltraFace + OCR, placeholders |
 | Ayush Verma | Backend | FastAPI, prompt builder, action builder |
 | Satyanand Gupta | Extension & UI | MV3 shell, executor, consent UI, inspector |
 | Isha Kumari | Docs & Demo | TASKS/SESSION_LOG upkeep, README, deck |
+| Vanshika Chamoli | Testing | Benchmark runs, test screens, zero-leak runs, latency and resource measurements, generalisation sweep |
 
 Ownership areas — who a question about that module goes to. Not a record of who
 wrote which commit.

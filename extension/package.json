@@ -14,6 +14,7 @@
     "ort-assets": "node tools/copy-ort-assets.mjs",
     "test": "node --import ./tools/test-setup.mjs --test \"tests/*.test.ts\"",
     "benchmark": "node --import ./tools/test-setup.mjs benchmark/run.ts",
+    "bench": "node --import ./tools/test-setup.mjs tools/bench/run.ts",
     "check": "npm run test && tsc --noEmit && npm run build",
     "ocr-assets": "node tools/copy-ocr-assets.mjs",
     "build:firefox": "npm run build && node tools/make-firefox-manifest.mjs && node tools/check-dev-gate.mjs dist-firefox && node tools/check-build.mjs dist-firefox",

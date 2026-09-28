@@ -31,3 +31,6 @@ Shield_*_Idea_Presentation.pdf
 # runtime. Local state, never source.
 server/fleet_data.json
 server/fleet_data.tmp
+
+# Benchmark bundle and results (tools/bench)
+extension/tools/bench/.out/
